@@ -1,329 +1,310 @@
 <!doctype html>
 <html lang="ko">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>A/S 이력관리시스템</title>
-        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
-        <script
-            src="https://code.jquery.com/jquery-3.6.1.min.js"
-            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
-            crossorigin="anonymous"
-        ></script>
-        <script src="../js/axios.min.js"></script>
-        <script src="../js/app-shell.js?ver=1"></script>
-        <script type="text/javascript" src="../js/common.js?ver=1"></script>
-        <link rel="stylesheet" href="../css/modern.css" />
-        <link rel="stylesheet" href="../css/modern-dashboard.css" />
-    <script>
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    </script>
-        <link rel="stylesheet" href="../css/common.css" />
-        <link rel="stylesheet" href="../css/legacy-forms-lists.css" />
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-    </head>
+<head>
+    <script src="../js/head-common.js?ver=1"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+</head>
 
-    <script>
-        const id = params.get("id");
-        const currentUrl = "material";
-        const currentApi = "/material";
+<script>
+    const id = params.get("id");
+    const currentUrl = "material";
+    const currentApi = "/material";
 
-        let fileList_material = [];
-        let price = 0;
+    let fileList_material = [];
+    let price = 0;
 
-        async function addFilesFromUrls(
-            fileDto,
-            targetList,
-            renderFunc,
-            columnName,
+    async function addFilesFromUrls(
+        fileDto,
+        targetList,
+        renderFunc,
+        columnName,
+    ) {
+        for (let i = 0; i < fileDto.length; i++) {
+            const file = fileDto[i];
+            if (file.upload_column === columnName) {
+                await addFileFromUrl(file.upload_url, targetList);
+            }
+        }
+        renderFunc();
+    }
+
+    async function addFileFromUrl(url, targetList) {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+
+            // MIME 타입 기반으로 확장자 결정 (간단히 png/jpg만)
+            const extension = blob.type === "image/png" ? "png" : "jpg";
+
+            // File 객체 생성
+            const file = new File([blob], `image_from_url.${extension}`, {
+                type: blob.type,
+            });
+
+            // 리스트에 추가
+            if (targetList.length < 10) {
+                targetList.push(file);
+            } else {
+                alert("최대 10개까지 가능합니다.");
+            }
+        } catch (error) {
+            console.error("URL 이미지 변환 실패:", error);
+        }
+    }
+
+    $(function () {
+        getPrchList();
+
+        if (id != null) {
+            $(".current_qty").css("display", "none");
+            getDetail();
+            $("#saveBtn").html("수정");
+        } else {
+            $(".btn-del").css("display", "none");
+            $("#saveBtn").html("등록");
+        }
+    });
+
+    function getDetail() {
+        Common.sendAxios(`${currentApi}/${id}`)
+            .then(async (json) => {
+                const data = json.data;
+
+                const prch_id = data.prch_id;
+                const prch_name = data.prch_name;
+                const prcitm_id = data.prcitm_id;
+                const prcitm_name = data.prcitm_name;
+                const item_code = data.item_code;
+                const standard = data.standard;
+                const link = data.link;
+                const mnfct = data.mnfct;
+                const brand = data.brand;
+                const note = data.note.replaceAll("<br>", "\r\n");
+
+                $("#prch_id").val(prch_id);
+                $("#prcitm_id").val(prcitm_id);
+                $("#prch_name").val(prch_name);
+                $("#prcitm_name").val(prcitm_name);
+                $("#item_code").val(item_code);
+                $("#standard").val(standard);
+                $("#link").val(link);
+                $("#mnfct").val(mnfct);
+                $("#brand").val(brand);
+                $("#note").val(note);
+
+                const fileDto = json.searchVO;
+
+                await addFilesFromUrls(
+                    fileDto,
+                    fileList_material,
+                    renderPreview_material,
+                    "material",
+                );
+            })
+            .catch((err) => {
+                console.error("ERROR : ", err);
+            });
+    }
+
+    function saveClick() {
+        const formData = new FormData();
+        const prch_id = $("#prch_id").val();
+        const prcitm_id = $("#prcitm_id").val();
+        const prch_name = $("#prch_name").val();
+        const prcitm_name = $("#prcitm_name").val();
+        const standard = $("#standard").val();
+        const link = $("#link").val();
+        const mnfct = $("#mnfct").val();
+        const brand = $("#brand").val();
+        const note = $("#note")
+            .val()
+            .replace(/(?:\r\n|\r|\n)/g, "<br>");
+
+        let method = "";
+
+        if (Common.nullCheck(prch_id, "prch_id", "매입처")) return;
+
+        formData.append("prch_id", prch_id);
+        formData.append("prcitm_id", prcitm_id);
+        formData.append("prch_name", prch_name);
+        formData.append("prcitm_name", prcitm_name);
+        formData.append("standard", standard);
+        formData.append("link", link);
+        formData.append("mnfct", mnfct);
+        formData.append("brand", brand);
+        formData.append("note", note);
+        formData.append("price", price);
+
+        if (fileList_material.length != 0) {
+            fileList_material.forEach((file) => {
+                formData.append("fileList_material", file);
+            });
+        }
+
+        if (id != null) {
+            method = "/put";
+            formData.append("material_id", id);
+        } else {
+            const current_qty = Number($("#current_qty").val()) || 0;
+            formData.append("current_qty", current_qty);
+        }
+
+        Common.sendAxios(`${currentApi}${method}`, formData)
+            .then(async (json) => {
+                if (json.code == 200) {
+                    alert(json.msg);
+
+                    if (id == null) {
+                        const params = new URLSearchParams(
+                            window.location.search,
+                        );
+                        params.delete("id");
+
+                        const queryString = params.toString();
+                        location.href = `${currentUrl}_list.html${queryString}`;
+                    } else {
+                        const queryString = window.location.search;
+                        location.href = `${currentUrl}_detail.html${queryString}`;
+                    }
+                } else if (json.code == 202) {
+                    alert(json.msg);
+                    $(`#${json.data}`).focus();
+                }
+            })
+            .catch((err) => {
+                console.error("ERROR : ", err);
+            });
+    }
+
+    function deletion() {
+        if (
+            confirm(
+                "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다.",
+            ) == true
         ) {
-            for (let i = 0; i < fileDto.length; i++) {
-                const file = fileDto[i];
-                if (file.upload_column === columnName) {
-                    await addFileFromUrl(file.upload_url, targetList);
-                }
-            }
-            renderFunc();
-        }
-
-        async function addFileFromUrl(url, targetList) {
-            try {
-                const response = await fetch(url);
-                const blob = await response.blob();
-
-                // MIME 타입 기반으로 확장자 결정 (간단히 png/jpg만)
-                const extension = blob.type === "image/png" ? "png" : "jpg";
-
-                // File 객체 생성
-                const file = new File([blob], `image_from_url.${extension}`, {
-                    type: blob.type,
-                });
-
-                // 리스트에 추가
-                if (targetList.length < 10) {
-                    targetList.push(file);
-                } else {
-                    alert("최대 10개까지 가능합니다.");
-                }
-            } catch (error) {
-                console.error("URL 이미지 변환 실패:", error);
-            }
-        }
-
-        $(function () {
-            getPrchList();
-
-            if (id != null) {
-                $(".current_qty").css("display", "none");
-                getDetail();
-                $("#saveBtn").html("수정");
-            } else {
-                $(".btn-del").css("display", "none");
-                $("#saveBtn").html("등록");
-            }
-        });
-
-        function getDetail() {
-            Common.sendAxios(`${currentApi}/${id}`)
-                .then(async (json) => {
-                    const data = json.data;
-
-                    const prch_id = data.prch_id;
-                    const prch_name = data.prch_name;
-                    const prcitm_id = data.prcitm_id;
-                    const prcitm_name = data.prcitm_name;
-                    const item_code = data.item_code;
-                    const standard = data.standard;
-                    const link = data.link;
-                    const mnfct = data.mnfct;
-                    const brand = data.brand;
-                    const note = data.note.replaceAll("<br>", "\r\n");
-
-                    $("#prch_id").val(prch_id);
-                    $("#prcitm_id").val(prcitm_id);
-                    $("#prch_name").val(prch_name);
-                    $("#prcitm_name").val(prcitm_name);
-                    $("#item_code").val(item_code);
-                    $("#standard").val(standard);
-                    $("#link").val(link);
-                    $("#mnfct").val(mnfct);
-                    $("#brand").val(brand);
-                    $("#note").val(note);
-
-                    const fileDto = json.searchVO;
-
-                    await addFilesFromUrls(
-                        fileDto,
-                        fileList_material,
-                        renderPreview_material,
-                        "material",
-                    );
-                })
-                .catch((err) => {
-                    console.error("ERROR : ", err);
-                });
-        }
-
-        function saveClick() {
             const formData = new FormData();
-            const prch_id = $("#prch_id").val();
-            const prcitm_id = $("#prcitm_id").val();
-            const prch_name = $("#prch_name").val();
-            const prcitm_name = $("#prcitm_name").val();
-            const standard = $("#standard").val();
-            const link = $("#link").val();
-            const mnfct = $("#mnfct").val();
-            const brand = $("#brand").val();
-            const note = $("#note")
-                .val()
-                .replace(/(?:\r\n|\r|\n)/g, "<br>");
+            formData.append("id_list", id);
 
-            let method = "";
-
-            if (Common.nullCheck(prch_id, "prch_id", "매입처")) return;
-
-            formData.append("prch_id", prch_id);
-            formData.append("prcitm_id", prcitm_id);
-            formData.append("prch_name", prch_name);
-            formData.append("prcitm_name", prcitm_name);
-            formData.append("standard", standard);
-            formData.append("link", link);
-            formData.append("mnfct", mnfct);
-            formData.append("brand", brand);
-            formData.append("note", note);
-            formData.append("price", price);
-
-            if (fileList_material.length != 0) {
-                fileList_material.forEach((file) => {
-                    formData.append("fileList_material", file);
-                });
-            }
-
-            if (id != null) {
-                method = "/put";
-                formData.append("material_id", id);
-            } else {
-                const current_qty = Number($("#current_qty").val()) || 0;
-                formData.append("current_qty", current_qty);
-            }
-
-            Common.sendAxios(`${currentApi}${method}`, formData)
+            Common.sendAxios(`${currentApi}/delete`, formData)
                 .then(async (json) => {
-                    if (json.code == 200) {
-                        alert(json.msg);
-
-                        if (id == null) {
-                            const params = new URLSearchParams(
-                                window.location.search,
-                            );
-                            params.delete("id");
-
-                            const queryString = params.toString();
-                            location.href = `${currentUrl}_list.html${queryString}`;
-                        } else {
-                            const queryString = window.location.search;
-                            location.href = `${currentUrl}_detail.html${queryString}`;
-                        }
-                    } else if (json.code == 202) {
-                        alert(json.msg);
-                        $(`#${json.data}`).focus();
-                    }
+                    alert(json.msg);
+                    location.href = `${currentUrl}_list.html`;
                 })
                 .catch((err) => {
                     console.error("ERROR : ", err);
                 });
         }
+    }
 
-        function deletion() {
-            if (
-                confirm(
-                    "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다.",
-                ) == true
-            ) {
-                const formData = new FormData();
-                formData.append("id_list", id);
+    function backPage() {
+        const params = new URLSearchParams(window.location.search);
+        const queryString = params.toString();
 
-                Common.sendAxios(`${currentApi}/delete`, formData)
-                    .then(async (json) => {
-                        alert(json.msg);
-                        location.href = `${currentUrl}_list.html`;
-                    })
-                    .catch((err) => {
-                        console.error("ERROR : ", err);
-                    });
-            }
+        if (queryString) {
+            location.href = `${currentUrl}_detail.html?${queryString}`;
+        } else {
+            location.href = `${currentUrl}_detail.html`;
         }
+    }
 
-        function backPage() {
-            const params = new URLSearchParams(window.location.search);
-            const queryString = params.toString();
+    function getPrchList(page = 1) {
+        Common.sendAxios(
+            `/pitem?keyword=${decodeURI(
+                $("#search").val(),
+            )}&page=${page}&sort=${decodeURI("b.name")}&cate=${$(
+                "#cate",
+            ).val()}`,
+        )
+            .then(async (json) => {
+                if (json.code == 200) {
+                    const list = json.data;
+                    const searchVO = json.searchVO;
 
-            if (queryString) {
-                location.href = `${currentUrl}_detail.html?${queryString}`;
-            } else {
-                location.href = `${currentUrl}_detail.html`;
-            }
-        }
+                    $("#list").empty();
 
-        function getPrchList(page = 1) {
-            Common.sendAxios(
-                `/pitem?keyword=${decodeURI(
-                    $("#search").val(),
-                )}&page=${page}&sort=${decodeURI("b.name")}&cate=${$(
-                    "#cate",
-                ).val()}`,
-            )
-                .then(async (json) => {
-                    if (json.code == 200) {
-                        const list = json.data;
-                        const searchVO = json.searchVO;
-
-                        $("#list").empty();
-
-                        if (list.length == 0) {
-                            $("#list").append(
-                                $(
-                                    `<tr><td colspan='${$("#list").closest("table").find("colgroup col").length}'>검색 결과가 없습니다.</td></tr>`,
-                                ),
-                            );
-                            return false;
-                        }
-
-                        Common.renderPaging(searchVO);
-
-                        for (let i = 0; i < list.length; i++) {
-                            const data = list[i];
-
-                            const id = data.prcItm_id;
-                            const prch_id = data.prch_id;
-                            const item_code = data.item_code?.trim() || "-";
-
-                            let tr = $(
-                                `<tr id="tr${id}" onclick="selectPrch(${id}, ${prch_id},'${data.prch_name}','${data.name}', '${data.price}', '${item_code}')">`,
-                            );
-
-                            const listno =
-                                searchVO.totalCnt -
-                                ((searchVO.page - 1) * searchVO.recordSize + i);
-                            const prch_name = data.prch_name;
-                            const name = data.name;
-                            const price = Common.numberWithCommas(data.price);
-
-                            tr.append($($(`<td>${listno}</td>`)));
-                            tr.append($(`<td>${prch_name}</td>`));
-                            tr.append($(`<td>${name}</td>`));
-                            tr.append($(`<td>${item_code}</td>`));
-                            tr.append($(`<td>${price} 원</td>`));
-
-                            $("#list").append(tr);
-                        }
+                    if (list.length == 0) {
+                        $("#list").append(
+                            $(
+                                `<tr><td colspan='${$("#list").closest("table").find("colgroup col").length}'>검색 결과가 없습니다.</td></tr>`,
+                            ),
+                        );
+                        return false;
                     }
-                })
-                .catch((err) => {
-                    console.error("ERROR : ", err);
-                });
-        }
 
-        function pageMove(pageIndex) {
-            getPrchList(pageIndex);
-        }
+                    Common.renderPaging(searchVO);
 
-        function selectPrch(id, prch_id, prch_name, name, price_, item_code) {
-            $("#prcitm_id").val(id);
-            $("#prch_id").val(prch_id);
-            $("#prcitm_name").val(name);
-            $("#prch_name").val(prch_name);
-            $("#item_code").val(item_code);
-            price = price_;
+                    for (let i = 0; i < list.length; i++) {
+                        const data = list[i];
 
-            popup_close();
-        }
+                        const id = data.prcItm_id;
+                        const prch_id = data.prch_id;
+                        const item_code = data.item_code?.trim() || "-";
 
-        // 고객정보관리 팝업 열기
-        function popup() {
-            $(".background").css({ "z-index": "1000000" });
-            $(".show-use").css({ "z-index": "100" });
-            document.querySelector(".background").className =
-                "background show-use";
-        }
+                        let tr = $(
+                            `<tr id="tr${id}" onclick="selectPrch(${id}, ${prch_id},'${data.prch_name}','${data.name}', '${data.price}', '${item_code}')">`,
+                        );
 
-        // 고객정보관리 팝업 닫기
-        function popup_close() {
-            $(".background").css({ "z-index": "-1" });
-            document.querySelector(".background").className = "background";
-        }
-    </script>
+                        const listno =
+                            searchVO.totalCnt -
+                            ((searchVO.page - 1) * searchVO.recordSize + i);
+                        const prch_name = data.prch_name;
+                        const name = data.name;
+                        const price = Common.numberWithCommas(data.price);
 
-    <body>
-                <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
-            <span id="theme-icon">🌙</span> Dark Mode
-        </button>
-        <div id="viewport">
-            <div class="top"></div>
-            <div class="main">
-                <div class="menu scroll-custom"></div>
+                        tr.append($($(`<td>${listno}</td>`)));
+                        tr.append($(`<td>${prch_name}</td>`));
+                        tr.append($(`<td>${name}</td>`));
+                        tr.append($(`<td>${item_code}</td>`));
+                        tr.append($(`<td>${price} 원</td>`));
+
+                        $("#list").append(tr);
+                    }
+                }
+            })
+            .catch((err) => {
+                console.error("ERROR : ", err);
+            });
+    }
+
+    function pageMove(pageIndex) {
+        getPrchList(pageIndex);
+    }
+
+    function selectPrch(id, prch_id, prch_name, name, price_, item_code) {
+        $("#prcitm_id").val(id);
+        $("#prch_id").val(prch_id);
+        $("#prcitm_name").val(name);
+        $("#prch_name").val(prch_name);
+        $("#item_code").val(item_code);
+        price = price_;
+
+        popup_close();
+    }
+
+    // 고객정보관리 팝업 열기
+    function popup() {
+        $(".background").css({ "z-index": "1000000" });
+        $(".show-use").css({ "z-index": "100" });
+        document.querySelector(".background").className =
+            "background show-use";
+    }
+
+    // 고객정보관리 팝업 닫기
+    function popup_close() {
+        $(".background").css({ "z-index": "-1" });
+        document.querySelector(".background").className = "background";
+    }
+</script>
+
+<body>
+    <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span> Dark Mode
+    </button>
+    <div id="viewport">
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu scroll-custom"></div>
             <div class="contents contents-add">
                 <div class="menu-nm">
                     <div class="menu-nm-in">
@@ -339,28 +320,16 @@
                     <div class="info-in">
                         <p>매입처</p>
 
-                        <input
-                            type="text"
-                            readonly
-                            onclick="popup()"
-                            style="cursor: pointer"
-                            id="prch_name"
-                            placeholder="매입처를 선택해주세요."
-                        />
+                        <input type="text" readonly onclick="popup()" style="cursor: pointer" id="prch_name"
+                            placeholder="매입처를 선택해주세요." />
                         <input type="hidden" id="prch_id" />
                     </div>
 
                     <div class="info-in">
                         <p>자재명</p>
 
-                        <input
-                            type="text"
-                            readonly
-                            onclick="popup()"
-                            style="cursor: pointer"
-                            id="prcitm_name"
-                            placeholder="자재를 선택해주세요."
-                        />
+                        <input type="text" readonly onclick="popup()" style="cursor: pointer" id="prcitm_name"
+                            placeholder="자재를 선택해주세요." />
                         <input type="hidden" id="prcitm_id" />
                     </div>
 
@@ -371,12 +340,7 @@
 
                     <div class="info-in current_qty">
                         <p>재고 수량</p>
-                        <input
-                            type="text"
-                            class="number"
-                            id="current_qty"
-                            value="0"
-                        />
+                        <input type="text" class="number" id="current_qty" value="0" />
                     </div>
 
                     <div class="info-in">
@@ -406,53 +370,33 @@
                             <div>
                                 <div class="info-file-inner">
                                     <div class="file-btn">
-                                        <input
-                                            type="file"
-                                            id="upload_material"
-                                            class="input-file info-file-custom"
-                                            accept="image/*"
-                                            required
-                                            multiple
-                                            onchange="readURL_material(this)"
-                                        />
+                                        <input type="file" id="upload_material" class="input-file info-file-custom"
+                                            accept="image/*" required multiple onchange="readURL_material(this)" />
 
-                                        <label
-                                            for="upload_material"
-                                            class="input-file-button"
-                                        >
+                                        <label for="upload_material" class="input-file-button">
                                             이미지 업로드
                                         </label>
-                                        <div
-                                            class="btn-img-del"
-                                            onclick="imgClear_material()"
-                                        >
+                                        <div class="btn-img-del" onclick="imgClear_material()">
                                             <p>이미지 모두 삭제</p>
                                         </div>
                                         <div>
-                                            <span
-                                                style="
+                                            <span style="
                                                     margin-left: 20px;
                                                     color: #7c828a;
-                                                "
-                                            >
+                                                ">
                                                 * 이미지 최대 10장 등록
                                             </span>
                                             <br />
-                                            <span
-                                                style="
+                                            <span style="
                                                     margin-left: 20px;
                                                     color: #7c828a;
-                                                "
-                                            >
+                                                ">
                                                 * PDF 등록 불가
                                             </span>
                                         </div>
                                     </div>
                                     <div class="img-list scroll-custom">
-                                        <ul
-                                            class="image-preview"
-                                            id="preview_material"
-                                        ></ul>
+                                        <ul class="image-preview" id="preview_material"></ul>
                                     </div>
                                 </div>
                             </div>
@@ -481,13 +425,12 @@
                 <div class="background">
                     <div class="window">
                         <div class="popup popup-list-dtl" style="width: 1000px">
-                            <div class="popup-hd"><p>매입 품목 목록</p></div>
+                            <div class="popup-hd">
+                                <p>매입 품목 목록</p>
+                            </div>
                             <div class="popup-search">
                                 <div class="popup-search-in">
-                                    <select
-                                        class="popup-search-select"
-                                        id="cate"
-                                    >
+                                    <select class="popup-search-select" id="cate">
                                         <option value="">전체</option>
                                         <option value="prch">매입처명</option>
                                         <option value="name">매입품목</option>
@@ -496,19 +439,11 @@
                                         </option>
                                     </select>
                                     <div class="popup-search-in">
-                                        <input
-                                            type="text"
-                                            placeholder="검색어를 입력해주세요."
-                                            class="search-input"
-                                            id="search"
-                                            onkeypress="getPrchList()"
-                                        />
+                                        <input type="text" placeholder="검색어를 입력해주세요." class="search-input" id="search"
+                                            onkeypress="getPrchList()" />
                                     </div>
-                                    <img
-                                        src="../img/ico_search_popup.png"
-                                        class="ico-search-popup"
-                                        onclick="getPrchList()"
-                                    />
+                                    <img src="../img/ico_search_popup.png" class="ico-search-popup"
+                                        onclick="getPrchList()" />
                                 </div>
                             </div>
                             <div class="popup-in">
@@ -536,10 +471,7 @@
                                         </table>
                                     </div>
                                     <div class="paging popup-paging">
-                                        <div
-                                            class="paging-inner popup-paging-inner"
-                                            id="pagingArea"
-                                        ></div>
+                                        <div class="paging-inner popup-paging-inner" id="pagingArea"></div>
                                     </div>
                                 </div>
                                 <div class="popup-close">
@@ -553,103 +485,101 @@
         </div>
     </div>
 
-        <script>
-            function readURL_material(input) {
-                const files = Array.from(input.files);
+    <script>
+        function readURL_material(input) {
+            const files = Array.from(input.files);
 
-                // 새로운 파일들을 fileList에 추가
-                files.forEach((file) => {
-                    if (fileList_material.length < 10) {
-                        fileList_material.push(file);
-                    }
-                });
+            // 새로운 파일들을 fileList에 추가
+            files.forEach((file) => {
+                if (fileList_material.length < 10) {
+                    fileList_material.push(file);
+                }
+            });
 
-                // 미리보기 UI를 fileList 순서대로 렌더링
-                renderPreview_material();
-            }
+            // 미리보기 UI를 fileList 순서대로 렌더링
+            renderPreview_material();
+        }
 
-            async function renderPreview_material() {
-                const previewContainer =
-                    document.getElementById("preview_material");
-                previewContainer.innerHTML = ""; // 기존 UI 초기화
+        async function renderPreview_material() {
+            const previewContainer =
+                document.getElementById("preview_material");
+            previewContainer.innerHTML = ""; // 기존 UI 초기화
 
-                // fileList의 순서대로 미리보기 UI를 그린다
-                for (let i = 0; i < fileList_material.length; i++) {
-                    const file = fileList_material[i];
+            // fileList의 순서대로 미리보기 UI를 그린다
+            for (let i = 0; i < fileList_material.length; i++) {
+                const file = fileList_material[i];
 
-                    // FileReader를 사용해 이미지를 읽고 미리보기 UI에 추가
-                    const reader = new FileReader();
-                    await new Promise((resolve) => {
-                        reader.onload = function (e) {
-                            const li = document.createElement("li");
-                            li.setAttribute("draggable", "true");
-                            li.classList.add("image-item");
+                // FileReader를 사용해 이미지를 읽고 미리보기 UI에 추가
+                const reader = new FileReader();
+                await new Promise((resolve) => {
+                    reader.onload = function (e) {
+                        const li = document.createElement("li");
+                        li.setAttribute("draggable", "true");
+                        li.classList.add("image-item");
 
-                            // 각 div에 고유한 index 부여 (data-index 속성 활용)
-                            li.setAttribute("data-index", i);
+                        // 각 div에 고유한 index 부여 (data-index 속성 활용)
+                        li.setAttribute("data-index", i);
 
-                            const img = document.createElement("img");
-                            img.src = e.target.result;
+                        const img = document.createElement("img");
+                        img.src = e.target.result;
 
-                            const btn = document.createElement("button");
-                            btn.innerText = "X";
-                            btn.classList.add("delete-btn");
-                            btn.onclick = function () {
-                                fileList_material.splice(i, 1); // fileList에서 해당 파일 삭제
-                                renderPreview_material(); // 미리보기 UI 다시 렌더링
-                            };
-
-                            li.appendChild(img);
-                            li.appendChild(btn);
-                            previewContainer.appendChild(li);
-
-                            resolve(); // 파일 읽기 완료 후 resolve 호출
+                        const btn = document.createElement("button");
+                        btn.innerText = "X";
+                        btn.classList.add("delete-btn");
+                        btn.onclick = function () {
+                            fileList_material.splice(i, 1); // fileList에서 해당 파일 삭제
+                            renderPreview_material(); // 미리보기 UI 다시 렌더링
                         };
 
-                        reader.readAsDataURL(file); // 파일을 읽어서 비동기적으로 처리
-                    });
-                }
+                        li.appendChild(img);
+                        li.appendChild(btn);
+                        previewContainer.appendChild(li);
 
-                // 이제 updateSortable 호출
-                updateSortable_material();
+                        resolve(); // 파일 읽기 완료 후 resolve 호출
+                    };
+
+                    reader.readAsDataURL(file); // 파일을 읽어서 비동기적으로 처리
+                });
             }
 
-            function imgClear_material() {
-                fileList_material = [];
-                renderPreview_material();
-            }
+            // 이제 updateSortable 호출
+            updateSortable_material();
+        }
 
-            function updateSortable_material() {
-                $("#preview_material")
-                    .sortable({
-                        update: function () {
-                            let newOrder = [];
+        function imgClear_material() {
+            fileList_material = [];
+            renderPreview_material();
+        }
 
-                            // 새로운 순서대로 fileList 업데이트
-                            $("#preview_material .image-item").each(
-                                function () {
-                                    let index = $(this).attr("data-index");
-                                    // 새로운 순서대로 fileList를 업데이트
-                                    newOrder.push(fileList_material[index]);
-                                },
-                            );
+        function updateSortable_material() {
+            $("#preview_material")
+                .sortable({
+                    update: function () {
+                        let newOrder = [];
 
-                            // 새로운 순서대로 fileList를 갱신
-                            fileList_material = [...newOrder];
+                        // 새로운 순서대로 fileList 업데이트
+                        $("#preview_material .image-item").each(
+                            function () {
+                                let index = $(this).attr("data-index");
+                                // 새로운 순서대로 fileList를 업데이트
+                                newOrder.push(fileList_material[index]);
+                            },
+                        );
 
-                            // 순서가 변경된 후 미리보기 UI 업데이트
-                            setTimeout(function () {
-                                renderPreview_material(); // 딜레이 후 순서가 제대로 반영되도록 미리보기 UI 다시 렌더링
-                            }, 200); // 200ms 정도 기다린 후 업데이트
-                        },
-                    })
-                    .disableSelection();
-            }
-        </script>
+                        // 새로운 순서대로 fileList를 갱신
+                        fileList_material = [...newOrder];
 
-        <div
-            id="imgModal"
-            style="
+                        // 순서가 변경된 후 미리보기 UI 업데이트
+                        setTimeout(function () {
+                            renderPreview_material(); // 딜레이 후 순서가 제대로 반영되도록 미리보기 UI 다시 렌더링
+                        }, 200); // 200ms 정도 기다린 후 업데이트
+                    },
+                })
+                .disableSelection();
+        }
+    </script>
+
+    <div id="imgModal" style="
                 display: none;
                 position: fixed;
                 top: 0;
@@ -659,33 +589,33 @@
                 background: rgba(0, 0, 0, 0.8);
                 justify-content: center;
                 align-items: center;
-            "
-        >
-            <img id="modalImg" src="" style="max-width: 90%; max-height: 90%" />
-        </div>
+            ">
+        <img id="modalImg" src="" style="max-width: 90%; max-height: 90%" />
+    </div>
 
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const lists = document.querySelectorAll(".img-list"); // 모든 img-list 선택
-                if (!lists.length) return;
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const lists = document.querySelectorAll(".img-list"); // 모든 img-list 선택
+            if (!lists.length) return;
 
-                const modal = document.getElementById("imgModal");
-                const modalImg = document.getElementById("modalImg");
+            const modal = document.getElementById("imgModal");
+            const modalImg = document.getElementById("modalImg");
 
-                lists.forEach((list) => {
-                    list.addEventListener("click", (e) => {
-                        if (e.target.tagName === "IMG") {
-                            modalImg.src = e.target.src;
-                            modal.style.display = "flex";
-                        }
-                    });
-                });
-
-                modal.addEventListener("click", () => {
-                    modal.style.display = "none";
-                    modalImg.src = "";
+            lists.forEach((list) => {
+                list.addEventListener("click", (e) => {
+                    if (e.target.tagName === "IMG") {
+                        modalImg.src = e.target.src;
+                        modal.style.display = "flex";
+                    }
                 });
             });
-        </script>
-    </body>
+
+            modal.addEventListener("click", () => {
+                modal.style.display = "none";
+                modalImg.src = "";
+            });
+        });
+    </script>
+</body>
+
 </html>

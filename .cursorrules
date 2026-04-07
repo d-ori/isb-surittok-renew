@@ -1,0 +1,26 @@
+# Frontend Refactoring Rules for Legacy Java Environment
+
+## 1. Strict Scope & Restrictions
+- **No Backend Modification:** Never modify or delete any Java-related files, including `.java`, `.xml`, `.properties`, or Gradle/Maven configurations. Focus strictly on HTML, JSP, CSS, and JS.
+- **Legacy Environment Compatibility:** This project does not use modern module systems (ESM, Webpack, etc.). All assets must be loaded via traditional `<link>` and `<script>` tags in HTML/JSP files.
+- **No Over-Engineering:** Do not suggest modern frameworks (React, Vue) or libraries unless explicitly requested.
+
+## 2. CSS Organization & Architecture
+- **CSS Modularization:** Deconstruct the existing monolithic CSS into smaller, purpose-driven files:
+    - `common.css`: Reset, typography, global layout.
+    - `components.css`: Reusable UI elements (buttons, inputs, modals).
+    - `pages/[page-name].css`: Page-specific styles.
+- **Design Philosophy:** - Avoid "AI-generated" aesthetics (excessive gradients, unnecessary animations).
+    - Aim for a **Clean, Professional, and Corporate** look.
+    - Focus on consistency, readability, and a structured layout.
+
+## 3. JavaScript & jQuery Guidelines
+- **Maintain jQuery Logic:** Use jQuery syntax (e.g., `$(document).ready()`) as the primary scripting standard. Ensure compatibility with the existing jQuery version.
+- **Decoupling & Reusability:** - Extract inline scripts from HTML/JSP and move them to external `.js` files.
+    - Separate shared functions into `common.js` and feature-specific logic into dedicated files.
+- **Avoid Global Conflicts:** Use the **Namespace Pattern** (e.g., `var MyApp = MyApp || {};`) to prevent variable name collisions in a non-modular environment.
+
+## 4. Instructions for Cursor (AI)
+- **Code Integrity:** When splitting files, always provide the updated `<link>` and `<script>` tags to ensure the HTML remains functional.
+- **Maintainability First:** Write clean, self-explanatory code with helpful comments (in Korean if requested).
+- **Verify Before Proceeding:** If you are unsure about how a JSP tag or Java data binding works, ask for clarification instead of guessing.
