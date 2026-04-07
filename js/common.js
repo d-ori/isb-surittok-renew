@@ -11,9 +11,6 @@ function createUrl(baseUrl, pstartno, cate, keyword, ob) {
 }
 
 $(function () {
-    $(".menu").load("../menu.html");
-    $(".top").load("../top.html");
-
     $(document).on("input", ".number", function () {
         this.value = this.value
             .replace(/[^0-9-]/g, "") // 1. 숫자와 하이픈(-)이 아닌 문자는 제거

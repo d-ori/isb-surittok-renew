@@ -11,9 +11,16 @@
             crossorigin="anonymous"
         ></script>
         <script src="../js/axios.min.js"></script>
+        <script src="../js/app-shell.js?ver=1"></script>
         <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/modern.css" />
+        <link rel="stylesheet" href="../css/modern-dashboard.css" />
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
         <link rel="stylesheet" href="../css/common.css" />
-        <link rel="stylesheet" href="../css/style.css" />
+        <link rel="stylesheet" href="../css/legacy-forms-lists.css" />
     </head>
 
     <script>
@@ -118,9 +125,13 @@
     </script>
 
     <body>
-        <div class="top"></div>
-        <div class="main">
-            <div class="menu"></div>
+                <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
+            <span id="theme-icon">🌙</span> Dark Mode
+        </button>
+        <div id="viewport">
+            <div class="top"></div>
+            <div class="main">
+                <div class="menu scroll-custom"></div>
             <div class="contents contents-add">
                 <div class="menu-nm">
                     <div class="menu-nm-in">
@@ -154,5 +165,6 @@
                 </div>
             </div>
         </div>
+    </div>
     </body>
 </html>

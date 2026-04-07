@@ -265,6 +265,19 @@ body {
     gap: 2rem;
 }
 
+/* 레거시 목록/폼 페이지: .contents를 홈과 동일한 메인 영역으로 */
+#viewport .main > .contents {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    width: auto !important;
+    height: auto !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    background-color: var(--page-bg);
+}
+
 /* 5. Dashboard Widgets (Compactized) */
 .status-as {
     width: 100%;
@@ -694,7 +707,8 @@ body {
 }
 
 @media (max-width: 768px) {
-    .contents-area {
+    .contents-area,
+    #viewport .main > .contents {
         padding: 1rem;
     }
     

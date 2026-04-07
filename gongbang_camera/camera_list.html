@@ -7,10 +7,17 @@
   <link rel="shortcut icon" href="../img/ico_shortIcon.png">
   <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
   <script src="../js/axios.min.js"></script>
-        <script type="text/javascript" src="../js/common.js?ver=1"></script>
-        <script type="text/javascript" src="../js/jquery.cookie.js"></script>
+  <script src="../js/app-shell.js?ver=1"></script>
+  <script type="text/javascript" src="../js/common.js?ver=1"></script>
+  <script type="text/javascript" src="../js/jquery.cookie.js"></script>
+  <link rel="stylesheet" href="../css/modern.css">
+  <link rel="stylesheet" href="../css/modern-dashboard.css">
+  <script>
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  </script>
   <link rel="stylesheet" href="../css/common.css">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/legacy-forms-lists.css">
 </head>
 
 <script>
@@ -21,10 +28,14 @@
 </script>
 
 <body>
-  <div class="top"></div>
-  <div class="main">
-    <div class="menu"></div>
-    <div class="contents">
+  <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
+    <span id="theme-icon">🌙</span> Dark Mode
+  </button>
+  <div id="viewport">
+    <div class="top"></div>
+    <div class="main">
+      <div class="menu scroll-custom"></div>
+      <div class="contents">
       <div class="menu-nm">
         <div class="menu-nm-in">
           <img src="../img/ico_input_line.png">
@@ -102,6 +113,11 @@
                 <td>권택민</td>
                 <td>010-0000-0000</td>
               </tr>
+              <tr>
+                <td>26</td>
+                <td>권택민</td>
+                <td>010-0000-0000</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -123,6 +139,7 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 </body>
 </html>
