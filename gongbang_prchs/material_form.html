@@ -305,7 +305,7 @@
         <div class="top"></div>
         <div class="main">
             <div class="menu scroll-custom"></div>
-            <div class="contents contents-add">
+            <div class="contents contents-add detail-view">
                 <div class="menu-nm">
                     <div class="menu-nm-in">
                         <img src="../img/ico_input_line.png" />
@@ -320,7 +320,12 @@
                     <div class="info-in">
                         <p>매입처</p>
 
-                        <input type="text" readonly onclick="popup()" style="cursor: pointer" id="prch_name"
+                        <input
+                            type="text"
+                            class="popup-input"
+                            readonly
+                            onclick="popup()"
+                            id="prch_name"
                             placeholder="매입처를 선택해주세요." />
                         <input type="hidden" id="prch_id" />
                     </div>
@@ -328,7 +333,12 @@
                     <div class="info-in">
                         <p>자재명</p>
 
-                        <input type="text" readonly onclick="popup()" style="cursor: pointer" id="prcitm_name"
+                        <input
+                            type="text"
+                            class="popup-input"
+                            readonly
+                            onclick="popup()"
+                            id="prcitm_name"
                             placeholder="자재를 선택해주세요." />
                         <input type="hidden" id="prcitm_id" />
                     </div>

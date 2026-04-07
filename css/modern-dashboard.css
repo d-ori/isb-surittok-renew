@@ -723,6 +723,8 @@ body {
 .search-input::placeholder {
     color: var(--text-secondary);
     opacity: 0.6;
+    font-size: 12px;
+    font-weight: 400;
 }
 
 /* 테이블 영역: 10행 고정 높이 */

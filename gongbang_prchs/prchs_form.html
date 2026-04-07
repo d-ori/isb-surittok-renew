@@ -127,29 +127,20 @@
             pitemArr.push(id);
 
             $("#pItemList").append(`
-                <div class="info-in" data-id="${id}" data-name="${name}">
+                <div class="info-in info-in-modify-info prchs-pitem-row" data-id="${id}" data-name="${name}">
                     <input
                         type="radio"
                         name="mainItem"
                         class="main-item-radio"
-                        style="margin-right: 10px;"
                     />
                     <input
                         type="text"
+                        class="prchs-pitem-name"
                         value="${name}"
-                        style="width: 632px; margin-right: 20px; background: #E4E8EA; color: #676767;"
                         readonly
                     />
-                    <div class="btn" onclick="delPItem(this, ${id}, '${name}')">
-                        <p
-                            style="
-                                margin-right: 0px;
-                                background: rgb(245, 63, 63);
-                                color: white;
-                            "
-                        >
-                            삭제
-                        </p>
+                    <div class="btn btn-del prchs-pitem-del" onclick="delPItem(this, ${id}, '${name}')">
+                        <p>삭제</p>
                     </div>
                 </div>
             `);
@@ -215,30 +206,21 @@
                         pitemArr.push(searchVO[i].prcItm_id);
 
                         $("#pItemList").append(`
-                            <div class="info-in" data-id="${searchVO[i].prcItm_id}" data-name="${searchVO[i].name}">
+                            <div class="info-in info-in-modify-info prchs-pitem-row" data-id="${searchVO[i].prcItm_id}" data-name="${searchVO[i].name}">
                                 <input
                                     type="radio"
                                     name="mainItem"
                                     class="main-item-radio"
-                                    style="margin-right: 10px;"
                                     ${isChecked}
                                 />
                                 <input
                                     type="text"
+                                    class="prchs-pitem-name"
                                     value="${searchVO[i].name}"
-                                    style="width: 632px; margin-right: 20px; background: #E4E8EA; color: #676767;"
                                     readonly
                                 />
-                                <div class="btn" onclick="delPItem(this, ${searchVO[i].prcItm_id}, '${searchVO[i].name}')">
-                                    <p
-                                        style="
-                                            margin-right: 0px;
-                                            background: rgb(245, 63, 63);
-                                            color: white;
-                                        "
-                                    >
-                                        삭제
-                                    </p>
+                                <div class="btn btn-del prchs-pitem-del" onclick="delPItem(this, ${searchVO[i].prcItm_id}, '${searchVO[i].name}')">
+                                    <p>삭제</p>
                                 </div>
                             </div>
                         `);
@@ -377,7 +359,7 @@
             <div class="top"></div>
             <div class="main">
                 <div class="menu scroll-custom"></div>
-            <div class="contents contents-add">
+            <div class="contents contents-add detail-view">
                 <div class="menu-nm">
                     <div class="menu-nm-in">
                         <img src="../img/ico_input_line.png" />
@@ -388,10 +370,7 @@
                         <p class="route">HOME > 매입처 관리 > 매입처 관리</p>
                     </div>
                 </div>
-                <div
-                    class="contents-in scroll-custom"
-                    style="height: calc(100vh - 350px)"
-                >
+                <div class="contents-in scroll-custom">
                     <div class="info-in">
                         <p>
                             <span class="r-value">*&nbsp;</span>
