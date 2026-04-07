@@ -1,13 +1,13 @@
 /* legacy-forms-lists.css — 목록/폼 전용 (구 style.css에서 셸 충돌 규칙 제외). modern-dashboard 이후 로드 */
 /* 단위 규칙: rem/em 변환 중단, px 기준 유지 */
 /* contents-top */
-.menu-nm { width: calc(100% - 66px); margin: 0 auto; margin-top: 40px; position: relative; display: flex; align-items: center; } 
+.menu-nm { width: calc(100% - 66px); margin: 40px auto 10px; position: relative; display: flex; align-items: center; } 
 .menu-nm-in { display: flex; align-items: center; } 
-.menu-nm-in img { width: 7px; height: 26px; margin-right: 14px; } 
-.menu-nm-in p { color: #3D3D3D; font-family: "Noto Sans KR"; font-size: 24px; font-style: normal; font-weight: 600; line-height: 100%; letter-spacing: -0.4px; } 
+.menu-nm-in img { width: 7px; height: 26px; margin-right: 4px;} 
+.menu-nm-in p {font-family: "Noto Sans KR"; font-size: 24px; font-style: normal; font-weight: 600; line-height: 100%; letter-spacing: -0.4px; } 
 .menu-route { position: absolute; right: 0; } 
 .menu-route img { width: 15px; height: 15px; } 
-.menu-route .route { color: #A5ADB8; font-family: "Noto Sans KR"; font-size: 14px; font-style: normal; font-weight: 400; line-height: 100%; letter-spacing: -0.3px; } 
+.menu-route .route {  color: #385885; font-family: "Noto Sans KR"; font-size: 12px; font-weight: 500; line-height: 100%; letter-spacing: -0.3px; } 
 
 /* search */
 .search { position: relative; width: calc(100% - 66px); height: 73px; margin: 0 auto; margin-top: 20px; background: #FFF; box-shadow: 0 4px 18px 0 rgba(66, 76, 96, 0.10); display: flex; align-items: center; font-size: 14px;} 
@@ -24,7 +24,7 @@
 .btn-excel { background-image: url('../img/ico_excel.png'); background-size: 16px; background-repeat: no-repeat; background-position: 8px 50%; width: 98px; text-align: center; font-family: "Noto Sans KR"; font-size: 12px; font-style: normal; font-weight: 400; line-height: 100%; } 
 .btn-excel p { margin-left: 24px; } 
 .btn-excel-down { background-image: url('../img/ico_excel_down.png'); width: 109px; } 
-.btn-search { margin-left: 10px; color: #FFF; background: var(--off, #A6AFB9); border: 1px solid #A6AFB9; } 
+.btn-search { margin-left: 10px; color: #FFF; background: var(--off, #385885); border: 1px solid #A6AFB9; } 
 .btn-search:hover { border: 1px solid #385885; background-color: #385885; color: #FBFBFB; } 
 .btn-excel-upload:hover { background-image: url('../img/ico_excel_h.png'); background-color: #385885; color: #FBFBFB; } 
 .btn-excel-down:hover { background-image: url('../img/ico_excel_down_h.png'); background-color: #385885; color: #FBFBFB; } 
@@ -42,7 +42,7 @@
 /* table */
 .list { width: 100%; height: calc(100vh - 379px); margin: 0 auto; margin-top: 22px; overflow: auto; } 
 .list table { width: 100%; margin: 0 auto; border-collapse: collapse; } 
-.list table tbody tr th { position: sticky; top: 0px; height: 46px; background: #4E8EED; color: #FFF; font-family: "Noto Sans KR"; font-size: 16px; font-style: normal; font-weight: 500; line-height: 100%; letter-spacing: -0.26px; } 
+.list table tbody tr th { position: sticky; top: 0px; height: 46px; background: #68b7ff; color: #FFF; font-family: "Noto Sans KR"; font-size: 16px; font-style: normal; font-weight: 500; line-height: 100%; letter-spacing: -0.26px; } 
 .list table tbody tr td { border-bottom: 1px solid #EDEFF1; height: 44px; color: #000; font-family: "Noto Sans KR"; text-align: center; font-size: 14px; font-style: normal; font-weight: 400; line-height: 1.5; letter-spacing: -0.26px; } 
 .list table tbody tr:hover { background-color: #F6F8FA; } 
 .list table tbody tr .ico-sort { cursor: pointer; margin-left: 8px; width: 16px; } 
@@ -70,7 +70,7 @@
 input[type="checkbox"] { display: none; } 
 input[type="checkbox"] + label { margin-top: 5px; cursor: pointer; display: inline-block; width: 20px; height: 20px; background-color: #ECECEC; position: relative; } 
 input[type="checkbox"] + label::after { content:'✔'; font-size: 14px; width: 20px; height: 20px; text-align: center; position: absolute; left: 0; top:0; color: #fff; } 
-input[type="checkbox"]:checked + label::after { background-color: #A5ADB8; content:'✔'; font-size: 14px; width: 20px; height: 20px; text-align: center; position: absolute; left: 0; top:0; color: #fff; } 
+input[type="checkbox"]:checked + label::after { background-color: #378eff; content:'✔'; font-size: 14px; width: 20px; height: 20px; text-align: center; position: absolute; left: 0; top:0; color: #fff; } 
 .selected-row { background: #F6F8FA; border-left: 5px solid var(--Color-Primary, #41B6E6); } 
 .t-header { border-left: 5px solid var(--Color-Primary, #4E8EED); } 
 
@@ -468,8 +468,8 @@ table { table-layout:fixed; }
     align-items: center;
     padding: 8px 10px;
     border-radius: 12px;
-    background: #f8fafc;
-    border: 1px solid #e9edf3;
+    /* background: #f8fafc; */
+    /* border: 1px solid #e9edf3; */
 }
 
 .contents-add.detail-view .info-in > p {
@@ -489,11 +489,12 @@ table { table-layout:fixed; }
 .contents-add.detail-view .info-in textarea,
 .contents-add.detail-view .info-in select {
     width: calc(100% - 152px);
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid var(--input-border);
     background: var(--input-bg);
     color: var(--text-primary);
-    min-height: 36px;
+    min-height: 45px;
+    padding: 0 20px;
 }
 
 .contents-add.detail-view .info-in-modify-info input,
@@ -547,4 +548,107 @@ table { table-layout:fixed; }
 [data-theme='dark'] .contents-add.detail-view .info-in {
     background: #172132;
     border-color: #253247;
+}
+
+/* =========================================
+   Legacy list/form dark-mode bridge
+   기존 고정 색상 규칙을 다크 토큰 기반으로 보정
+   ========================================= */
+[data-theme='dark'] .menu-nm-in p,
+[data-theme='dark'] .info-in p,
+[data-theme='dark'] .home-title p,
+[data-theme='dark'] .kpi-title,
+[data-theme='dark'] .kpi-value,
+[data-theme='dark'] .kpi-value-sub,
+[data-theme='dark'] .kpi-graph-value-in p,
+[data-theme='dark'] .p-status-title,
+[data-theme='dark'] .p-status-contents,
+[data-theme='dark'] .p-item-title,
+[data-theme='dark'] .p-item-contents {
+    color: var(--text-primary);
+}
+
+[data-theme='dark'] .menu-route .route,
+[data-theme='dark'] .file-status,
+[data-theme='dark'] .paging p {
+    color: var(--text-secondary);
+}
+
+[data-theme='dark'] .search,
+[data-theme='dark'] .contents-in,
+[data-theme='dark'] .paging,
+[data-theme='dark'] .home-kpi,
+[data-theme='dark'] .home-as,
+[data-theme='dark'] .home-predictive,
+[data-theme='dark'] .menu-mypage,
+[data-theme='dark'] .mypage-wrap,
+[data-theme='dark'] .order-wrap,
+[data-theme='dark'] .popup {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme='dark'] .search-select,
+[data-theme='dark'] .search-input,
+[data-theme='dark'] .info-in input,
+[data-theme='dark'] .info-in textarea,
+[data-theme='dark'] .input-select,
+[data-theme='dark'] .p-item-contents input,
+[data-theme='dark'] .p-item-contents textarea,
+[data-theme='dark'] .p-item-contents select,
+[data-theme='dark'] .inquiry-info input,
+[data-theme='dark'] .inquiry-info-txt textarea,
+[data-theme='dark'] .inquiry-wrap .mypage-in .inquiry-info textarea {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+}
+
+[data-theme='dark'] .search-input::placeholder,
+[data-theme='dark'] .popup-search-in input::placeholder {
+    color: var(--text-secondary);
+}
+
+[data-theme='dark'] .btn,
+[data-theme='dark'] .btn-img-del,
+[data-theme='dark'] .btn-mypage-g {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+[data-theme='dark'] .list table tbody tr th,
+[data-theme='dark'] .mypage-in .list table tbody tr th {
+    background: #334155;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme='dark'] .list table tbody tr td,
+[data-theme='dark'] .mypage-in .list table tbody tr td,
+[data-theme='dark'] .popup-list table tbody tr td {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme='dark'] .list table tbody tr:hover,
+[data-theme='dark'] .selected-row,
+[data-theme='dark'] .as-selected-row {
+    background: #1f2937;
+}
+
+[data-theme='dark'] .popup-hd,
+[data-theme='dark'] .popup-close,
+[data-theme='dark'] .popup-search-in input {
+    color: var(--text-primary);
+}
+
+[data-theme='dark'] .popup-search,
+[data-theme='dark'] .popup-search-in,
+[data-theme='dark'] .kpi-in,
+[data-theme='dark'] .menu-mypage-top,
+[data-theme='dark'] .contents-in .info-in p,
+[data-theme='dark'] .contents-in .info-in .info-title {
+    background: var(--bg-secondary);
 }
