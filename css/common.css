@@ -46,6 +46,19 @@ select {
     cursor: pointer;
     padding-right: 36px;
 }
+
+/* 주요 select 컴포넌트 공통 화살표 여백 통일 */
+select,
+.search-select,
+.input-select,
+.as-input-select,
+.popup-search-select,
+.p-search-select,
+.month-title select,
+.year-title select {
+    background-position: calc(100% - 18px) center !important;
+    padding-right: 40px !important;
+}
 select::-ms-expand { display: none; /* 화살표 없애기 for IE10, 11*/ }
 
 /*스크롤바 커스텀*/

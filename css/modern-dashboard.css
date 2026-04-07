@@ -55,8 +55,10 @@ body {
     display: none; /* hidden on PC */
     cursor: pointer;
     color: var(--text-primary);
-    padding: 0.5rem;
-    border-radius: var(--radius-md);
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 999px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     transition: none;
@@ -494,7 +496,7 @@ body {
     align-items: center;
     justify-content: center;
     padding: 1rem 0.75rem 0.9rem;
-    background: var(--page-bg);
+    /* background: var(--page-bg); */
     border-radius: var(--radius-md);
     border: 1px solid transparent;
     transition: none;

@@ -90,33 +90,102 @@
 .menu-route .route {  color: #385885; font-family: "Noto Sans KR"; font-size: 12px; font-weight: 500; line-height: 100%; letter-spacing: -0.3px; } 
 
 /* search */
-.search { position: relative; width: calc(100% - 66px); height: 73px; margin: 0 auto; margin-top: 20px; background: #FFF; box-shadow: 0 4px 18px 0 rgba(66, 76, 96, 0.10); display: flex; align-items: center; font-size: 14px;} 
-.search .btn-wrap .btn{margin-right: 8px;}
-.ico-search { width: 24px; height: 24px; margin-left: 16px; margin-right: 15px; } 
-.search-select { width: 105px; height: 34px; padding-left: 10px; margin-right: 15px; color: #A5ADB8; font-family: "Noto Sans KR"; font-size: 16px; font-style: normal; font-weight: 400; line-height: 100%; border-radius: 6px; border: 1px solid var(--Color-line, #E4E8EA); } 
-.search-in { display: flex; align-items: center; } 
-.search input { border-radius: 6px; padding-left: 10px; } 
-.search-input { width: 513px; height: 32px; font-family: "Noto Sans KR"; font-size: 16px; font-style: normal; font-weight: 400; line-height: 100%; border-radius: 6px; border: 1px solid var(--Color-line, #E4E8EA); } 
-.search-input::placeholder { color: #A5ADB8; font-family: "Noto Sans KR"; font-size: 16px; font-style: normal; font-weight: 400; line-height: 100%; } 
+.search {
+    position: relative;
+    width: calc(100% - 66px);
+    min-height: 73px;
+    margin: 20px auto 0;
+    padding: 12px 16px;
+    background: #FFF;
+    border: 1px solid #E4E8EA;
+    border-radius: 10px;
+    box-shadow: 0 4px 18px 0 rgba(66, 76, 96, 0.10);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 14px;
+    color: #000;
+}
+.search p,
+.search label,
+.search span,
+.search input,
+.search select {
+    color: #000;
+}
+.search .btn-wrap .btn { margin-right: 8px; }
+.ico-search { width: 24px; height: 24px; margin-left: 2px; margin-right: 8px; }
+.search-select {
+    width: 110px;
+    height: 34px;
+    padding-left: 10px;
+    margin-right: 4px;
+    color: #000;
+    font-family: "Noto Sans KR";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 100%;
+    border-radius: 6px;
+    border: 1px solid var(--Color-line, #E4E8EA);
+    background-color: #FFF;
+}
+.search-in { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.search input { border-radius: 6px; padding-left: 10px; }
+.search-input {
+    width: 513px;
+    max-width: 100%;
+    height: 32px;
+    font-family: "Noto Sans KR";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 100%;
+    border-radius: 6px;
+    border: 1px solid var(--Color-line, #E4E8EA);
+    color: #000;
+    background: #FFF;
+}
+.search-input::placeholder {
+    color: #8A94A6;
+    font-family: "Noto Sans KR";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 100%;
+}
 
 /* button */
 .btn-wrap { display: flex; position: absolute; right: 16px; } 
-.btn { margin-right: 16px; cursor: pointer; width: 63px; height: 32px; display: flex; justify-content: center; align-items: center; border-radius: 4px; border: 1px solid var(--Color-line, #E4E8EA); background: #FFF; color: #A5ADB8; } 
-.btn-excel { background-image: url('../img/ico_excel.png'); background-size: 16px; background-repeat: no-repeat; background-position: 8px 50%; width: 98px; text-align: center; font-family: "Noto Sans KR"; font-size: 12px; font-style: normal; font-weight: 400; line-height: 100%; } 
-.btn-excel p { margin-left: 24px; } 
-.btn-excel-down { background-image: url('../img/ico_excel_down.png'); width: 109px; } 
-.btn-search { margin-left: 10px; color: #FFF; background: var(--off, #385885); border: 1px solid #A6AFB9; } 
-.btn-search:hover { border: 1px solid #385885; background-color: #385885; color: #FBFBFB; } 
-.btn-excel-upload:hover { background-image: url('../img/ico_excel_h.png'); background-color: #385885; color: #FBFBFB; } 
-.btn-excel-down:hover { background-image: url('../img/ico_excel_down_h.png'); background-color: #385885; color: #FBFBFB; } 
+.btn { margin-right: 16px; cursor: pointer; width: 63px; height: 32px; display: flex; justify-content: center; align-items: center; border-radius: 4px; border: 1px solid var(--Color-line, #E4E8EA); background: #FFF; color: #7A8595; font-size: 12px; font-weight: 500; line-height: 1; padding: 0 12px; transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; } 
+.btn p { color: inherit; } 
+.btn-excel { background-image: url('../img/ico_excel.png'); background-size: 16px; background-repeat: no-repeat; background-position: 12px 50%; width: auto; min-width: 109px; text-align: center; font-family: "Noto Sans KR"; font-size: 12px; font-style: normal; font-weight: 500; line-height: 1; padding-left: 32px; padding-right: 12px; } 
+.btn-excel p { margin-left: 0; } 
+.btn-excel-down { background-image: url('../img/ico_excel_down.png'); width: auto; min-width: 109px; } 
+.btn-search { margin-left: 10px; color: #FFF; background: #4E8EED; border: 1px solid #4E8EED; } 
+.btn-search:hover { border: 1px solid #4B8BEA; background-color: #4B8BEA; color: #FFF; } 
+.btn-excel-upload:hover { background-image: url('../img/ico_excel.png'); background-color: #F7FAFF; border-color: #DCE8F8; color: #6F7E92; } 
+.btn-excel-down:hover { background-image: url('../img/ico_excel_down.png'); background-color: #F7FAFF; border-color: #DCE8F8; color: #6F7E92; } 
 .btn-del { padding: 0 6px; width: auto;}
-.btn-del:hover { color: #fff; border: 1px solid #385885; font-weight: 400; background: #385885; } 
-.btn-add:hover { color: #FFF; border: 1px solid #385885; font-weight: 400; background: #385885; } 
-.btn-add { color: #FFF; background: #4E8EED; border: 1px solid var(--Color-line, #4E8EED); } 
+.btn-del:hover { color: #7A8595; border: 1px solid #DCE8F8; font-weight: 400; background: #F7FAFF; } 
+.btn-add:hover { color: #FFF; border: 1px solid #4B8BEA; font-weight: 400; background: #4B8BEA; } 
+.btn-add { color: #FFF; background: #4E8EED; border: 1px solid var(--Color-line, #4E8EED); width: auto; min-width: 63px; padding: 0 12px; } 
 .btn:nth-last-child(1) { margin-right: 0; } 
+.btn-del { padding: 0 12px; }
+.search .btn,
+.search .btn p {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+}
+.search .btn-search,
+.search .btn-search p {
+    color: #FFF !important;
+}
 .btn-add-btm { width: 100%; } 
 .btn-add-btm p { margin: 0 auto; margin-top: 87px; margin-bottom: 54px; display: flex; justify-content: center; align-items: center; cursor: pointer; width: 128px; height: 68px; border-radius: 4px; background: #4E8EED; color: #FFF; font-family: "Noto Sans KR"; font-size: 24px; font-style: normal; font-weight: 400; line-height: 100%; } 
-.btn-add-btm p:hover { background-color: #385885; } 
+.btn-add-btm p:hover { background-color: #4B8BEA; } 
 
 .contents-in { width: calc(100% - 66px); height: calc(100vh - 309px); margin: 0 auto; margin-top: 13px; background: #FFF; border-radius: 10px; } 
 .contents-add .contents-in { padding-top: 59px; height: calc(100vh - 340px); overflow: scroll; } 
@@ -124,10 +193,41 @@
 /* table */
 .list { width: 100%; height: calc(100vh - 379px); margin: 0 auto; margin-top: 22px; overflow: auto; } 
 .list table { width: 100%; margin: 0 auto; border-collapse: collapse; } 
-.list table tbody tr th { position: sticky; top: 0px; height: 46px; background: #68b7ff; color: #FFF; font-family: "Noto Sans KR"; font-size: 16px; font-style: normal; font-weight: 500; line-height: 100%; letter-spacing: -0.26px; } 
-.list table tbody tr td { border-bottom: 1px solid #EDEFF1; height: 44px; color: #000; font-family: "Noto Sans KR"; text-align: center; font-size: 14px; font-style: normal; font-weight: 400; line-height: 1.5; letter-spacing: -0.26px; } 
-.list table tbody tr:hover { background-color: #F6F8FA; } 
-.list table tbody tr .ico-sort { cursor: pointer; margin-left: 8px; width: 16px; } 
+.list table tbody tr th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    height: 46px;
+    background: #EFF6FF;
+    color: #1E3A5F;
+    font-family: "Noto Sans KR";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 100%;
+    letter-spacing: -0.2px;
+    border-bottom: 1px solid #D6E4F8;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.list table tbody tr td {
+    border-bottom: 1px solid #EDEFF1;
+    height: 44px;
+    color: #111827;
+    font-family: "Noto Sans KR";
+    text-align: center;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: -0.2px;
+    background: #FFF;
+    transition: background-color 0.18s ease;
+}
+.list table tbody tr:hover { background-color: #F7FAFF; } 
+.list table tbody tr:hover td { background-color: #F7FAFF; }
+.list table tbody tr .ico-sort { display: inline-block; cursor: pointer; margin-left: 6px; width: 18px !important; height: 18px !important; padding: 0; margin-top: 0; margin-bottom: 0; opacity: 1 !important; vertical-align: middle; filter: brightness(0) saturate(100%) !important; background: transparent; border: 0; } 
+.list table tbody tr th:hover .ico-sort { opacity: 1; }
 .list table tbody tr .modify { width: 79px; cursor: pointer; color: #A6AFB9; font-family: "Noto Sans KR"; font-size: 13px; font-style: normal; font-weight: 400; line-height: 100%; letter-spacing: -0.26px; } 
 .list table tbody tr .modify:hover { color: #7c828a; font-weight: 700; } 
 .as-list table tbody tr td { font-size: 14px; } 
@@ -161,9 +261,7 @@ input[type="checkbox"]:checked + label::after { background-color: #378eff; conte
     text-align: center;
     width: 100%;
     height: 64px;
-    background-color: #FFF;
     border-radius: 10px;
-    border-top: 1px solid #EDEFF1;
 }
 .paging-inner {
     width: 100%;
@@ -418,12 +516,63 @@ table { table-layout:fixed; }
 .delete-btn { position: absolute; top: 2px; right: 2px; background-color: rgba(0,0,0,0.5); /* 반투명 검정 */ color: white; /* 글자색 */ border: none; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; } 
 .image-preview li { position: relative; } 
 
-.as-list table tbody tr { border: 1px solid #E4E8EA; } 
-.as-list table tbody tr td { border: 1px solid #E4E8EA; } 
-.list table tbody tr { border: 1px solid #E4E8EA; } 
-.list table tbody tr td { border: 1px solid #E4E8EA; } 
-.list { border-radius: 10px; padding: 20px 10px;} 
+.as-list table tbody tr { border: 1px solid #E7EDF5; } 
+.as-list table tbody tr td { border: 1px solid #E7EDF5; } 
+.list table tbody tr { border: 1px solid #E7EDF5; } 
+.list table tbody tr td { border: 1px solid #E7EDF5; } 
+.list { border-radius: 10px; padding: 20px 10px; } 
 .search { border-radius: 10px; } 
+
+/* sales_list.html: 검색 영역 줄깨짐 방지 */
+.search.search-sales .search-in {
+    flex: 1;
+    min-width: 620px;
+}
+.search.search-sales .btn-wrap {
+    position: static;
+    margin-left: auto;
+}
+.search.search-sales #repair_name {
+    min-width: 180px;
+}
+
+/* 공통 테이블 가장자리 라운드 처리 */
+.list {
+    border-radius: 10px;
+    overflow: auto;
+}
+
+/* 한 줄에 입력 요소가 여러 개일 때 제목 영역 깨짐 방지 */
+.info-in > p {
+    flex: 0 0 120px;
+    min-width: 120px;
+    white-space: nowrap;
+}
+.info-in > input:not([type="radio"]):not([type="checkbox"]):not([type="file"]),
+.info-in > select,
+.info-in > .input-select,
+.info-in > textarea {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 110px;
+    max-width: 588px;
+}
+
+/* 제목/섹션 앞 장식 아이콘 제거 */
+.menu-nm-in img,
+.info-in-line img {
+    display: none;
+}
+
+@media (max-width: 1560px) {
+    .search.search-sales .search-in {
+        min-width: 100%;
+    }
+    .search.search-sales .btn-wrap {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
 
 /* user_info.html */
 .contents-mypage {
@@ -573,7 +722,7 @@ table { table-layout:fixed; }
 .mypage-in .list table tbody tr td .order-c { cursor: pointer; display: flex; justify-content: center; align-items: center; width: 100px; height: 26px; margin: 0 auto; margin-top: 6px; border-radius: 4px; border: 1px solid #D5D7D9; color: #8C8C8C; font-family: "Noto Sans KR"; font-size: 16px; font-style: normal; font-weight: 500; line-height: 100%; } 
 .mypage-in .list table tbody tr td .order-c:hover { background-color: #D5D7D9; color: #000; } 
 .mypage-in .paging { height: 50px; } 
-.mypage-in .paging .paging-inner { height: 50px; border-radius: 10px; } 
+.mypage-in .paging .paging-inner { height: 50px;} 
 
 /* order_dtl.html */
 .order-wrap .mypage-dtl-in { position: relative; margin-top: 0px; } 
