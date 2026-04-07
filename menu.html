@@ -213,38 +213,6 @@
         $(".sub-menu-on").find(".ico-sub-menu").hide();
         $(".sub-menu-on").find(".ico-sub-menu-hover").show();
 
-        // 메뉴 마우스 오버 시
-        $(".menu li").hover(
-            function () {
-                if (!$(this).hasClass("menu-on")) {
-                    $(this).find(".ico-menu").hide();
-                    $(this).find(".ico-hover").show();
-                }
-            },
-            function () {
-                if (!$(this).hasClass("menu-on")) {
-                    $(this).find(".ico-menu").show();
-                    $(this).find(".ico-hover").hide();
-                }
-            }
-        );
-
-        // 서브메뉴 마우스 오버 시
-        $(".sub-menu-in").hover(
-            function () {
-                if (!$(this).hasClass("sub-menu-on")) {
-                    $(this).find(".ico-sub-menu").hide();
-                    $(this).find(".ico-sub-menu-hover").show();
-                }
-            },
-            function () {
-                if (!$(this).hasClass("sub-menu-on")) {
-                    $(this).find(".ico-sub-menu").show();
-                    $(this).find(".ico-sub-menu-hover").hide();
-                }
-            }
-        );
-
         // li 클릭 시
         $(".menu li").click(function (event) {
             // 서브메뉴 클릭 시 상위 메뉴가 닫히지 않도록 이벤트 전파 방지
@@ -256,20 +224,20 @@
             // 모든 li에서 menu-on 클래스를 제거하고 모든 sub-menu를 숨기기
             $(".menu li").removeClass("menu-on").find(".ico-menu").show();
             $(".menu li").removeClass("menu-on").find(".ico-hover").hide();
-            $(".sub-menu").slideUp(500); // 부드럽게 닫기
+            $(".sub-menu").hide();
 
             // 클릭된 li에 menu-on 클래스를 추가하고 sub-menu 보이기
             if (!isCurrentlyOn) {
                 $(this).addClass("menu-on");
                 $(this).find(".ico-menu").hide();
                 $(this).find(".ico-hover").show();
-                $(this).find(".sub-menu").slideDown(500); // 부드럽게 열기
+                $(this).find(".sub-menu").show();
             } else {
                 // 현재 클릭된 li가 이미 menu-on 클래스를 가지고 있으면
                 $(this).removeClass("menu-on");
                 $(this).find(".ico-menu").show();
                 $(this).find(".ico-hover").hide();
-                $(this).find(".sub-menu").slideUp(500); // 부드럽게 닫기
+                $(this).find(".sub-menu").hide();
             }
         });
 
