@@ -40,10 +40,11 @@ select {
     appearance: none; /* 화살표 없애기 공통*/
     background-image: url('../img/ico_arrow_select.png'); ;
     background-repeat: no-repeat;
-    background-position: calc(100% - 8px) center;
+    background-position: calc(100% - 14px) center;
     background-size: 16px;
     background-color: #fff;
-    cursor: pointer; 
+    cursor: pointer;
+    padding-right: 36px;
 }
 select::-ms-expand { display: none; /* 화살표 없애기 for IE10, 11*/ }
 

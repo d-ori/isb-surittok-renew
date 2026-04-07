@@ -233,7 +233,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
-    transition: none;
+    transition: width 0.12s ease, padding 0.12s ease, opacity 0.12s ease, transform 0.12s ease;
     z-index: 900;
     border-radius: 0 20px 20px 0;
     box-shadow: 6px 0 20px rgba(22, 61, 121, 0.22);
@@ -261,10 +261,37 @@ body {
 
 .menu ul {
     list-style: none;
-    padding: 0; margin: 0;
+    padding: 0;
+    margin: 0;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 .menu li {
     margin-bottom: 0.2rem;
+}
+.menu-theme-toggle {
+    margin-top: auto;
+    padding-top: 0.5rem;
+}
+.menu-theme-toggle .menu-theme-toggle-in {
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.12);
+}
+.menu-theme-toggle .menu-theme-toggle-in:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+.menu-theme-toggle #menu-theme-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.menu-theme-toggle .top-toolbar-icon {
+    width: 20px;
+    height: 20px;
 }
 /* Legacy Icon restyling within the modern layout */
 .menu-in {
@@ -273,7 +300,7 @@ body {
     padding: 0.8rem 1rem;
     cursor: pointer;
     color: rgba(255, 255, 255, 0.92);
-    transition: none;
+    transition: background-color 0.12s ease, color 0.12s ease;
     border-radius: 12px;
     font-weight: 500;
 }
@@ -317,7 +344,7 @@ body {
     font-size: 0.9rem;
     display: flex;
     align-items: center;
-    transition: none;
+    transition: background-color 0.12s ease, color 0.12s ease;
     border-radius: var(--radius-md);
     margin: 0 0.5rem;
 }

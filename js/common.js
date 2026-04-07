@@ -1,5 +1,100 @@
 const params = new URLSearchParams(location.search);
 
+// Global page loader: show spinner on initial load and hide after all assets are ready.
+(function () {
+    if (window.__pageLoaderInitialized__) return;
+    window.__pageLoaderInitialized__ = true;
+
+    var LOADER_ID = "global-page-loader";
+    var STYLE_ID = "global-page-loader-style";
+    var HIDE_CLASS = "is-hidden";
+    var LOADING_CLASS = "page-loading";
+    var fallbackTimer = null;
+
+    function injectStyle() {
+        if (document.getElementById(STYLE_ID)) return;
+
+        var style = document.createElement("style");
+        style.id = STYLE_ID;
+        style.textContent =
+            "#" + LOADER_ID + "{" +
+            "position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;" +
+            "background:#ffffff;transition:opacity .25s ease,visibility .25s ease;opacity:1;visibility:visible;" +
+            "}" +
+            "[data-theme='dark'] #" + LOADER_ID + "{background:#0f172a;}" +
+            "#" + LOADER_ID + "." + HIDE_CLASS + "{opacity:0;visibility:hidden;pointer-events:none;}" +
+            "html." + LOADING_CLASS + " body > *:not(#" + LOADER_ID + "){visibility:hidden !important;}" +
+            "html." + LOADING_CLASS + " body{overflow:hidden;}" +
+            "#" + LOADER_ID + " .loader-spinner{" +
+            "width:40px;height:40px;border-radius:50%;border:4px solid rgba(78,142,237,.2);border-top-color:#4e8eed;" +
+            "animation:global-loader-spin .8s linear infinite;" +
+            "}" +
+            "@keyframes global-loader-spin{to{transform:rotate(360deg);}}";
+
+        (document.head || document.documentElement).appendChild(style);
+    }
+
+    function ensureLoader() {
+        var el = document.getElementById(LOADER_ID);
+        if (el) return el;
+
+        el = document.createElement("div");
+        el.id = LOADER_ID;
+        el.setAttribute("aria-hidden", "true");
+        el.innerHTML = '<div class="loader-spinner"></div>';
+        document.body.appendChild(el);
+        return el;
+    }
+
+    function hideLoader() {
+        var el = document.getElementById(LOADER_ID);
+        document.documentElement.classList.remove(LOADING_CLASS);
+        if (!el) return;
+        el.classList.add(HIDE_CLASS);
+        window.setTimeout(function () {
+            if (el && el.parentNode) el.parentNode.removeChild(el);
+        }, 300);
+    }
+
+    function showLoaderWhenReady() {
+        injectStyle();
+        if (document.body) {
+            ensureLoader();
+            document.documentElement.classList.add(LOADING_CLASS);
+            return;
+        }
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+                ensureLoader();
+                document.documentElement.classList.add(LOADING_CLASS);
+            },
+            { once: true },
+        );
+    }
+
+    function setupHideTrigger() {
+        if (document.readyState === "complete") {
+            window.setTimeout(hideLoader, 0);
+            return;
+        }
+        window.addEventListener("load", hideLoader, { once: true });
+
+        // Safety net: hide loader even if load event is delayed unexpectedly.
+        fallbackTimer = window.setTimeout(hideLoader, 10000);
+        window.addEventListener(
+            "load",
+            function () {
+                if (fallbackTimer) window.clearTimeout(fallbackTimer);
+            },
+            { once: true },
+        );
+    }
+
+    showLoaderWhenReady();
+    setupHideTrigger();
+})();
+
 function createUrl(baseUrl, pstartno, cate, keyword, ob) {
     let url = baseUrl + "?pstartno=" + pstartno;
 

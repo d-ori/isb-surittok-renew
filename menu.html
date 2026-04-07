@@ -29,8 +29,27 @@
         }
     }
 
+    function goMenuUrl(url) {
+        if (!url) return;
+        var currentPath = location.pathname.replace(/\/+$/, "");
+        var targetPath = new URL(url, location.href).pathname.replace(/\/+$/, "");
+        if (currentPath === targetPath) return;
+        location.href = url;
+    }
+
+    function bindMenuNavigationGuard() {
+        $(".menu [onclick*='location.href']").each(function () {
+            var inline = $(this).attr("onclick");
+            if (!inline) return;
+            var match = inline.match(/location\.href\s*=\s*['"]([^'"]+)['"]/);
+            if (!match || !match[1]) return;
+            $(this).attr("onclick", "goMenuUrl('" + match[1] + "');");
+        });
+    }
+
     $(function () {
         const URL = location.href;
+        bindMenuNavigationGuard();
 
         var arr = [
             "품목 분류 관리",
@@ -224,20 +243,20 @@
             // 모든 li에서 menu-on 클래스를 제거하고 모든 sub-menu를 숨기기
             $(".menu li").removeClass("menu-on").find(".ico-menu").show();
             $(".menu li").removeClass("menu-on").find(".ico-hover").hide();
-            $(".sub-menu").hide();
+            $(".sub-menu").stop(true, true).slideUp(120);
 
             // 클릭된 li에 menu-on 클래스를 추가하고 sub-menu 보이기
             if (!isCurrentlyOn) {
                 $(this).addClass("menu-on");
                 $(this).find(".ico-menu").hide();
                 $(this).find(".ico-hover").show();
-                $(this).find(".sub-menu").show();
+                $(this).find(".sub-menu").stop(true, true).slideDown(120);
             } else {
                 // 현재 클릭된 li가 이미 menu-on 클래스를 가지고 있으면
                 $(this).removeClass("menu-on");
                 $(this).find(".ico-menu").show();
                 $(this).find(".ico-hover").hide();
-                $(this).find(".sub-menu").hide();
+                $(this).find(".sub-menu").stop(true, true).slideUp(120);
             }
         });
 
@@ -660,6 +679,36 @@
 
         window.open("https://realglasses.asijang.co.kr/", "_blank");
     }
+
+    function menuToggleTheme() {
+        if (typeof topToggleTheme === "function") {
+            topToggleTheme();
+        } else if (typeof toggleTheme === "function") {
+            toggleTheme();
+        } else {
+            var currentTheme = document.documentElement.getAttribute("data-theme");
+            var newTheme = currentTheme === "dark" ? "light" : "dark";
+            document.documentElement.setAttribute("data-theme", newTheme);
+            localStorage.setItem("theme", newTheme);
+        }
+
+        syncMenuThemeToggleState();
+    }
+
+    function syncMenuThemeToggleState() {
+        var dark = document.documentElement.getAttribute("data-theme") === "dark";
+        var moonSvg = window.__topThemeMoonSvg
+            || '<svg class="top-toolbar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+        var sunSvg = window.__topThemeSunSvg
+            || '<svg class="top-toolbar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
+
+        $("#menu-theme-icon").html(dark ? sunSvg : moonSvg);
+        $("#menu-theme-text").text(dark ? "라이트 모드" : "다크 모드");
+    }
+
+    $(function () {
+        syncMenuThemeToggleState();
+    });
 </script>
 
 <ul>
@@ -1312,4 +1361,11 @@
             <p class="menu-title">로그아웃</p>
         </div>
     </li> -->
+
+    <li class="menu-theme-toggle" onclick="menuToggleTheme()">
+        <div class="menu-in menu-theme-toggle-in">
+            <span id="menu-theme-icon"></span>
+            <p class="menu-title" id="menu-theme-text">다크 모드</p>
+        </div>
+    </li>
 </ul>
