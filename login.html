@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A/S 이력관리시스템</title>
+    <link rel="shortcut icon" href="./img/ico_shortIcon.png" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <link rel="stylesheet" href="./css/modern.css" />
+    <script src="./js/axios.min.js"></script>
+    <script type="text/javascript" src="./js/common.js?ver=1"></script>
+    <script>
+        // FOUC(깜빡임) 방지를 위해 가급적 최상단에서 테마 적용
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+</head>
+<script>
+    if (
+        localStorage.getItem("jwtToken") != null &&
+        localStorage.getItem("refreshToken") != null
+    ) {
+        location.href = "./gongbang_home/home.html";
+    }
+
+    $(function () {
+        // $("#id").val("test");
+        // $("#pw").val("1");
+
+        // 버튼 상태 초기화
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+            document.querySelector('.theme-toggle-btn').innerHTML = '<span id="theme-icon">☀️</span> Light Mode';
+        }
+    });
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
+        const btn = document.querySelector('.theme-toggle-btn');
+        if (newTheme === 'dark') {
+            btn.innerHTML = '<span id="theme-icon">☀️</span> Light Mode';
+        } else {
+            btn.innerHTML = '<span id="theme-icon">🌙</span> Dark Mode';
+        }
+    }
+
+    function enterkey() {
+        if (window.event.keyCode == 13) {
+            login();
+        }
+    }
+
+    function login() {
+        const id = Common.valueCheck("#id", "아이디");
+        const pw = Common.valueCheck("#pw", "비밀번호");
+
+        let formData = new FormData();
+        formData.append("id", id);
+        formData.append("pw", pw);
+
+        Common.sendAxios("/account/login", formData)
+            .then((json) => {
+                if (json.code === 200) {
+                    localStorage.setItem(
+                        "jwtToken",
+                        json.token.accessToken
+                    );
+                    localStorage.setItem(
+                        "refreshToken",
+                        json.token.refreshToken
+                    );
+
+                    localStorage.setItem("info", JSON.stringify(json.data));
+
+                    location.href = "./gongbang_home/home.html";
+                } else {
+                    alert(json.msg);
+                }
+            })
+            .catch((err) => {
+                console.error("로그인 에러:", err);
+            });
+    }
+
+    function join() {
+        location.href = "/join.html";
+    }
+</script>
+
+<body>
+    <!-- 다크모드 변환 토글 버튼 -->
+    <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span> Dark Mode
+    </button>
+
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>A/S 이력관리시스템</h1>
+                <p>관리자 전용 시스템에 오신 것을 환영합니다</p>
+            </div>
+
+            <div class="form-group">
+                <label>아이디</label>
+                <input type="text" id="id" class="mod-input" placeholder="아이디를 입력해주세요" onkeypress="enterkey()"
+                    autocomplete="off" />
+            </div>
+
+            <div class="form-group">
+                <label>비밀번호</label>
+                <input type="password" id="pw" class="mod-input" placeholder="비밀번호를 입력해주세요" onkeypress="enterkey()" />
+            </div>
+
+            <div class="auth-actions">
+                <button type="button" class="btn-primary" onclick="login()">로그인</button>
+                <button type="button" class="btn-secondary" onclick="join()">회원가입</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

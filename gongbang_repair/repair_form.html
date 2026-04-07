@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "repair";
+        const currentApi = "/repair";
+
+        $(function () {
+            if (id != null) {
+                $("#saveBtn").html("수정");
+                $("#pw").attr("placeholder", "비밀번호 변경 시 입력해주세요.");
+                $("#pw-span").css("display", "none");
+
+                getDetail();
+            } else {
+                $(".btn-del").css("display", "none");
+                $("#saveBtn").html("등록");
+            }
+        });
+
+        function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const name = (data.name || "").replaceAll("<br>", "\r\n");
+                    const phone = data.phone;
+                    const note = (data.note || "").replaceAll("<br>", "\r\n");
+
+                    $("#name").val(name);
+                    $("#phone").val(phone);
+                    $("#note").val(note);
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function saveClick() {
+            const formData = new FormData();
+            const name = $("#name").val();
+            const phone = $("#phone").val();
+            const pw = $("#pw").val();
+            const note = ($("#note").val() || "").replaceAll("<br>", "\r\n");
+            let method = "";
+
+            if (Common.nullCheck(name, "name", "품목명")) return;
+
+            formData.append("name", name);
+            formData.append("phone", phone);
+            formData.append("pw", pw);
+            formData.append("note", note);
+
+            if (id != null) {
+                method = "/put";
+                formData.append("account_id", id);
+            }
+
+            Common.sendAxios(`${currentApi}${method}`, formData)
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        alert(json.msg);
+
+                        if (id == null) {
+                            const params = new URLSearchParams(
+                                window.location.search
+                            );
+                            params.delete("id");
+
+                            const queryString = params.toString();
+                            location.href = `${currentUrl}_list.html${queryString}`;
+                        } else {
+                            const queryString = window.location.search;
+                            location.href = `${currentUrl}_detail.html${queryString}`;
+                        }
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                        $(`#${json.data}`).focus();
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function deletion() {
+            if (
+                confirm(
+                    "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다."
+                ) == true
+            ) {
+                const formData = new FormData();
+                formData.append("id_list", id);
+
+                Common.sendAxios(`${currentApi}/delete`, formData)
+                    .then(async (json) => {
+                        alert(json.msg);
+                        location.href = `${currentUrl}_list.html`;
+                    })
+                    .catch((err) => {
+                        console.error("ERROR : ", err);
+                    });
+            }
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_detail.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_detail.html`;
+            }
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>A/S 기사 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">
+                            HOME > A/S 기사 관리 > A/S 기사 관리
+                        </p>
+                    </div>
+                </div>
+                <div class="contents-in scroll-custom" style="height: 531px">
+                    <div class="info-in">
+                        <p class="as-p">
+                            <span class="r-value">*&nbsp;</span>
+                            이름
+                        </p>
+                        <input type="text" id="name" />
+                    </div>
+
+                    <div class="info-in">
+                        <p class="as-p">
+                            <span class="r-value">*&nbsp;</span>
+                            연락처
+                        </p>
+                        <input
+                            class="number"
+                            type="text"
+                            id="phone"
+                            placeholder="'-' 를 제외하고 입력해주세요."
+                            maxlength="11"
+                        />
+                    </div>
+
+                    <div class="info-in">
+                        <p class="as-p">
+                            <span class="r-value" id="pw-span">*&nbsp;</span>
+                            비밀번호
+                        </p>
+                        <input type="password" id="pw" maxlength="20" />
+                    </div>
+
+                    <div class="info-in info-in-rm">
+                        <p class="as-p">비고</p>
+                        <textarea class="scroll-custom" id="note"></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="deletion()">
+                        <p>삭제</p>
+                    </div>
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>뒤로</p>
+                    </div>
+                    <div class="btn btn-add" onclick="saveClick()">
+                        <p id="saveBtn"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

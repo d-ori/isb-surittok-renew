@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+
+        <!-- Sheet JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.14.3/xlsx.full.min.js"></script>
+        <!--FileSaver savaAs 이용 -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
+    </head>
+
+    <script>
+        let arr = [];
+        const currentUrl = "custom";
+        const currentApi = "/custom";
+        const sort =
+            params.get("sort") == undefined
+                ? decodeURI("a.created_at DESC")
+                : decodeURI(params.get("sort"));
+        const page = params.get("page") || "1";
+        const keyword = decodeURI(params.get("keyword")) || "";
+        const cate = decodeURI(params.get("cate")) || "";
+
+        $(function () {
+            if (params.get("page") == null) {
+                location.href = `${currentUrl}_list.html?page=1&keyword=&sort=${sort}&cate=`;
+            } else {
+                let [sortColumn, sortDir] = sort.split(" ");
+                sortColumn = sortColumn.replace(".", "_");
+
+                const arrowIcon =
+                    sortDir === "DESC"
+                        ? "ico_arrow_down.png"
+                        : "ico_arrow_up.png";
+
+                $(`#sort_${sortColumn}`).attr("src", `../img/${arrowIcon}`);
+
+                getList();
+            }
+        });
+
+        // sort
+        function sortClick(select) {
+            // 현재 sort 상태가 예: "name DESC" 또는 "name"
+            const [currentColumn, currentDirection] = sort.split(" ");
+
+            // 같은 컬럼 클릭 시 정렬 방향 토글, 다른 컬럼 클릭 시 DESC로 시작
+            const newDirection =
+                currentColumn === select
+                    ? currentDirection === "DESC"
+                        ? ""
+                        : "DESC"
+                    : "DESC";
+
+            // 정렬 문자열 구성 (기본 오름차순이면 컬럼명만 넘김)
+            const newSort = newDirection ? `${select} ${newDirection}` : select;
+
+            location.href = `${currentUrl}_list.html?page=${page}&keyword=${keyword}&sort=${newSort}&cate=${cate}`;
+        }
+
+        // 리스트
+        function getList() {
+            $("#search").val(keyword);
+            $("#cate").val(cate);
+
+            Common.sendAxios(
+                `${currentApi}?keyword=${keyword}&page=${page}&sort=${sort}&cate=${$(
+                    "#cate",
+                ).val()}`,
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        if (list.length == 0) {
+                            $("#list").append(
+                                $(
+                                    `<tr><td colspan='${$("#list").closest("table").find("colgroup col").length}'>검색 결과가 없습니다.</td></tr>`,
+                                ),
+                            );
+                            return false;
+                        }
+
+                        $("#list").empty();
+
+                        Common.renderPaging(searchVO);
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const id = data.cus_id;
+                            let tr = $(
+                                `<tr id="tr${id}" class="list_check" val="${id}" onclick="detail(event, ${id})">`,
+                            );
+
+                            const listno =
+                                searchVO.totalCnt -
+                                ((searchVO.page - 1) * searchVO.recordSize + i);
+                            const created_at = data.created_at;
+                            const name = data.name;
+                            const phone = Common.formatPhoneNumber(data.phone);
+                            const addr1 = data.addr1 || "";
+                            const addr2 = data.addr2 || "";
+                            const addr = (addr1 + " " + addr2).trim() || "-";
+
+                            const name_rpr = data.name_rpr;
+                            const phone_rpr = Common.formatPhoneNumber(
+                                data.phone_rpr,
+                            );
+                            const addr1_rpr = data.addr1_rpr || "";
+                            const addr2_rpr = data.addr2_rpr || "";
+                            const addr_rpr =
+                                (addr1_rpr + " " + addr2_rpr).trim() || "-";
+
+                            tr.append(
+                                $(
+                                    `
+                                        <td id="rowDiv_${id}">
+                                            <input
+                                                type="checkbox"
+                                                name="_selected_"
+                                                value="ROW_${id}"
+                                                id="row-${id}"
+                                            /><label id="row_${id}" for="row-${id}"></label>
+                                        </td>'
+                                    `,
+                                ),
+                            );
+
+                            tr.append($($(`<td>${listno}</td>`)));
+                            tr.append($(`<td>${name}</td>`));
+                            tr.append($(`<td>${phone}</td>`));
+                            tr.append($(`<td>${addr}</td>`));
+                            tr.append($(`<td>${name_rpr}</td>`));
+                            tr.append($(`<td>${phone_rpr}</td>`));
+                            tr.append($(`<td>${addr_rpr}</td>`));
+
+                            $("#list").append(tr);
+                        }
+
+                        check();
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // paging 이동
+        function pageMove(pageIndex) {
+            location.href = `${currentUrl}_list.html?page=${pageIndex}&keyword=${keyword}&sort=${sort}&cate=${cate}`;
+        }
+
+        // 체크박스
+        function check() {
+            $("input[name=_selected_all_]").on("change", function () {
+                $("input[name=_selected_]").prop("checked", this.checked);
+                if (this.checked) {
+                    $("tr").addClass("selected-row");
+                } else {
+                    $("tr").removeClass("selected-row");
+                }
+            });
+
+            $("input[name=_selected_]").on("change", function () {
+                $(this).closest("tr").toggleClass("selected-row", this.checked);
+
+                const allChecked =
+                    $("input[name=_selected_]").length ===
+                    $("input[name=_selected_]:checked").length;
+                $("input[name=_selected_all_]").prop("checked", allChecked);
+            });
+        }
+
+        // 선택 → 수정 → back, 선택해제
+        function uncheck() {
+            $(":checkbox:checked").prop("checked", false);
+        }
+
+        // search - Enter
+        function enterkey() {
+            if (window.event.keyCode == 13) {
+                search();
+            }
+        }
+
+        // 검색
+        function search() {
+            location.href = `${currentUrl}_list.html?page=1&keyword=${decodeURI(
+                $("#search").val(),
+            )}&sort=${sort}&cate=${$("#cate").val()}`;
+        }
+
+        // 선택 삭제
+        function deletion() {
+            let id_list = "";
+
+            const selectedRows = document.querySelectorAll(
+                ".list_check.selected-row",
+            );
+
+            for (let i = 0; i < selectedRows.length; i++) {
+                if (i == selectedRows.length - 1) {
+                    id_list += selectedRows[i].getAttribute("val");
+                } else {
+                    id_list += selectedRows[i].getAttribute("val") + ",";
+                }
+            }
+
+            if (selectedRows.length > 0) {
+                if (
+                    confirm(
+                        "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다.",
+                    ) == true
+                ) {
+                    const formData = new FormData();
+                    formData.append("id_list", id_list);
+
+                    Common.sendAxios(`${currentApi}/delete`, formData)
+                        .then(async (json) => {
+                            alert(json.msg);
+                            location.reload();
+                        })
+                        .catch((err) => {
+                            console.error("ERROR : ", err);
+                        });
+                }
+            } else {
+                alert("데이터를 선택해주세요.");
+            }
+        }
+
+        // 등록
+        function add() {
+            location.href = `${currentUrl}_form.html`;
+        }
+
+        // 상세
+        function detail(e, id) {
+            var targetId = $(e.target).attr("id") || "";
+
+            if (targetId.includes("row")) {
+                return;
+            }
+
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_detail.html?id=${id}${queryString.replace(
+                "?",
+                "&",
+            )}`;
+        }
+
+        // 엑셀 다운로드
+        function excel_download() {
+            Common.sendAxios(
+                `${currentApi}?keyword=${keyword}&page=${page}&sort=${sort}&cate=${cate}&usePageNavy=false`,
+            )
+                .then(async (json) => {
+                    const list = json.data;
+
+                    if (list.length == 0) {
+                        alert("조회된 결과가 없습니다.");
+                        return;
+                    }
+
+                    const excelData = list.map((data) => ({
+                        접수처: data.name,
+                        "접수처 연락처": Common.formatPhoneNumber(data.phone),
+                        "접수처 주소":
+                            (
+                                data.addr1 ||
+                                "" + " " + data.addr2 ||
+                                ""
+                            ).trim() || "-",
+                        "접수처 비고":
+                            data.note?.split("<br>").join(" ")?.trim() || "-",
+                        수리처: data.name_rpr,
+                        "수리처 연락처": Common.formatPhoneNumber(
+                            data.phone_rpr,
+                        ),
+                        "수리처 주소":
+                            (
+                                data.addr1_rpr ||
+                                "" + " " + data.addr2_rpr ||
+                                ""
+                            ).trim() || "-",
+                        "수리처 비고":
+                            data.note_rpr?.split("<br>").join(" ")?.trim() ||
+                            "-",
+                        생성일: data.created_at,
+                    }));
+
+                    const sheet = XLSX.utils.json_to_sheet(excelData);
+                    const wb = XLSX.utils.book_new();
+                    const str = "고객정보관리";
+                    XLSX.utils.book_append_sheet(wb, sheet, str);
+
+                    const wbout = XLSX.write(wb, {
+                        bookType: "xlsx",
+                        type: "binary",
+                    });
+                    const fileName = `${str}_${Common.getCurrentFormattedTime()}.xlsx`;
+
+                    saveAs(
+                        new Blob([s2ab(wbout)], {
+                            type: "application/octet-stream",
+                        }),
+                        fileName,
+                    );
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function s2ab(s) {
+            var buf = new ArrayBuffer(s.length); //convert s to arrayBuffer
+            var view = new Uint8Array(buf); //create uint8array as viewer
+            for (var i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff; //convert to octet
+            return buf;
+        }
+    </script>
+
+    <body onLoad="uncheck()">
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>고객 정보 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 고객 관리 > 고객 정보 관리</p>
+                    </div>
+                </div>
+                <div class="search">
+                    <img src="../img/ico_search.png" class="ico-search" />
+                    <select class="search-select" id="cate">
+                        <option value="">전체</option>
+                        <option value="name">접수처</option>
+                        <option value="name_rpr">수리처</option>
+                        <option value="phone">연락처</option>
+                        <option value="addr">주소</option>
+                    </select>
+                    <div class="search-in">
+                        <input
+                            type="text"
+                            placeholder="검색어를 입력해주세요."
+                            class="search-input"
+                            id="search"
+                            onkeypress="enterkey()"
+                        />
+                        <p class="btn btn-search" onclick="search()">검색</p>
+                    </div>
+                    <div class="btn-wrap">
+                        <div
+                            class="btn btn-excel btn-excel-down"
+                            onclick="excel_download()"
+                        >
+                            <p>엑셀 다운로드</p>
+                        </div>
+                        <div class="btn btn-del" onclick="deletion()">
+                            <p>선택 삭제</p>
+                        </div>
+                        <div class="btn btn-add" onclick="add()">
+                            <p>등록</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="contents-in">
+                    <div class="list">
+                        <table>
+                            <colgroup>
+                                <col style="width: 60px" />
+                                <col style="width: 100px" />
+                                <col style="width: 13%" />
+                                <col style="width: 13%" />
+                                <col style="width: 26%" />
+                                <col style="width: 13%" />
+                                <col style="width: 13%" />
+                                <col style="width: 26%" />
+                            </colgroup>
+                            <tbody>
+                                <tr class="t-header">
+                                    <th class="check">
+                                        <input
+                                            type="checkbox"
+                                            name="_selected_all_"
+                                            id="select-all"
+                                        />
+                                        <label for="select-all"></label>
+                                    </th>
+                                    <th>No.</th>
+                                    <th>
+                                        접수처
+                                        <img
+                                            src="../img/ico_arrow_down.png"
+                                            class="ico-sort"
+                                            id="sort_a_name"
+                                            onclick="sortClick('a.name')"
+                                        />
+                                    </th>
+                                    <th>
+                                        접수처 연락처
+                                        <img
+                                            src="../img/ico_arrow_down.png"
+                                            class="ico-sort"
+                                            id="sort_a_phone"
+                                            onclick="sortClick('a.phone')"
+                                        />
+                                    </th>
+                                    <th>접수처 주소</th>
+                                    <th>
+                                        수리처
+                                        <img
+                                            src="../img/ico_arrow_down.png"
+                                            class="ico-sort"
+                                            id="sort_a_name"
+                                            onclick="sortClick('a.name_rpr')"
+                                        />
+                                    </th>
+                                    <th>
+                                        수리처 연락처
+                                        <img
+                                            src="../img/ico_arrow_down.png"
+                                            class="ico-sort"
+                                            id="sort_a_phone"
+                                            onclick="sortClick('a.phone_rpr')"
+                                        />
+                                    </th>
+                                    <th>수리처 주소</th>
+                                </tr>
+                            </tbody>
+
+                            <tbody id="list"></tbody>
+                        </table>
+                    </div>
+                    <div class="paging">
+                        <div class="paging-inner" id="pagingArea"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "custom";
+        const currentApi = "/custom";
+        let page = 1;
+
+        $(function () {
+            getDetail();
+            getList();
+        });
+
+        function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const name = data.name;
+                    const phone = Common.formatPhoneNumber(data.phone);
+                    const addr1 = data.addr1;
+                    const addr2 = data.addr2;
+                    const addr3 = data.addr3;
+                    const note = data.note?.replaceAll("<br>", "\r\n");
+
+                    const name_rpr = data.name_rpr;
+                    const phone_rpr = Common.formatPhoneNumber(data.phone_rpr);
+                    const addr1_rpr = data.addr1_rpr;
+                    const addr2_rpr = data.addr2_rpr;
+                    const addr3_rpr = data.addr3_rpr;
+                    const note_rpr = data.note_rpr?.replaceAll("<br>", "\r\n");
+
+                    $("#name").val(name);
+                    $("#phone").val(phone);
+                    $("#addr1").val(addr1);
+                    $("#addr2").val(addr2);
+                    $("#zipcode").val(addr3);
+                    $("#note").val(note);
+
+                    $("#name_rpr").val(name_rpr);
+                    $("#phone_rpr").val(phone_rpr);
+                    $("#addr1_rpr").val(addr1_rpr);
+                    $("#addr2_rpr").val(addr2_rpr);
+                    $("#zipcode_rpr").val(addr3_rpr);
+                    $("#note_rpr").val(note_rpr);
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function modify() {
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_form.html${queryString}`;
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            params.delete("id");
+
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_list.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_list.html`;
+            }
+        }
+
+        function getList() {
+            Common.sendAxios(`/as/custom?cus_id=${id}&page=${page}`)
+                .then(async (json) => {
+                    const list = json.data;
+
+                    $("#list").empty();
+
+                    if (list.length == 0) {
+                        $("#list").append(
+                            $(
+                                "<tr><td colspan='8'>검색 결과가 없습니다.</td></tr>"
+                            )
+                        );
+                        return false;
+                    }
+
+                    const searchVO = json.searchVO;
+                    Common.renderPaging(searchVO);
+
+                    for (let i = 0; i < list.length; i++) {
+                        const data = list[i];
+                        const id = data.as_id;
+
+                        let status = data.status;
+                        let tr_color = "as-gray-row";
+                        let td_color = "as-gray";
+
+                        if (status == 2) {
+                            tr_color = "as-blue-row";
+                            td_color = "as-blue";
+                        } else if (status == 3) {
+                            tr_color = "as-green-row";
+                            td_color = "as-green";
+                        } else if (status == 4) {
+                            tr_color = "as-orange-row";
+                            td_color = "as-orange";
+                        }
+
+                        let tr = $(
+                            `<tr id="tr${id}" class="list_check ${tr_color}" val="${id}" onclick="detail(event, ${id}, ${status})">`
+                        );
+
+                        const created_at = data.created_at;
+                        const cus_name = data.cus_name;
+                        const item_name = data.item_name?.trim() || "-";
+                        const addr1 = data.addr1 || "";
+                        const addr2 = data.addr2 || "";
+                        const addr = (addr1 + " " + addr2).trim() || "-";
+                        const phone = Common.formatPhoneNumber(data.phone);
+                        const as_cmpn_name = data.as_cmpn_name;
+                        let repair_name = data.repair_name;
+                        let status_name = "처리완료";
+
+                        if (status == 1) {
+                            status_name = "접수완료";
+                            repair_name = "미배정";
+                        } else if (status == 2) {
+                            status_name = "배정완료";
+                        } else if (status == 3) {
+                            status_name = "작업진행";
+                        }
+
+                        tr.append($(`<td>${created_at}</td>`));
+                        tr.append(
+                            $(`<td class="${td_color}">${status_name}</td>`)
+                        );
+                        tr.append($(`<td>${cus_name}</td>`));
+                        tr.append($(`<td>${item_name}</td>`));
+                        tr.append($(`<td>${addr}</td>`));
+                        tr.append($(`<td>${phone}</td>`));
+                        tr.append($(`<td>${as_cmpn_name}</td>`));
+                        tr.append($(`<td>${repair_name}</td>`));
+
+                        $("#list").append(tr);
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // paging 이동
+        function pageMove(pageIndex) {
+            page = pageIndex;
+            console.log(page);
+            getList();
+        }
+
+        function detail(e, id, status) {
+            let url = "sales";
+
+            if (status == "1") {
+                url = "assignment";
+            } else if (status == "2") {
+                url = "process";
+            } else if (status == "3") {
+                url = "process_end";
+            }
+
+            location.href = `../gongbang_as/${url}_form.html?id=${id}`;
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div
+                class="contents contents-add scroll-custom"
+                style="height: calc(100vh - 140px); overflow: scroll"
+            >
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>고객 정보 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 고객 관리 > 고객 정보 관리</p>
+                    </div>
+                </div>
+                <div
+                    class="contents-in scroll-custom"
+                    style="height: 368px; padding-top: 32px"
+                >
+                    <div class="info-in info-in-modify-info">
+                        <p>접수처명</p>
+                        <input type="text" id="name" readonly />
+                    </div>
+                    <div class="info-in info-in-modify-info">
+                        <p>접수처 연락처</p>
+                        <input type="text" id="phone" readonly />
+                    </div>
+                    <div class="info-in info-addr info-in-modify-info">
+                        <p>접수처 주소</p>
+                        <div class="addr-wrap">
+                            <div class="addr-zipcode-wrap">
+                                <input type="text" readonly id="zipcode" />
+                            </div>
+                            <input
+                                type="text"
+                                id="addr1"
+                                class="addr-dtl"
+                                style="cursor: text"
+                                readonly
+                            />
+                            <input
+                                type="text"
+                                id="addr2"
+                                class="addr-dtl"
+                                readonly
+                            />
+                        </div>
+                    </div>
+                    <div
+                        class="info-in info-in-t info-in-modify-info"
+                        style="height: 96px"
+                    >
+                        <p>접수처 비고</p>
+                        <textarea
+                            class="scroll-custom"
+                            style="height: 84px"
+                            id="note"
+                            readonly
+                        ></textarea>
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>수리처명</p>
+                        <input type="text" id="name_rpr" readonly />
+                    </div>
+                    <div class="info-in info-in-modify-info">
+                        <p>수리처 연락처</p>
+                        <input type="text" id="phone_rpr" readonly />
+                    </div>
+                    <div class="info-in info-addr info-in-modify-info">
+                        <p>수리처 주소</p>
+                        <div class="addr-wrap">
+                            <div class="addr-zipcode-wrap">
+                                <input type="text" readonly id="zipcode_rpr" />
+                            </div>
+                            <input
+                                type="text"
+                                id="addr1_rpr"
+                                class="addr-dtl"
+                                style="cursor: text"
+                                readonly
+                            />
+                            <input
+                                type="text"
+                                id="addr2_rpr"
+                                class="addr-dtl"
+                                readonly
+                            />
+                        </div>
+                    </div>
+                    <div
+                        class="info-in info-in-t info-in-modify-info"
+                        style="height: 96px"
+                    >
+                        <p>수리처 비고</p>
+                        <textarea
+                            class="scroll-custom"
+                            style="height: 84px"
+                            id="note_rpr"
+                            readonly
+                        ></textarea>
+                    </div>
+                </div>
+                <div
+                    class="btn-wrap"
+                    style="
+                        position: relative;
+                        width: calc(100% - 66px);
+                        margin: 0 auto;
+                        margin-top: 21px;
+                        right: 0;
+                    "
+                >
+                    <div
+                        class="btn btn-del"
+                        style="position: absolute; right: 64px"
+                        onclick="backPage()"
+                    >
+                        <p>뒤로</p>
+                    </div>
+
+                    <div
+                        class="btn btn-add"
+                        style="position: absolute; right: 0px"
+                        onclick="modify()"
+                    >
+                        <p>수정</p>
+                    </div>
+                </div>
+
+                <!-- 접수내역 -->
+                <div class="info-in info-in-line info-in-line-btm">
+                    <img src="../img/ico_menu.png" />
+                    <p class="info-in-title" style="background: none">
+                        접수 내역
+                    </p>
+                </div>
+                <div class="contents-in contents-btm" style="overflow: hidden">
+                    <div class="list list-btm">
+                        <table>
+                            <colgroup>
+                                <col style="width: 150px" />
+                                <col style="width: 100px" />
+                                <col style="width: 15%" />
+                                <col style="width: 20%" />
+                                <col style="width: 25%" />
+                                <col style="width: 15%" />
+                                <col style="width: 15%" />
+                                <col style="width: 10%" />
+                            </colgroup>
+                            <tbody>
+                                <tr class="t-header">
+                                    <th>접수시간</th>
+                                    <th>작업상태</th>
+                                    <th>고객/업체명</th>
+                                    <th>제품명</th>
+                                    <th>고객 주소</th>
+                                    <th>고객 연락처</th>
+                                    <th>A/S 업체</th>
+                                    <th>A/S 기사</th>
+                                </tr>
+                            </tbody>
+
+                            <tbody id="list"></tbody>
+                        </table>
+                    </div>
+                    <div class="paging">
+                        <div class="paging-inner" id="pagingArea"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

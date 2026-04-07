@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    </head>
+    <script>
+        const id = params.get("id");
+        const currentUrl = "cancel";
+        const currentApi = "/cancel";
+
+        $(function () {
+            if (id != null) {
+                getDetail();
+            }
+        });
+
+        let fileList_startAS = [];
+        let fileList_endAS = [];
+
+        async function addFilesFromUrls(
+            fileDto,
+            targetList,
+            renderFunc,
+            columnName
+        ) {
+            for (let i = 0; i < fileDto.length; i++) {
+                const file = fileDto[i];
+                if (file.upload_column === columnName) {
+                    await addFileFromUrl(file.upload_url, targetList);
+                }
+            }
+            renderFunc();
+        }
+
+        async function addFileFromUrl(url, targetList) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+
+                // MIME 타입 기반으로 확장자 결정 (간단히 png/jpg만)
+                const extension = blob.type === "image/png" ? "png" : "jpg";
+
+                // File 객체 생성
+                const file = new File([blob], `image_from_url.${extension}`, {
+                    type: blob.type,
+                });
+
+                // 리스트에 추가
+                if (targetList.length < 10) {
+                    targetList.push(file);
+                } else {
+                    alert("최대 10개까지 가능합니다.");
+                }
+            } catch (error) {
+                console.error("URL 이미지 변환 실패:", error);
+            }
+        }
+
+        async function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const status = data.status;
+                    const cus_id = data.cus_id;
+                    const cus_name = data.cus_name;
+                    const cus_name_rpr = data.cus_name_rpr;
+                    const citem_id = data.citem_id;
+                    const item_name = data.item_name;
+                    const addr1 = data.addr1;
+                    const addr2 = data.addr2;
+                    const addr3 = data.addr3;
+                    const phone = data.phone;
+                    const symptom_cus = (data.symptom_cus || "").replaceAll(
+                        "<br>",
+                        "\r\n"
+                    );
+                    const as_cmpn_id = data.as_cmpn_id;
+                    const as_cmpn_name = data.as_cmpn_name || data.cmpn_name;
+                    const repair_id = data.repair_id;
+                    const repair_name = data.repair_name;
+
+                    const total_price = Common.numberWithCommas(
+                        data.total_price
+                    );
+                    const expense_price = Common.numberWithCommas(
+                        data.expense_price
+                    );
+                    const net_profit = Common.numberWithCommas(
+                        data.total_price - data.expense_price
+                    );
+
+                    $("#as_cmpn_id").val(as_cmpn_id);
+                    $("#as_cmpn_name").val(as_cmpn_name);
+                    $("#repair_id").val(repair_id);
+                    $("#repair_name").val(repair_name);
+
+                    $("#cus_id").val(cus_id);
+                    $("#cus_name").val(cus_name + " / " + cus_name_rpr);
+                    $("#citem_id").val(citem_id);
+                    $("#item_name").val(item_name);
+                    $("#addr1").val(addr1);
+                    $("#addr2").val(addr2);
+                    $("#zipcode").val(addr3);
+                    $("#phone").val(phone);
+                    $("#symptom_cus").val(symptom_cus);
+
+                    $("#total_price").val(total_price);
+                    $("#expense_price").val(expense_price);
+                    $("#net_profit").val(net_profit);
+
+                    const symptom = (data.symptom || "").replaceAll(
+                        "<br>",
+                        "\r\n"
+                    );
+                    const note = (data.note || "").replaceAll("<br>", "\r\n");
+
+                    $("#symptom").val(symptom);
+                    $("#note").val(note);
+
+                    if (status == 6) {
+                        $("#sales_div").css("display", "none");
+                        $("#process_div").css("display", "none");
+                    } else if (status == 7) {
+                        $("#sales_div").css("display", "none");
+                        $("#process_div").css("display", "none");
+                    } else if (status == 8) {
+                        $("#sales_div").css("display", "none");
+                    }
+
+                    const fileDto = json.searchVO;
+
+                    for (let i = 0; i < fileDto.length; i++) {
+                        const file = fileDto[i];
+
+                        if (file.upload_column == "startAS") {
+                            $("#preview_startAS").append(
+                                `<li><img src="${file.upload_url}"></li>`
+                            );
+                        } else if (file.upload_column == "endAS") {
+                            $("#preview_endAS").append(
+                                `<li><img src="${file.upload_url}"></li>`
+                            );
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function deletion() {
+            if (
+                confirm(
+                    "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다."
+                ) == true
+            ) {
+                const formData = new FormData();
+                formData.append("id_list", id);
+                formData.append("status", "9");
+
+                Common.sendAxios(`/as/delete`, formData)
+                    .then(async (json) => {
+                        alert(json.msg);
+                        location.href = `${currentUrl}_list.html`;
+                    })
+                    .catch((err) => {
+                        console.error("ERROR : ", err);
+                    });
+            }
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            const queryString = params.toString();
+
+            if (queryString) {
+                if (params.size == 1) {
+                    location.href = `/`;
+                } else {
+                    location.href = `${currentUrl}_list.html?${queryString}`;
+                }
+            } else {
+                location.href = `${currentUrl}_list.html`;
+            }
+        }
+    </script>
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>취소관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > A/S 관리 > 취소관리</p>
+                    </div>
+                </div>
+
+                <div class="contents-in scroll-custom">
+                    <div id="sales_div">
+                        <div
+                            class="info-in info-in-line"
+                            style="margin-top: 0px"
+                        >
+                            <img src="../img/ico_input_line.png" />
+                            <p class="info-in-title">매출</p>
+                        </div>
+
+                        <div class="info-in info-in-modify-info">
+                            <p class="as-p">총 금액(원)</p>
+                            <input type="text" id="total_price" readonly />
+                        </div>
+
+                        <div class="info-in info-in-modify-info">
+                            <p class="as-p">지출액(원)</p>
+                            <input type="text" id="expense_price" readonly />
+                        </div>
+
+                        <div class="info-in info-in-modify-info">
+                            <p class="as-p">차액(원)</p>
+                            <input type="text" id="net_profit" readonly />
+                        </div>
+                    </div>
+
+                    <div id="process_div">
+                        <div class="info-in info-in-line">
+                            <img src="../img/ico_input_line.png" />
+                            <p class="info-in-title">작업 내용</p>
+                        </div>
+
+                        <div
+                            class="info-in info-in-t info-in-modify-info"
+                            style="height: 96px"
+                        >
+                            <p>증상</p>
+                            <textarea
+                                class="scroll-custom"
+                                style="height: 84px"
+                                id="symptom"
+                                readonly
+                            ></textarea>
+                        </div>
+
+                        <div
+                            class="info-in info-in-t info-in-modify-info"
+                            style="height: 96px"
+                        >
+                            <p>처리내역</p>
+                            <textarea
+                                class="scroll-custom"
+                                style="height: 84px"
+                                id="note"
+                                readonly
+                            ></textarea>
+                        </div>
+
+                        <div class="info-in info-file">
+                            <div class="info-file-in">
+                                <p>작업 전 이미지</p>
+
+                                <div>
+                                    <div
+                                        class="info-file-inner"
+                                        style="height: 122px"
+                                    >
+                                        <div class="img-list scroll-custom">
+                                            <ul
+                                                class="image-preview"
+                                                id="preview_startAS"
+                                            ></ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-in info-file">
+                            <div class="info-file-in">
+                                <p>작업 후 이미지</p>
+
+                                <div>
+                                    <div
+                                        class="info-file-inner"
+                                        style="height: 122px"
+                                    >
+                                        <div class="img-list scroll-custom">
+                                            <ul
+                                                class="image-preview"
+                                                id="preview_endAS"
+                                            ></ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-in info-in-line">
+                        <img src="../img/ico_input_line.png" />
+                        <p class="info-in-title">접수 내용</p>
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p class="as-p">A/S 업체</p>
+                        <input type="text" readonly id="as_cmpn_name" />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p class="as-p">A/S 기사</p>
+                        <input type="text" readonly id="repair_name" />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p class="as-p">접수처/수리처</p>
+                        <input type="text" readonly id="cus_name" />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p class="as-p">제품명</p>
+                        <input type="text" id="item_name" readonly />
+                    </div>
+
+                    <div class="info-in info-addr info-in-modify-info">
+                        <p class="as-p">A/S 방문 주소</p>
+                        <div class="addr-wrap">
+                            <div class="addr-zipcode-wrap">
+                                <input
+                                    type="text"
+                                    readonly
+                                    id="zipcode"
+                                    readonly
+                                />
+                            </div>
+                            <input
+                                type="text"
+                                id="addr1"
+                                class="addr-dtl"
+                                style="cursor: text"
+                                readonly
+                            />
+                            <input
+                                type="text"
+                                id="addr2"
+                                class="addr-dtl"
+                                readonly
+                            />
+                        </div>
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p class="as-p">연락처</p>
+                        <input type="text" id="phone" maxlength="11" readonly />
+                    </div>
+
+                    <div
+                        class="info-in info-in-t info-in-modify-info"
+                        style="height: 76px"
+                    >
+                        <p class="as-p">고객 증상</p>
+                        <textarea
+                            class="scroll-custom"
+                            style="height: 64px"
+                            id="symptom_cus"
+                            readonly
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>뒤로</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            id="imgModal"
+            style="
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                justify-content: center;
+                align-items: center;
+            "
+        >
+            <img id="modalImg" src="" style="max-width: 90%; max-height: 90%" />
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const lists = document.querySelectorAll(".img-list"); // 모든 img-list 선택
+                if (!lists.length) return;
+
+                const modal = document.getElementById("imgModal");
+                const modalImg = document.getElementById("modalImg");
+
+                lists.forEach((list) => {
+                    list.addEventListener("click", (e) => {
+                        if (e.target.tagName === "IMG") {
+                            modalImg.src = e.target.src;
+                            modal.style.display = "flex";
+                        }
+                    });
+                });
+
+                modal.addEventListener("click", () => {
+                    modal.style.display = "none";
+                    modalImg.src = "";
+                });
+            });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,746 @@
+/* modern-dashboard.css
+   Modern standalone stylesheet for the Dashboard & App shell.
+   Replaces common.css, style.css, and style_1.css
+*/
+
+body {
+    display: block !important;
+    background: var(--bg-secondary) !important;
+    height: 100vh;
+    overflow: hidden;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* 글로벌 웹킷 스크롤바 완전 숨김 (스크롤 기능은 유지) */
+::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* 1. Global Wrapper Layout */
+#viewport {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    background-color: var(--page-bg);
+}
+
+.top {
+    width: 100%;
+    height: 70px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    z-index: 1000;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+
+/* NEW TOP BAR LAYOUT */
+.top-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.hamburger {
+    display: none; /* hidden on PC */
+    cursor: pointer;
+    color: var(--text-primary);
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hamburger:hover {
+    background: var(--input-bg);
+    color: var(--brand-primary);
+}
+
+.top-company {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--brand-primary);
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.top-company p {
+    margin: 0;
+}
+
+.top-right {
+    display: flex;
+    align-items: center;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.admin-greeting {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.admin-greeting span {
+    font-weight: 700;
+    color: var(--brand-primary);
+}
+
+.top-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.top-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+.top-btn:hover {
+    color: var(--brand-primary);
+    border-color: var(--brand-primary);
+    background: rgba(79, 70, 229, 0.05);
+}
+.top-btn.logout:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+/* 2. Main Flex Area */
+.main {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 70px);
+    overflow: hidden;
+    position: relative;
+}
+
+/* 3. Sidebar Menu (Responsive logic included) */
+.menu {
+    width: 260px;
+    height: 100%;
+    background: var(--bg-color);
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 900;
+}
+
+/* PC Toggle `.closed` state */
+.menu.closed {
+    width: 0;
+    padding: 0;
+    opacity: 0;
+    border-right: none;
+}
+
+/* Hide redundant _h.png hover icons */
+.menu img[src*="_h.png"], .sub-menu img[src*="_h.png"] {
+    display: none !important;
+}
+
+.menu ul {
+    list-style: none;
+    padding: 0; margin: 0;
+}
+.menu li {
+    margin-bottom: 0.2rem;
+}
+/* Legacy Icon restyling within the modern layout */
+.menu-in {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+}
+.menu-in img {
+    /* Auto-recolor via filter without needing hover PNGs */
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    filter: invert(0.5); 
+    object-fit: contain;
+}
+[data-theme='dark'] .menu-in img { filter: invert(0.8) brightness(1.5); }
+
+.menu-in:hover {
+    background: rgba(79, 70, 229, 0.05);
+    color: var(--brand-primary);
+}
+.menu-on .menu-in {
+    color: var(--brand-primary);
+    background: rgba(79, 70, 229, 0.1);
+    font-weight: 700;
+}
+.menu-on .menu-in img {
+    filter: invert(0.3) sepia(1) saturate(5) hue-rotate(220deg) brightness(0.9) !important;
+}
+
+/* Submenus */
+.sub-menu {
+    display: none;
+    margin-top: 0.2rem;
+    background: rgba(0,0,0,0.015);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0;
+}
+[data-theme='dark'] .sub-menu { background: rgba(255,255,255,0.015); }
+
+.sub-menu-in {
+    padding: 0.6rem 1rem 0.6rem 3rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    border-radius: var(--radius-md);
+    margin: 0 0.5rem;
+}
+.sub-menu-in img {
+    width: 14px;
+    height: 14px;
+    margin-right: 10px;
+    filter: invert(0.5);
+    object-fit: contain;
+}
+[data-theme='dark'] .sub-menu-in img { filter: invert(0.8); }
+
+.sub-menu-in:hover, .sub-menu-on {
+    color: var(--brand-primary);
+    background: rgba(79, 70, 229, 0.05);
+    font-weight: 600;
+}
+.sub-menu-on img { filter: invert(0.3) sepia(1) saturate(5) hue-rotate(220deg) brightness(0.9) !important; }
+
+/* 4. Contents Area */
+.contents-area {
+    flex: 1;
+    padding: 2.5rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: var(--page-bg);
+}
+.contents-wrap {
+    width: 100%;
+    /* max-width 제거: 사이드바가 닫혔을때 완전히 창을 채우도록 변경 */
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* 5. Dashboard Widgets (Compactized) */
+.status-as {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 2rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s;
+}
+.status-as:hover {
+    box-shadow: var(--shadow-md);
+}
+.as-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}
+.as-title h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.as-title p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+.as-title span {
+    font-weight: 700;
+    color: var(--brand-primary);
+    margin-left: 0.8rem;
+    background: rgba(79, 70, 229, 0.1);
+    padding: 0.3rem 0.8rem;
+    border-radius: var(--radius-md);
+}
+.as-contents {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+.as-graph-box {
+    flex: 1;
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    background: var(--page-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+.as-graph {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1.5rem;
+}
+.as-graph canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+.as-graph-text {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+.as-graph-title {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+}
+.as-graph-title:hover {
+    background: rgba(239, 68, 68, 0.15);
+    transform: translateY(-2px);
+}
+.as-graph-title h2 {
+    margin: 0;
+    font-size: 1rem;
+    text-decoration: underline;
+}
+
+.status-box {
+    display: flex;
+    gap: 1.5rem;
+    height: 400px;
+    min-width: 0; /* Prevents flex children from stretching parent */
+}
+.status-month, .status-year {
+    flex: 1;
+    min-width: 0; /* Crucial for Chart.js responsive scaling */
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 2rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s;
+}
+.status-month:hover, .status-year:hover {
+    box-shadow: var(--shadow-md);
+}
+.month-title, .year-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.month-title h1, .year-title h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.month-title h1 span, .year-title h1 span {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+.month-title div, .year-title div {
+    display: flex;
+    gap: 0.5rem;
+}
+.month-title select, .year-title select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-md);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s;
+}
+.month-title select:hover, .year-title select:hover {
+    border-color: var(--brand-primary);
+}
+.month-graph-box, .year-graph-box {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+}
+.month-graph, .year-graph {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    /* overflow hidden helps contain resizing artifacts */
+    overflow: hidden;
+}
+
+/* 6. Modals & Popups - New Design */
+.background {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: -1;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.background.show-use {
+    z-index: 10000;
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 팝업 카드 본체 */
+.popup-card {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    width: 920px;
+    max-width: 95vw;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* 헤더: 제목 + X 버튼 */
+.popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+.popup-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.popup-x-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-color);
+    border: 1.5px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.popup-x-btn:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #fff;
+}
+
+/* 검색바 */
+.popup-search-bar {
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-color);
+}
+.popup-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--input-border);
+    border-radius: var(--radius-md);
+    padding: 0 1rem;
+    height: 44px;
+    transition: border-color 0.2s;
+}
+.popup-search-wrap:focus-within {
+    border-color: var(--brand-primary);
+}
+.search-icon {
+    color: var(--text-secondary);
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+.search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    height: 100%;
+    outline: none;
+}
+.search-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+/* 테이블 영역: 10행 고정 높이 */
+.popup-table-wrap {
+    overflow-y: auto;
+    /* 헤더(44px) + 10행(48px each) = 480px */
+    max-height: 524px;
+    min-height: 480px;
+}
+.popup-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.popup-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-secondary);
+    padding: 0.8rem 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+    text-align: center;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.popup-table tbody td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    text-align: center;
+    font-size: 0.875rem;
+    height: 48px;
+}
+.popup-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.popup-table tbody tr:hover td {
+    background: rgba(79, 70, 229, 0.04);
+    cursor: pointer;
+}
+[data-theme='dark'] .popup-table tbody tr:hover td {
+    background: rgba(99, 102, 241, 0.08);
+}
+
+/* 푸터: 페이징 가운데 + 닫기 오른쪽 고정 */
+.popup-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 1rem 2rem;
+    min-height: 70px; /* 페이징이 없을 때도 높이 유지 */
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+/* 페이징: 가운데 정렬 */
+.paging-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+}
+.paging-wrap p {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 0.5rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    background: transparent;
+}
+.paging-wrap p:hover {
+    background: var(--bg-color);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+.paging-wrap p.pstarno {
+    background: var(--brand-primary);
+    color: #fff;
+    border-color: var(--brand-primary);
+    font-weight: 700;
+}
+
+/* 닫기 버튼: 오른쪽 고정, 사이즈 일정 */
+.popup-close-btn {
+    position: absolute;
+    right: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-color);
+    border: 1.5px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.popup-close-btn:hover {
+    background: var(--brand-primary);
+    color: #fff;
+    border-color: var(--brand-primary);
+}
+
+
+/* =========================================
+   Responsive & Mobile Overrides 
+   ========================================= */
+
+@media (min-width: 1025px) {
+    /* Show hamburger on PC too, as requested by user */
+    .hamburger { display: flex !important; }
+}
+
+@media (max-width: 1024px) {
+    .hamburger {
+        display: flex; 
+    }
+    
+    .menu {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1500;
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-lg);
+        opacity: 1; /* Reset the PC closed state opacity */
+    }
+    
+    .menu.open {
+        transform: translateX(0);
+    }
+    
+    .btn-text {
+        display: none; /* Hide text on mobile for top buttons */
+    }
+    .top-btn {
+        padding: 0.5rem;
+    }
+    
+    .admin-greeting {
+        display: none; /* Hide greeting on mobile */
+    }
+}
+
+@media (max-width: 768px) {
+    .contents-area {
+        padding: 1rem;
+    }
+    
+    .status-box {
+        flex-direction: column;
+        height: auto;
+    }
+    .status-month, .status-year {
+        height: 380px;
+        padding: 1.5rem;
+    }
+    
+    .as-contents {
+        justify-content: center;
+    }
+
+    /* 모바일 팝업 */
+    .popup-card {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        border: none;
+    }
+    .popup-table-wrap {
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+        overflow-x: auto;
+    }
+    .popup-table {
+        min-width: 520px; /* 가로 스크롤 허용 */
+    }
+    .popup-footer {
+        grid-template-columns: auto 1fr auto;
+        padding: 0.75rem 1rem;
+    }
+    .paging-wrap {
+        grid-column: auto;
+        justify-content: flex-start;
+        overflow-x: auto;
+    }
+    .paging-wrap p {
+        min-width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+}

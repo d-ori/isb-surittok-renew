@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+
+        <!-- Sheet JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.14.3/xlsx.full.min.js"></script>
+        <!--FileSaver savaAs 이용 -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
+        <script
+            type="text/javascript"
+            src="https://www.gstatic.com/charts/loader.js"
+        ></script>
+    </head>
+
+    <script>
+        let arr = [];
+        const currentUrl = "repairState";
+        const currentApi = "/repairState";
+
+        let chartData = null;
+
+        // 1. 구글 차트 로드
+        google.charts.load("current", { packages: ["corechart"] });
+        google.charts.setOnLoadCallback(init);
+
+        function init() {
+            getList();
+
+            window.addEventListener("resize", () => {
+                if (chartData) {
+                    drawChart(chartData);
+                }
+            });
+        }
+
+        // 연도별 멀티라인 데이터 생성
+        function makeMultiLineChartData(yearMap) {
+            const years = Object.keys(yearMap).sort(); // ["2024", "2025"]
+
+            const data = [["month", ...years.map((y) => `${y}년`)]];
+
+            for (let m = 1; m <= 12; m++) {
+                const row = [m]; // ✅ X축은 number
+
+                years.forEach((y) => {
+                    row.push(yearMap[y]?.[m] ?? 0);
+                });
+
+                data.push(row);
+            }
+
+            return data;
+        }
+
+        // 리스트
+        function getList() {
+            Common.sendAxios(`${currentApi}`)
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+
+                        console.log(list);
+                        const yearMap = {};
+
+                        list.forEach(({ year, month, repairCnt }) => {
+                            if (!yearMap[year]) yearMap[year] = {};
+                            yearMap[year][month] = repairCnt;
+                        });
+
+                        // ✅ 차트 데이터 생성
+                        chartData = makeMultiLineChartData(yearMap);
+
+                        drawChart(chartData);
+
+                        const years = Object.keys(yearMap).sort();
+                        let html = "";
+
+                        years.forEach((year) => {
+                            html += `
+                                    <tr >
+                                        <td colspan="3" class="t-title">${year}년</td>
+                                `;
+
+                            for (let m = 1; m <= 12; m++) {
+                                const value = Math.max(
+                                    0,
+                                    yearMap[year]?.[m] ?? 0
+                                );
+                                html += `<td>${value}</td>`;
+                            }
+
+                            html += `</tr>`;
+                        });
+
+                        $("#list").html(html);
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // 차트 렌더링
+        function drawChart(dataArray) {
+            const dataTable = google.visualization.arrayToDataTable(dataArray);
+
+            const options = {
+                title: "연도별 월간 기사 수",
+                curveType: "function",
+                legend: { position: "bottom" },
+                hAxis: {
+                    title: "월",
+                    ticks: Array.from({ length: 12 }, (_, i) => ({
+                        v: i + 1,
+                        f: `${i + 1}월`,
+                    })),
+                },
+                vAxis: {
+                    title: "기사 수",
+                    minValue: 0,
+                },
+            };
+
+            const chart = new google.visualization.LineChart(
+                document.getElementById("chart_div")
+            );
+
+            chart.draw(dataTable, options);
+        }
+
+        // 상세
+        function detail(e, id) {
+            var targetId = $(e.target).attr("id") || "";
+
+            if (targetId.includes("row")) {
+                return;
+            }
+
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_detail.html?id=${id}${queryString.replace(
+                "?",
+                "&"
+            )}`;
+        }
+
+        // 엑셀 다운로드
+        function excel_download() {
+            Common.sendAxios(
+                `${currentApi}?keyword=${keyword}&page=${page}&sort=${sort}&cate=${cate}&usePageNavy=false`
+            )
+                .then(async (json) => {
+                    const list = json.data;
+
+                    if (list.length == 0) {
+                        alert("조회된 결과가 없습니다.");
+                        return;
+                    }
+
+                    const excelData = list.map((data) => ({
+                        기사명: data.name,
+                        연락처: Common.formatPhoneNumber(data.phone),
+                        비고: data.note.split("<br>").join(" "),
+                        생성일: data.created_at,
+                    }));
+
+                    const sheet = XLSX.utils.json_to_sheet(excelData);
+                    const wb = XLSX.utils.book_new();
+                    const str = "AS기사관리";
+                    XLSX.utils.book_append_sheet(wb, sheet, str);
+
+                    const wbout = XLSX.write(wb, {
+                        bookType: "xlsx",
+                        type: "binary",
+                    });
+                    const fileName = `${str}_${Common.getCurrentFormattedTime()}.xlsx`;
+
+                    saveAs(
+                        new Blob([s2ab(wbout)], {
+                            type: "application/octet-stream",
+                        }),
+                        fileName
+                    );
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function s2ab(s) {
+            var buf = new ArrayBuffer(s.length); //convert s to arrayBuffer
+            var view = new Uint8Array(buf); //create uint8array as viewer
+            for (var i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff; //convert to octet
+            return buf;
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>A/S 기사 현황</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">
+                            HOME > A/S 기사 관리 > A/S 기사 현황
+                        </p>
+                    </div>
+                </div>
+                <div class="search">
+                    <img src="../img/ico_search.png" class="ico-search" />
+                    <select class="search-select" id="cate">
+                        <option value="">전체</option>
+                        <option value="name">기사명</option>
+                        <option value="phone">연락처</option>
+                    </select>
+                    <div class="search-in">
+                        <input
+                            type="text"
+                            placeholder="검색어를 입력해주세요."
+                            class="search-input"
+                            id="search"
+                            onkeypress="enterkey()"
+                        />
+                        <p class="btn btn-search" onclick="search()">검색</p>
+                    </div>
+                    <div class="btn-wrap">
+                        <div
+                            class="btn btn-excel btn-excel-down"
+                            onclick="excel_download()"
+                        >
+                            <p>엑셀 다운로드</p>
+                        </div>
+                        <!-- <div class="btn btn-add" onclick="add()">
+                            <p>등록</p>
+                        </div> -->
+                    </div>
+                </div>
+
+                <div class="home-kpi scroll-custom" style="height: 270px">
+                    <div class="home-in">
+                        <div
+                            id="chart_div"
+                            style="width: 100%; height: 240px"
+                        ></div>
+                    </div>
+                </div>
+
+                <div
+                    class="home-as scroll-custom"
+                    style="height: calc(100% - 424px)"
+                >
+                    <div
+                        class="home-in"
+                        style="
+                            width: calc(100% - 22px);
+                            margin-top: 10px;
+                            margin-bottom: 10px;
+                        "
+                    >
+                        <div
+                            class="list as-list kpi-as-list scroll-custom"
+                            style="height: 95%; margin-top: 5px"
+                        >
+                            <table>
+                                <tbody>
+                                    <tr class="t-header">
+                                        <th
+                                            colspan="3"
+                                            style="
+                                                border-right: 1px solid #e4e8ea;
+                                            "
+                                        >
+                                            항목/월(Month)
+                                        </th>
+                                        <th>1월</th>
+                                        <th>2월</th>
+                                        <th>3월</th>
+                                        <th>4월</th>
+                                        <th>5월</th>
+                                        <th>6월</th>
+                                        <th>7월</th>
+                                        <th>8월</th>
+                                        <th>9월</th>
+                                        <th>10월</th>
+                                        <th>11월</th>
+                                        <th>12월</th>
+                                    </tr>
+                                </tbody>
+
+                                <tbody id="list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+
+        <script
+            type="text/javascript"
+            src="https://www.gstatic.com/charts/loader.js"
+        ></script>
+    </head>
+
+    <script>
+        const currentApi = "/kpi/year";
+
+        let chartData = [
+            [
+                "월",
+                "기술자별 월별 총 처리건수",
+                "작업공수 절감 달성률(%)",
+                "리드 타임 감소 달성률 (%)",
+            ],
+        ];
+
+        $(function () {
+            const select = document.getElementById("year");
+            const startYear = 2026;
+            const currentYear = new Date().getFullYear();
+
+            for (let year_ = currentYear; year_ >= startYear; year_--) {
+                let option = document.createElement("option");
+                option.value = year_;
+                option.textContent = year_;
+                select.appendChild(option);
+            }
+
+            getList();
+        });
+
+        // 리스트
+        function getList() {
+            const year = $("#year").val();
+
+            Common.sendAxios(`${currentApi}?year=${year}`)
+                .then(async (json) => {
+                    const list = json.data;
+
+                    if (list.length == 0) {
+                        $("#list").append(
+                            $(
+                                "<tr><td colspan='13'>검색 결과가 없습니다.</td></tr>",
+                            ),
+                        );
+                        return false;
+                    }
+
+                    $("#list").empty();
+
+                    chartData = [
+                        [
+                            "월",
+                            "기술자별 월별 총 처리건수",
+                            "작업공수 절감 달성률(%)",
+                            "리드 타임 감소 달성률 (%)",
+                        ],
+                    ];
+
+                    // 1~12월 미리 초기화
+                    for (let i = 1; i <= 12; i++) {
+                        const monthLabel = i + "월";
+                        chartData.push([monthLabel, null, null, null]);
+                    }
+
+                    let tr;
+
+                    for (let i = 0; i < 6; i++) {
+                        switch (i) {
+                            case 0:
+                                tr = $(`<tr id="total_count_rtOfImp">`).append(
+                                    `<td colspan=3">총 A/S 처리(건)</td>`,
+                                );
+                                break;
+                            case 1:
+                                tr = $(`<tr id="total_count_rtOfImp">`).append(
+                                    `<td colspan="3">기술자별 월별 총 처리건수<br>(목표값 : ${list[0].kpi_count} 건)</td>`,
+                                );
+                                break;
+                            case 2:
+                                tr = $(`<tr id="avg_hours_rtOfImp">`)
+                                    .append(
+                                        `<td rowspan="2" colspan="2">수주출하리드타임 단축<br>(목표값 : ${list[0].kpi_day} 일)</td>`,
+                                    )
+                                    .append("<td>달성률(%)</td>");
+                                break;
+                            case 3:
+                                tr = $(`<tr id="avg_hours_achRt">`).append(
+                                    "<td>현재값(일)</td>",
+                                );
+                                break;
+                            case 4:
+                                tr = $(`<tr id="avg_days_rtOfImp">`)
+                                    .append(
+                                        `<td rowspan="2" colspan="2">작업시간 감소<br>(목표값 : ${list[0].kpi_hour} 시간)</td>`,
+                                    )
+                                    .append("<td>달성률(%)</td>");
+                                break;
+                            case 5:
+                                tr = $(`<tr id="avg_days_achRt">`).append(
+                                    "<td>현재값(시간)</td>",
+                                );
+                                break;
+                        }
+
+                        for (let k = 0; k < list.length; k++) {
+                            const data = list[k];
+                            const month = data.month;
+                            const total_count = data.total_count;
+                            const avg_hours = data.avg_hours;
+                            const avg_days = data.avg_days;
+                            const kpi_count = data.kpi_count;
+                            const kpi_day = data.kpi_day;
+                            const kpi_hour = data.kpi_hour;
+                            const kpi_before_count = data.kpi_before_count;
+                            const kpi_before_day = data.kpi_before_day;
+                            const kpi_before_hour = data.kpi_before_hour;
+                            const repairCnt = data.repair_count;
+
+                            let tdValue;
+
+                            switch (i) {
+                                case 0:
+                                    tdValue = total_count;
+                                    break;
+                                case 1:
+                                    tdValue = total_count / repairCnt;
+                                    // 소수점이 있으면 두 자리까지 반올림, 없으면 정수 유지
+                                    chartData[month][1] = Number.isInteger(
+                                        tdValue,
+                                    )
+                                        ? tdValue
+                                        : Number(tdValue.toFixed(2));
+                                    break;
+                                case 2:
+                                    tdValue =
+                                        ((kpi_before_day - avg_days) /
+                                            (kpi_before_day - kpi_day)) *
+                                        100;
+                                    chartData[month][2] = Number(
+                                        tdValue.toFixed(2),
+                                    ); // 두 자리 고정
+                                    break;
+                                case 3:
+                                    tdValue = Number(avg_days.toFixed(2)); // avg_days 소수점 두 자리
+                                    break;
+                                case 4:
+                                    tdValue =
+                                        ((kpi_before_hour - avg_hours) /
+                                            (kpi_before_hour - kpi_hour)) *
+                                        100;
+                                    chartData[month][3] = Number(
+                                        tdValue.toFixed(2),
+                                    ); // 두 자리 고정
+                                    break;
+                                case 5:
+                                    tdValue = Number(avg_hours.toFixed(2)); // avg_hours 소수점 두 자리
+                                    break;
+                            }
+
+                            if (total_count == 0) {
+                                tdValue = 0;
+
+                                chartData[month][1] = tdValue;
+                                chartData[month][2] = tdValue;
+                                chartData[month][3] = tdValue;
+                            }
+
+                            if (tdValue !== 0 && tdValue % 1 !== 0) {
+                                tdValue = tdValue.toFixed(1); // 문자열 반환
+                            }
+
+                            tr.append(`<td>${tdValue}</td>`);
+                        }
+
+                        $("#list").append(tr);
+                    }
+
+                    // 구글 차트 로드
+                    google.charts.load("current", {
+                        packages: ["corechart"],
+                    });
+                    google.charts.setOnLoadCallback(drawChart);
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // 차트 그리는 함수
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable(chartData);
+
+            var options = {
+                curveType: "function",
+                legend: { position: "bottom" },
+                // Y축 설정 추가
+                vAxis: {
+                    minValue: 0, // 최소값을 0으로 설정
+                    viewWindow: {
+                        min: 0, // 뷰포트 하단을 0으로 고정 (-200 방지)
+                    },
+                },
+                // 차트 영역 여백 조정 (선택사항)
+                chartArea: {
+                    width: "90%",
+                    height: "70%",
+                },
+            };
+
+            var chart = new google.visualization.LineChart(
+                document.getElementById("line_chart"),
+            );
+            chart.draw(data, options);
+        }
+
+        window.addEventListener("resize", drawChart);
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>KPI 조회</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > KPI 관리 > KPI 조회</p>
+                    </div>
+                </div>
+
+                <div class="search" style="height: 53px">
+                    <p class="p-search-title">연도</p>
+                    <div class="search-in">
+                        <select
+                            id="year"
+                            onchange="getList()"
+                            style="width: 100px; padding-left: 10px"
+                            class="search-input"
+                        ></select>
+                    </div>
+                </div>
+
+                <div class="home-kpi scroll-custom" style="height: 270px">
+                    <div class="home-in">
+                        <div
+                            id="line_chart"
+                            style="width: 100%; height: 240px"
+                        ></div>
+                    </div>
+                </div>
+
+                <div
+                    class="home-as scroll-custom"
+                    style="height: calc(100% - 424px)"
+                >
+                    <div
+                        class="home-in"
+                        style="
+                            width: calc(100% - 22px);
+                            margin-top: 10px;
+                            margin-bottom: 10px;
+                        "
+                    >
+                        <div
+                            class="list as-list kpi-as-list scroll-custom"
+                            style="height: 95%; margin-top: 5px"
+                        >
+                            <table>
+                                <tbody>
+                                    <tr class="t-header">
+                                        <th
+                                            colspan="3"
+                                            style="
+                                                border-right: 1px solid #e4e8ea;
+                                            "
+                                        >
+                                            항목/월(Month)
+                                        </th>
+                                        <th>1월</th>
+                                        <th>2월</th>
+                                        <th>3월</th>
+                                        <th>4월</th>
+                                        <th>5월</th>
+                                        <th>6월</th>
+                                        <th>7월</th>
+                                        <th>8월</th>
+                                        <th>9월</th>
+                                        <th>10월</th>
+                                        <th>11월</th>
+                                        <th>12월</th>
+                                    </tr>
+                                </tbody>
+
+                                <tbody id="list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

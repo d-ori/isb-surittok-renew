@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script src="../js/common.js"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        const youhu_status = params.get("youhu_status");
+        const name = params.get("name");
+        const youhu_id = params.get("youhu_id");
+        const id = params.get("id");
+        const currentUrl = "inquiry";
+        const currentApi = "/inquiry";
+        let info = JSON.parse(localStorage.getItem("info"));
+        let cmpn_id = "";
+        const current_account_id = info?.account_id;
+
+        $(function () {
+            $("#cancelBtn").css("display", "none");
+
+            if (id != null) {
+                getDetail();
+            } else {
+                $("#answer_div").css("display", "none");
+                $("#title").val(`(${name} 문의) `);
+                $("#deleteBtn").css("display", "none");
+
+                $("#saveBtn").html("등록");
+            }
+        });
+
+        function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const title = data.title;
+                    const content = (data.content || "").replaceAll(
+                        "<br>",
+                        "\r\n"
+                    );
+                    const answer = (data.answer || "").replaceAll(
+                        "<br>",
+                        "\r\n"
+                    );
+                    const created_at = data.created_at;
+
+                    $("#title").val(title);
+                    $("#content").val(content);
+                    $("#created_at").html(created_at);
+                    $("#answer").html(answer);
+
+                    cmpn_id = data.cmpn_id;
+
+                    if (info.cmpn_id != cmpn_id) {
+                        $("#title").attr("disabled", "true");
+                        $("#content").attr("disabled", "true");
+                        $("#deleteBtn").css("display", "none");
+
+                        if (data.status == "PENDING") {
+                            $("#saveBtn").html("답변 등록");
+                        } else if (data.status == "ANSWERED") {
+                            $("#cancelBtn").css("display", "");
+                            $("#saveBtn").html("답변 수정");
+                        }
+                    } else {
+                        $("#answer").attr("disabled", "true");
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function saveClick() {
+            const formData = new FormData();
+            const title = $("#title").val();
+            const content = ($("#content").val() || "").replaceAll(
+                "<br>",
+                "\r\n"
+            );
+            const answer = ($("#answer").val() || "").replaceAll(
+                "<br>",
+                "\r\n"
+            );
+            let method = "";
+
+            if (id != null) {
+                method = "/put";
+                formData.append("inquiry_id", id);
+
+                if (info.cmpn_id != cmpn_id) {
+                    if (Common.nullCheck(answer, "answer", "답변내용")) return;
+                    formData.append("answer", answer);
+                    formData.append("status", "ANSWERED");
+                } else {
+                    if (Common.nullCheck(title, "title", "제목")) return;
+                    formData.append("title", title);
+                    formData.append("content", content);
+                }
+            } else {
+                if (Common.nullCheck(title, "title", "제목")) return;
+
+                formData.append("title", title);
+                formData.append("content", content);
+                formData.append("youhu_id", youhu_id);
+                formData.append("inquiry", youhu_status);
+            }
+
+            Common.sendAxios(`${currentApi}${method}`, formData)
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        alert(json.msg);
+
+                        if (id == null) {
+                            const params = new URLSearchParams(
+                                window.location.search
+                            );
+                            params.delete("id");
+
+                            const queryString = params.toString();
+                            location.href = `${currentUrl}_list.html?${queryString}`;
+                        } else {
+                            const queryString = window.location.search;
+                            console.log(queryString);
+                            location.href = `${currentUrl}_detail.html${queryString}`;
+                        }
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                        $(`#${json.data}`).focus();
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function deletion() {
+            if (
+                confirm(
+                    "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다."
+                ) == true
+            ) {
+                const formData = new FormData();
+                formData.append("id_list", id);
+
+                Common.sendAxios(`${currentApi}/delete`, formData)
+                    .then(async (json) => {
+                        alert(json.msg);
+                        location.href = `${currentUrl}_list.html`;
+                    })
+                    .catch((err) => {
+                        console.error("ERROR : ", err);
+                    });
+            }
+        }
+
+        function cancel() {
+            if (confirm("정말 답변을 취소하시겠습니까?") == true) {
+                const formData = new FormData();
+                formData.append("inquiry_id", id);
+
+                Common.sendAxios(`${currentApi}/cancel`, formData)
+                    .then(async (json) => {
+                        alert(json.msg);
+                        location.href = `${currentUrl}_list.html`;
+                    })
+                    .catch((err) => {
+                        console.error("ERROR : ", err);
+                    });
+            }
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+
+            // 1. 쿼리 파라미터 중 youhu_status가 존재하는지 확인
+            if (params.has("youhu_status")) {
+                history.back();
+                return; // 함수 종료
+            }
+
+            // 2. 그 외의 경우 상세 페이지로 이동
+            const queryString = params.toString();
+            const targetUrl =
+                `${currentUrl}_detail.html` +
+                (queryString ? `?${queryString}` : "");
+
+            location.href = targetUrl;
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents scroll-custom">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>문의내역</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 마이페이지 > 문의내역</p>
+                    </div>
+                </div>
+                <div class="contents-in contents-mypage">
+                    <div class="menu-mypage">
+                        <div class="menu-mypage-top">
+                            <img src="../img/ico_mypage.png" />
+                            <p>마이페이지</p>
+                        </div>
+                        <ul>
+                            <li>
+                                <p onclick="location.href='user_info.html'">
+                                    정보관리
+                                </p>
+                            </li>
+                            <li>
+                                <p onclick="location.href='order_list.html'">
+                                    주문정보
+                                </p>
+                            </li>
+                            <li class="on">
+                                <p onclick="location.href='inquiry_list.html'">
+                                    문의내역
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="order-wrap inquiry-wrap">
+                        <div class="mypage-in">
+                            <p class="info-top" style="margin-bottom: 0px">
+                                문의하기
+                            </p>
+
+                            <div class="inquiry-info">
+                                <p class="inquiry-title">제목</p>
+                                <input type="text" id="title" />
+                            </div>
+                            <div class="inquiry-info-txt">
+                                <textarea
+                                    id="content"
+                                    placeholder="문의 내용을 입력해주세요. (필요 시 연락처 기재)"
+                                ></textarea>
+                            </div>
+
+                            <div
+                                id="answer_div"
+                                class="inquiry-info"
+                                style="
+                                    border-top: 1px solid #d5d7d9;
+                                    height: 150px;
+                                "
+                            >
+                                <p class="inquiry-title">답변내용</p>
+                                <textarea id="answer"></textarea>
+                            </div>
+
+                            <div
+                                class="btn-wrap"
+                                style="
+                                    padding-bottom: 20px;
+                                    top: auto;
+                                    bottom: 20px;
+                                "
+                            >
+                                <div class="btn btn-del" onclick="backPage()">
+                                    <p>뒤로</p>
+                                </div>
+
+                                <div
+                                    class="btn btn-del"
+                                    id="deleteBtn"
+                                    onclick="deletion()"
+                                >
+                                    <p>삭제</p>
+                                </div>
+
+                                <div
+                                    class="btn btn-del"
+                                    id="cancelBtn"
+                                    onclick="cancel()"
+                                >
+                                    <p>답변 취소</p>
+                                </div>
+
+                                <div class="btn btn-add" onclick="saveClick()">
+                                    <p id="saveBtn">수정</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

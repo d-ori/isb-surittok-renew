@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        $(function () {
+            getUserInfo();
+        });
+
+        function getUserInfo() {
+            Common.sendAxios(`/account/cmpn`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    $("#name").html(data.name);
+                    $("#user_name").html(data.user_name);
+                    $("#phone").html(Common.formatPhoneNumber(data.phone));
+                    $("#addr1").html(data.addr1);
+                    $("#addr2").html(data.addr2);
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function modify() {
+            location.href = "user_info_modify.html";
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents scroll-custom">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>회원정보</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 마이페이지 > 정보관리</p>
+                    </div>
+                </div>
+                <div class="contents-in contents-mypage">
+                    <div class="menu-mypage">
+                        <div class="menu-mypage-top">
+                            <img src="../img/ico_mypage.png" />
+                            <p>마이페이지</p>
+                        </div>
+                        <ul>
+                            <li class="on">
+                                <p onclick="location.href='user_info.html'">
+                                    정보관리
+                                </p>
+                            </li>
+                            <li>
+                                <p onclick="location.href='order_list.html'">
+                                    주문정보
+                                </p>
+                            </li>
+                            <li>
+                                <p onclick="location.href='inquiry_list.html'">
+                                    문의내역
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mypage-wrap">
+                        <div class="mypage-in">
+                            <p class="info-top">회원정보</p>
+                            <div class="info-in">
+                                <p class="info-nm">업체명</p>
+                                <p class="info-value" id="name"></p>
+                            </div>
+                            <div class="info-in">
+                                <p class="info-nm">주소</p>
+                                <p class="info-value" id="addr1"></p>
+                            </div>
+                            <div class="info-in">
+                                <p class="info-nm">상세주소</p>
+                                <p class="info-value" id="addr2"></p>
+                            </div>
+                            <div class="info-in">
+                                <p class="info-nm">담당자명</p>
+                                <p class="info-value" id="user_name"></p>
+                            </div>
+                            <div class="info-in">
+                                <p class="info-nm">휴대폰 번호</p>
+                                <p class="info-value" id="phone"></p>
+                            </div>
+                        </div>
+                        <div class="btn-mypage">
+                            <p class="btn-mypage-b" onclick="modify()">수정</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

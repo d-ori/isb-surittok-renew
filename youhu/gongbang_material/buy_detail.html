@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>유휴자재관리</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script src="../js/common.js"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "buy";
+        const currentApi = "/youhu";
+        let info = JSON.parse(localStorage.getItem("info_youhu"));
+
+        let fileList_youhu = [];
+
+        $(function () {
+            getDetail();
+        });
+
+        async function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const cmpn_name = data.cmpn_name;
+                    const name = data.name;
+                    const price = data.price;
+                    const qntty = data.qntty;
+                    const standard = data.standard;
+                    const phone = data.phone;
+                    const note = data.note.replaceAll("<br>", "\r\n");
+                    const type = data.type;
+
+                    if (info.cmpn_id == data.cmpn_id) {
+                        $(".btn-qna").css("display", "none");
+                    } else {
+                        $(".btn-add").css("display", "none");
+                    }
+
+                    if (type == "N") {
+                        $("#type").val("가격 협의");
+                        $("#price").val("가격 협의");
+                    } else {
+                        $("#type").val("희망 가격");
+                        $("#price").val(Common.numberWithCommas(price));
+                    }
+
+                    $("#cmpn_name").val(cmpn_name);
+                    $("#name").val(name);
+                    $("#qntty").val(Common.numberWithCommas(qntty));
+                    $("#standard").val(standard);
+                    $("#phone").val(Common.formatPhoneNumber(phone));
+                    $("#note").val(note);
+
+                    const fileDto = json.searchVO;
+
+                    for (let i = 0; i < fileDto.length; i++) {
+                        const file = fileDto[i];
+
+                        if (file.upload_column == "youhu") {
+                            $("#preview_youhu").append(
+                                `<li><img src="${file.upload_url}"></li>`,
+                            );
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function modify() {
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_form.html${queryString}`;
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            params.delete("id");
+
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_list.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_list.html`;
+            }
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>유휴자재 구매</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">유휴자재관리 > 유휴자재 구매</p>
+                    </div>
+                </div>
+
+                <div class="contents-in scroll-custom contents-in-dtl">
+                    <div class="info-in info-in-modify-info">
+                        <p class="info-title">업체명</p>
+                        <input type="text" id="cmpn_name" readonly />
+                    </div>
+                    <div class="info-in info-in-modify-info">
+                        <p class="info-title">구매 연락처</p>
+                        <input type="text" id="phone" readonly />
+                    </div>
+                    <div class="info-in info-in-modify-info">
+                        <p class="info-title">제품명</p>
+                        <input type="text" id="name" readonly />
+                    </div>
+                    <div class="info-in info-in-modify-info">
+                        <p class="info-title">수량</p>
+                        <input type="text" id="qntty" readonly />
+                    </div>
+                    <div class="info-in info-in-modify-info">
+                        <p class="info-title">규격</p>
+                        <input type="text" id="standard" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p class="info-title">거래 타입</p>
+                        <input type="text" id="type" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p class="info-title">희망 가격</p>
+                        <input type="text" id="price" readonly />
+                    </div>
+
+                    <div
+                        class="info-in info-in- info-in-modify-info"
+                        style="height: 112px"
+                    >
+                        <p class="info-title info-title-t">세부설명</p>
+                        <textarea
+                            class="scroll-custom"
+                            style="height: 100px"
+                            id="note"
+                            readonly
+                        ></textarea>
+                    </div>
+
+                    <div class="info-in info-file">
+                        <div class="info-file-in">
+                            <p>이미지 첨부</p>
+
+                            <div>
+                                <div
+                                    class="info-file-inner"
+                                    style="height: 122px"
+                                >
+                                    <div class="img-list scroll-custom">
+                                        <ul
+                                            class="image-preview"
+                                            id="preview_youhu"
+                                        ></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>목록</p>
+                    </div>
+                    <div class="btn btn-add" onclick="modify()">
+                        <p>수정</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function readURL_youhu(input) {
+                const files = Array.from(input.files);
+
+                // 새로운 파일들을 fileList에 추가
+                files.forEach((file) => {
+                    if (fileList_youhu.length < 10) {
+                        fileList_youhu.push(file);
+                    }
+                });
+
+                // 미리보기 UI를 fileList 순서대로 렌더링
+                renderPreview_youhu();
+            }
+
+            async function renderPreview_youhu() {
+                const previewContainer =
+                    document.getElementById("preview_youhu");
+                previewContainer.innerHTML = ""; // 기존 UI 초기화
+
+                // fileList의 순서대로 미리보기 UI를 그린다
+                for (let i = 0; i < fileList_youhu.length; i++) {
+                    const file = fileList_youhu[i];
+
+                    // FileReader를 사용해 이미지를 읽고 미리보기 UI에 추가
+                    const reader = new FileReader();
+                    await new Promise((resolve) => {
+                        reader.onload = function (e) {
+                            const li = document.createElement("li");
+                            li.setAttribute("draggable", "true");
+                            li.classList.add("image-item");
+
+                            // 각 div에 고유한 index 부여 (data-index 속성 활용)
+                            li.setAttribute("data-index", i);
+
+                            const img = document.createElement("img");
+                            img.src = e.target.result;
+
+                            const btn = document.createElement("button");
+                            btn.innerText = "X";
+                            btn.classList.add("delete-btn");
+                            btn.onclick = function () {
+                                fileList_youhu.splice(i, 1); // fileList에서 해당 파일 삭제
+                                renderPreview_youhu(); // 미리보기 UI 다시 렌더링
+                            };
+
+                            li.appendChild(img);
+                            li.appendChild(btn);
+                            previewContainer.appendChild(li);
+
+                            resolve(); // 파일 읽기 완료 후 resolve 호출
+                        };
+
+                        reader.readAsDataURL(file); // 파일을 읽어서 비동기적으로 처리
+                    });
+                }
+
+                // 이제 updateSortable 호출
+                updateSortable_youhu();
+            }
+
+            function imgClear_youhu() {
+                fileList_youhu = [];
+                renderPreview_youhu();
+            }
+
+            function updateSortable_youhu() {
+                $("#preview_youhu")
+                    .sortable({
+                        update: function () {
+                            let newOrder = [];
+
+                            // 새로운 순서대로 fileList 업데이트
+                            $("#preview_youhu .image-item").each(function () {
+                                let index = $(this).attr("data-index");
+                                // 새로운 순서대로 fileList를 업데이트
+                                newOrder.push(fileList_youhu[index]);
+                            });
+
+                            // 새로운 순서대로 fileList를 갱신
+                            fileList_youhu = [...newOrder];
+
+                            // 순서가 변경된 후 미리보기 UI 업데이트
+                            setTimeout(function () {
+                                renderPreview_youhu(); // 딜레이 후 순서가 제대로 반영되도록 미리보기 UI 다시 렌더링
+                            }, 200); // 200ms 정도 기다린 후 업데이트
+                        },
+                    })
+                    .disableSelection();
+            }
+        </script>
+
+        <div
+            id="imgModal"
+            style="
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                justify-content: center;
+                align-items: center;
+            "
+        >
+            <img id="modalImg" src="" style="max-width: 90%; max-height: 90%" />
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const lists = document.querySelectorAll(".img-list"); // 모든 img-list 선택
+                if (!lists.length) return;
+
+                const modal = document.getElementById("imgModal");
+                const modalImg = document.getElementById("modalImg");
+
+                lists.forEach((list) => {
+                    list.addEventListener("click", (e) => {
+                        if (e.target.tagName === "IMG") {
+                            modalImg.src = e.target.src;
+                            modal.style.display = "flex";
+                        }
+                    });
+                });
+
+                modal.addEventListener("click", () => {
+                    modal.style.display = "none";
+                    modalImg.src = "";
+                });
+            });
+        </script>
+    </body>
+</html>

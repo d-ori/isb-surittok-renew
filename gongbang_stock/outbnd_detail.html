@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+        <!-- 카카오맵 연동 -->
+        <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "outbnd";
+        const currentApi = "/outbnd";
+
+        $(function () {
+            getDetail();
+        });
+
+        function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const prch_name = data.prch_name;
+                    const prcitm_name = data.prcitm_name;
+                    const item_code = data.item_code;
+                    const outbnd_qty = Common.numberWithCommas(data.outbnd_qty);
+                    const outbnd_price = Common.numberWithCommas(
+                        data.outbnd_price,
+                    );
+                    const amount = Common.numberWithCommas(data.amount);
+                    const note = data.outbnd_note?.replaceAll("<br>", "\r\n");
+                    const outbnd_at = data.outbnd_at.substring(0, 10);
+                    const standard = data.standard?.trim() || "-";
+                    const order_cmpn = data.order_cmpn?.trim() || "-";
+
+                    $("#outbnd_at").val(outbnd_at);
+                    $("#prch_name").val(prch_name);
+                    $("#prcitm_name").val(prcitm_name);
+                    $("#item_code").val(item_code);
+                    $("#outbnd_qty").val(outbnd_qty);
+                    $("#outbnd_price").val(outbnd_price);
+                    $("#amount").val(amount);
+                    $("#note").val(note);
+                    $("#standard").val(standard);
+                    $("#order_cmpn").val(order_cmpn);
+
+                    const type = data.type;
+                    $(`input[name='type'][value='${data.type}']`).prop(
+                        "checked",
+                        true,
+                    );
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function modify() {
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_form.html${queryString}`;
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            params.delete("id");
+
+            const queryString = params.toString();
+
+            if (queryString) {
+                if (queryString.includes("sort=t.")) {
+                    location.href = `warehouse_list.html?${queryString}`;
+                } else {
+                    location.href = `${currentUrl}_list.html?${queryString}`;
+                }
+            } else {
+                location.href = `${currentUrl}_list.html`;
+            }
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>출고 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 재고 관리 > 출고 관리</p>
+                    </div>
+                </div>
+                <div
+                    class="contents-in scroll-custom"
+                    style="height: calc(100vh - 350px)"
+                >
+                    <div class="info-in info-in-modify-info">
+                        <p>접수 타입</p>
+
+                        <input
+                            type="radio"
+                            name="type"
+                            class="input-radio"
+                            value="1"
+                            disabled
+                        />
+                        <p
+                            class="info-title"
+                            style="
+                                background-color: #fff;
+                                justify-content: left;
+                                width: 80px;
+                                background: none;
+                                justify-content: left;
+                                padding-left: 10px;
+                            "
+                        >
+                            기사
+                        </p>
+
+                        <input
+                            type="radio"
+                            name="type"
+                            class="input-radio"
+                            value="2"
+                            disabled
+                        />
+                        <p
+                            class="info-title"
+                            style="
+                                background-color: #fff;
+                                justify-content: left;
+                                width: 80px;
+                                background: none;
+                                justify-content: left;
+                                padding-left: 10px;
+                            "
+                        >
+                            자재 판매
+                        </p>
+
+                        <input
+                            type="radio"
+                            name="type"
+                            class="input-radio"
+                            value="3"
+                            disabled
+                        />
+                        <p
+                            class="info-title"
+                            style="
+                                background-color: #fff;
+                                justify-content: left;
+                                width: 80px;
+                                background: none;
+                                justify-content: left;
+                                padding-left: 10px;
+                            "
+                        >
+                            서비스
+                        </p>
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>출고일자</p>
+                        <input type="text" id="outbnd_at" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>발주처</p>
+                        <input type="text" id="order_cmpn" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>품목명</p>
+                        <input type="text" id="prcitm_name" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>매입처명</p>
+                        <input type="text" id="prch_name" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>품목코드</p>
+                        <input type="text" id="item_code" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>규격</p>
+                        <input type="text" id="standard" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>단가 (VAT 포함)</p>
+                        <input type="text" id="outbnd_price" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>출고 수량</p>
+                        <input type="text" id="outbnd_qty" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>출고 총 금액 (원)</p>
+                        <input type="text" id="amount" readonly />
+                    </div>
+
+                    <div class="info-in info-in-rm info-in-modify-info">
+                        <p>비고</p>
+                        <textarea
+                            class="scroll-custom"
+                            id="note"
+                            readonly
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>뒤로</p>
+                    </div>
+                    <div class="btn btn-add" onclick="modify()">
+                        <p>수정</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A/S 이력관리시스템</title>
+  <link rel="shortcut icon" href="../img/ico_shortIcon.png">
+  <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+  <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <script type="text/javascript" src="../js/jquery.cookie.js"></script>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<script>
+  // 검색
+  function search(){
+    alert("search")
+  }
+</script>
+
+<body>
+  <div class="top"></div>
+  <div class="main">
+    <div class="menu"></div>
+    <div class="contents">
+      <div class="menu-nm">
+        <div class="menu-nm-in">
+          <img src="../img/ico_input_line.png">
+          <p>사용자 호출</p>
+        </div>
+        <div class="menu-nm-in menu-route">
+          <img src="../img/ico_home.png">
+          <p class="route">HOME  >  웨어러블 카메라  >  사용자 호출</p>
+        </div>
+      </div>
+      <div class="search">
+        <img src="../img/ico_search.png" class="ico-search">
+        <select class="search-select">
+          <option value="all">전체</option>
+          <option value="cate-1">cate-1</option>
+          <option value="cate-2">cate-2</option>
+          <option value="cate-3">cate-3</option>
+        </select>
+        <div class="search-in">
+          <input type="text" placeholder="검색어를 입력해주세요." class="search-input">
+          <p class="btn btn-search" onclick="search()">검색</p>
+        </div>
+      </div>
+      <div class="contents-in">
+        <div class="list">
+          <table>
+            <tbody>
+              <tr class="t-header">
+                <th>No.</th>
+                <th>기사</th>
+                <th>연락처</th>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>권택민</td>
+                <td>010-0000-0000</td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>권택민</td>
+                <td>010-0000-0000</td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>권택민</td>
+                <td>010-0000-0000</td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>권택민</td>
+                <td>010-0000-0000</td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>권택민</td>
+                <td>010-0000-0000</td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>권택민</td>
+                <td>010-0000-0000</td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>권택민</td>
+                <td>010-0000-0000</td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>권택민</td>
+                <td>010-0000-0000</td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td>권택민</td>
+                <td>010-0000-0000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="paging">
+          <div class="paging-inner">
+            <p><</p>
+            <p class="pstarno">1</p>
+            <p>2</p>
+            <p>3</p>
+            <p>4</p>
+            <p>5</p>
+            <p>6</p>
+            <p>7</p>
+            <p>8</p>
+            <p>9</p>
+            <p>10</p>
+            <p>></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

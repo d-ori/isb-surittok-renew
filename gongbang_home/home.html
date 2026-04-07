@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A/S 이력관리시스템</title>
+    <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <script src="../js/axios.min.js"></script>
+    <script type="text/javascript" src="../js/common.js?ver=1"></script>
+    <link rel="stylesheet" href="../css/modern.css" />
+    <link rel="stylesheet" href="../css/modern-dashboard.css" />
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+
+<script>
+    const currentUrl = "as";
+    const currentApi = "/as";
+    const sort =
+        params.get("sort") == undefined
+            ? decodeURI("a.created_at DESC")
+            : decodeURI(params.get("sort"));
+    const page = params.get("page") || "1";
+
+    // 도넛 차트 변수
+    // 도넛 차트 설정 및 인스턴스 보관
+    let chartConfigs = [
+        {
+            canvasId: "donutChart_1",
+            icon: "/img/home_icon_1.png",
+            labels: ["접수 완료", "취소"],
+            counts: { success: 0, cancel: 0 },
+            backgroundColor: ["#8EE1C6", "#DBDBDB"],
+            instance: null
+        },
+        {
+            canvasId: "donutChart_2",
+            icon: "/img/home_icon_2.png",
+            labels: ["배정 완료", "취소"],
+            counts: { success: 0, cancel: 0 },
+            backgroundColor: ["#7C58FF", "#DBDBDB"],
+            instance: null
+        },
+        {
+            canvasId: "donutChart_3",
+            icon: "/img/home_icon_3.png",
+            labels: ["미배정", "취소"],
+            counts: { success: 0, cancel: 0 },
+            backgroundColor: ["#B7B9C3", "#DBDBDB"],
+            instance: null
+        },
+        {
+            canvasId: "donutChart_4",
+            icon: "/img/home_icon_4.png",
+            labels: ["처리중", "취소"],
+            counts: { success: 0, cancel: 0 },
+            backgroundColor: ["#FFA95D", "#DBDBDB"],
+            instance: null
+        },
+        {
+            canvasId: "donutChart_5",
+            icon: "/img/home_icon_5.png",
+            labels: ["작업완료", "취소"],
+            counts: { success: 0, cancel: 0 },
+            backgroundColor: ["#4E8EED", "#DBDBDB"],
+            instance: null
+        },
+    ];
+
+    let barChart = null;
+    let lineChart = null;
+
+    let today = new Date();
+    function initYearSelect(selectId, minYear = 2025) {
+        const $select = $("#" + selectId);
+        const currentYear = new Date().getFullYear();
+
+        $select.empty();
+
+        for (let y = currentYear; y >= minYear; y--) {
+            $select.append(`<option value="${y}">${y}년</option>`);
+        }
+
+        // 기본값: 현재 연도
+        $select.val(String(currentYear));
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
+        const btn = document.querySelector('.theme-toggle-btn');
+        if (newTheme === 'dark') {
+            btn.innerHTML = '<span id="theme-icon">☀️</span> Light Mode';
+        } else {
+            btn.innerHTML = '<span id="theme-icon">🌙</span> Dark Mode';
+        }
+
+        // 차트 텍스트 컬러 즉시 반영
+        chartConfigs.forEach(function (conf) {
+            if (conf.instance) conf.instance.update();
+        });
+        if (barChart) barChart.update();
+        if (lineChart) lineChart.update();
+    }
+
+    $(function () {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+            const btn = document.querySelector('.theme-toggle-btn');
+            if (btn) btn.innerHTML = '<span id="theme-icon">☀️</span> Light Mode';
+        }
+        initYearSelect("year_2", 2025);
+        initYearSelect("year_3", 2026);
+
+        const today = new Date();
+        const year = today.getFullYear(); // 2026
+        const month = String(today.getMonth() + 1).padStart(2, "0"); // "01"
+
+        $("#year_2").val(String(year));
+        $("#year_3").val(String(year));
+        $("#month_2").val(month);
+
+        getTodayAs();
+        getMonthAs();
+        getYearhAs();
+    });
+
+    function enterkey() {
+        if (window.event.keyCode == 13) {
+            popup();
+        }
+    }
+
+    function getTodayAs() {
+        let year = today.getFullYear(); // 년도
+        let month = today.getMonth() + 1; // 월
+        month = month >= 10 ? month : "0" + month;
+        let date = today.getDate(); // 날짜
+        date = date >= 10 ? date : "0" + date;
+
+        const kpiDate = year + "-" + month + "-" + date;
+
+        $("#y-date").html(`${year}년 ${month}월 ${date}일`);
+
+        Common.sendAxios(`/kpi?date=${kpiDate}`)
+            .then((json) => {
+                if (json.code == 200) {
+                    const d = json.data;
+
+                    const status = {
+                        1: Number(d.status_1 ?? 0),
+                        2: Number(d.status_2 ?? 0),
+                        3: Number(d.status_3 ?? 0),
+                        4: Number(d.status_4 ?? 0),
+                        6: Number(d.status_6 ?? 0),
+                        7: Number(d.status_7 ?? 0),
+                        8: Number(d.status_8 ?? 0),
+                        9: Number(d.status_9 ?? 0),
+                    };
+
+                    // 작업 완료
+                    chartConfigs[4].counts.success = status[4];
+                    chartConfigs[4].counts.cancel = status[9];
+                    $("#cancel_9").html(status[9] + "건");
+
+                    // 처리중
+                    chartConfigs[3].counts.success = status[3];
+                    chartConfigs[3].counts.cancel = status[8];
+                    $("#cancel_8").html(status[8] + "건");
+
+                    // 배정
+                    chartConfigs[1].counts.success = status[2];
+                    chartConfigs[1].counts.cancel = status[7];
+                    $("#cancel_7").html(status[7] + "건");
+
+                    // 접수
+                    chartConfigs[0].counts.success =
+                        status[4] + status[3] + status[2] + status[1];
+                    chartConfigs[0].counts.cancel =
+                        status[9] + status[8] + status[7] + status[6];
+
+                    $("#cancel_5").html(
+                        status[9] +
+                        status[8] +
+                        status[7] +
+                        status[6] +
+                        "건",
+                    );
+
+                    // 미배정
+                    chartConfigs[2].counts.success = status[1];
+                    chartConfigs[2].counts.cancel = status[6];
+                    $("#cancel_6").html(status[6] + "건");
+
+                    chartConfigs.forEach(createDonutChart);
+                }
+            })
+            .catch((err) => {
+                console.error("ERROR : ", err);
+            });
+    }
+
+    const labels_bar = ["접수", "배정", "미배정", "처리중", "작업완료"];
+
+    const barStatusMap = {
+        접수: ["1", "2", "3", "4"],
+        배정: ["2"],
+        미배정: ["1"],
+        처리중: ["3"],
+        작업완료: ["4"],
+    };
+
+    // function buildMonthMap(rawList) {
+    //     console.log(rawList);
+    //     const map = {};
+
+    //     rawList.forEach(({ year, status, totalCnt }) => {
+    //         if (!map[year]) map[year] = {};
+    //         map[year][status] = totalCnt;
+    //     });
+
+    //     return map;
+    // }
+
+    function buildMonthMap(rawList) {
+        const map = {};
+
+        rawList.forEach(({ year, status, totalCnt }) => {
+            // total_count 대신 totalCnt 사용
+            if (!map[year]) map[year] = {};
+
+            // 특정 연월(year)의 특정 상태(status)에 수치 할당
+            // 만약 동일한 year/status가 여러 개라면 합산하도록 처리
+            map[year][status] =
+                (map[year][status] || 0) + Number(totalCnt || 0);
+        });
+
+        return map;
+    }
+
+    function buildBarData(monthMap, ym) {
+        const monthData = monthMap[ym] || {};
+
+        return labels_bar.map((label) =>
+            barStatusMap[label].reduce(
+                (sum, st) => sum + (monthData[st] ?? 0),
+                0,
+            ),
+        );
+    }
+
+    function buildDatasets(monthMap, baseYm, prevYm) {
+        return [
+            {
+                label: `${baseYm.replace("-", "년 ")}월`,
+                data: buildBarData(monthMap, baseYm),
+                backgroundColor: "#4E8EED",
+            },
+            {
+                label: `${prevYm.replace("-", "년 ")}월`,
+                data: buildBarData(monthMap, prevYm),
+                backgroundColor: "#88E5E1",
+            },
+        ];
+    }
+
+    function formatYmLabel(ym) {
+        const [y, m] = ym.split("-");
+        return `${y}년 ${m}월`;
+    }
+
+    function getYmPairFromSelect() {
+        const year = document.getElementById("year_2").value; // "2025"
+        const month = document.getElementById("month_2").value; // "01" ~ "12"
+
+        const baseYm = `${year}-${month}`;
+
+        // 이전 달 계산
+        const y = Number(year);
+        const m = Number(month);
+
+        const prevDate = new Date(y, m - 2); // JS month는 0-based
+        const prevYm =
+            prevDate.getFullYear() +
+            "-" +
+            String(prevDate.getMonth() + 1).padStart(2, "0");
+
+        return { baseYm, prevYm };
+    }
+
+    function getMonthAs() {
+        const { baseYm, prevYm } = getYmPairFromSelect();
+        const kpiDate = `${baseYm}-01`;
+
+        Common.sendAxios(`/kpi/month?date=${kpiDate}`)
+            .then((json) => {
+                if (json.code !== 200) return;
+
+                const monthMap = buildMonthMap(json.data);
+                const datasets = [
+                    {
+                        label: formatYmLabel(baseYm),
+                        data: buildBarData(monthMap, baseYm),
+                        backgroundColor: "#4E8EED",
+                    },
+                    {
+                        label: formatYmLabel(prevYm),
+                        data: buildBarData(monthMap, prevYm),
+                        backgroundColor: "#88E5E1",
+                    },
+                ];
+
+                renderBarChart(datasets);
+            })
+            .catch((err) => {
+                console.error("ERROR : ", err);
+            });
+    }
+
+    const categoryMap = {
+        접수: ["1", "2", "3", "4"],
+        배정: ["2"],
+        미배정: ["1"],
+        처리중: ["3"],
+        작업완료: ["4"],
+    };
+
+    const labels_year = ["접수", "배정", "미배정", "처리중", "작업완료"];
+
+    function buildYearMap(rawList) {
+        const yearMap = {};
+
+        rawList.forEach((item) => {
+            const year = item.year; // "2026"
+            const status = item.status; // "1" ~ "4"
+            const cnt = item.totalCnt; // number
+
+            if (!yearMap[year]) {
+                yearMap[year] = {};
+            }
+
+            yearMap[year][status] = cnt;
+        });
+
+        return yearMap;
+    }
+
+    function buildLineDataForYear(yearData) {
+        return labels_year.map((label) => {
+            const statuses = categoryMap[label];
+
+            return statuses.reduce((sum, st) => {
+                return sum + (yearData[st] ?? 0);
+            }, 0);
+        });
+    }
+
+    function buildLineDatasets(rawList) {
+        const yearMap = buildYearMap(rawList);
+        const years = Object.keys(yearMap).sort().reverse(); // 최신년도 먼저
+
+        const colors = ["#2D9CDB", "#F3A378"]; // 필요하면 더 추가
+
+        return years.map((year, idx) => {
+            return {
+                label: `${year}년`,
+                data: buildLineDataForYear(yearMap[year]),
+                borderColor: colors[idx],
+                backgroundColor: colors[idx],
+                tension: 0.4,
+                pointRadius: 5,
+            };
+        });
+    }
+
+    function getYearhAs() {
+        const baseYear = Number($("#year_3").val());
+        const prevYear = baseYear - 1;
+
+        Common.sendAxios(`/kpi/yearas?date=${baseYear + "-01-01"}`)
+            .then((json) => {
+                if (json.code !== 200) return;
+
+                const rawList = json.data;
+
+                const datasets = buildLineDatasets(rawList);
+
+                const ctx = document
+                    .getElementById("lineChart")
+                    .getContext("2d");
+
+                if (lineChart instanceof Chart) {
+                    lineChart.data.datasets = datasets;
+                    lineChart.update();
+                    return;
+                }
+
+                const chart = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels: labels_year,
+                        datasets: datasets,
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: "nearest",
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: {
+                                    font: {
+                                        size: 16,
+                                        weight: "600",
+                                    },
+                                    padding: 20,
+                                },
+                            },
+                            tooltip: {
+                                padding: 12,
+                                titleFont: {
+                                    size: 14,
+                                    weight: "bold",
+                                },
+                                bodyFont: {
+                                    size: 13,
+                                },
+                                callbacks: {
+                                    label(context) {
+                                        return `${context.dataset.label} : ${context.raw}건`;
+                                    },
+                                },
+                            },
+                            datalabels: {
+                                align: "top",
+                                anchor: "end",
+                                color: "#333",
+                                font: {
+                                    weight: "bold",
+                                    size: 12,
+                                },
+                                formatter(value) {
+                                    return value;
+                                },
+                            },
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grace: "10%",
+                            },
+                        },
+                    },
+                    plugins: [ChartDataLabels],
+                });
+                lineChart = chart;
+            })
+            .catch((err) => {
+                console.error("ERROR : ", err);
+            });
+    }
+
+    function detail(e, id, status) {
+        location.href = `../gongbang_as/cancel_detail.html?id=${id}`;
+    }
+
+    let currentStatus = "";
+    // 팝업 열기
+    function popup(status = "", pageIndex = 1) {
+        currentStatus = status;
+        const statusNames = {
+            "": "접수",
+            "7": "배정",
+            "6": "미배정",
+            "8": "처리중",
+            "9": "작업완료"
+        };
+        const titlePrefix = statusNames[String(status)] || "접수";
+        $("#popup-title").text(titlePrefix + " 취소목록");
+
+        let year = today.getFullYear(); // 년도
+        let month = today.getMonth() + 1; // 월
+        month = month >= 10 ? month : "0" + month;
+        let date = today.getDate(); // 날짜
+        date = date >= 10 ? date : "0" + date;
+
+        const kpiDate = year + "-" + month + "-" + date;
+        const search = $("#search").val();
+
+        Common.sendAxios(
+            `/cancel?page=${pageIndex}&keyword=${decodeURI(search)}&sort=${decodeURI(
+                "a.updated_at DESC",
+            )}&cate=${status}&date=${kpiDate}`,
+        )
+            .then((json) => {
+                const list = json.data;
+                const searchVO = json.searchVO;
+
+                $("#list").empty();
+
+                if (!list || list.length == 0) {
+                    $("#list").append(
+                        $(
+                            "<tr><td colspan='4'>검색 결과가 없습니다.</td></tr>",
+                        ),
+                    );
+                    $("#pagingArea").empty();
+                    return false;
+                }
+
+                Common.renderPaging(searchVO, "#pagingArea");
+
+                for (let i = 0; i < list.length; i++) {
+                    const data = list[i];
+                    const id = data.as_id;
+
+                    let status = data.status;
+
+                    let tr = $(
+                        `<tr id="tr${id}" class="list_check" val="${id}" onclick="detail(event, ${id}, ${data.status})">`,
+                    );
+
+                    const listno =
+                        searchVO.totalCnt -
+                        ((searchVO.page - 1) * searchVO.recordSize + i);
+                    let updated_at = data.updated_at || "";
+                    if (updated_at.length > 16) {
+                        updated_at = updated_at.substring(0, 16);
+                    }
+                    const cus_name = data.cus_name;
+                    const addr1 = data.addr1 || "";
+                    const addr2 = data.addr2 || "";
+                    const addr = (addr1 + " " + addr2).trim() || "-";
+
+                    tr.append($(`<td>${listno}</td>`));
+                    tr.append($(`<td>${updated_at}</td>`));
+                    tr.append($(`<td>${cus_name}</td>`));
+                    tr.append($(`<td>${addr}</td>`));
+
+                    $("#list").append(tr);
+                }
+
+                document.querySelector(".background").className = "background show-use";
+                $(".background").css({ "z-index": "10000" });
+            })
+            .catch((err) => {
+                console.error("ERROR : ", err);
+            });
+    }
+
+    // 페이징 이동
+    function pageMove(page) {
+        popup(currentStatus, page);
+    }
+
+    // 팝업 닫기
+    function popup_close() {
+        $(".background").css({ "z-index": "-1" });
+        document.querySelector(".background").className = "background";
+        $("#search").val("");
+    }
+</script>
+
+<body>
+    <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span> Dark Mode
+    </button>
+
+    <div id="viewport">
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu scroll-custom"></div>
+            <div class="contents-area">
+                <div class="contents-wrap">
+                    <div class="status-as">
+                        <div class="as-title">
+                            <h1>A/S현황</h1>
+                            <p>
+                                기준일자
+                                <span id="y-date"></span>
+                            </p>
+                        </div>
+                        <div class="as-contents">
+                            <div class="as-graph-box">
+                                <div class="as-graph">
+                                    <canvas id="donutChart_1" width="210" height="210"></canvas>
+                                </div>
+                                <div class="as-graph-text">
+                                    <span>접수</span>
+                                    <div class="as-graph-title" onclick="popup()">
+                                        취소:
+                                        <h2 id="cancel_5"></h2>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="as-graph-box">
+                                <div class="as-graph">
+                                    <canvas id="donutChart_2" width="210" height="210"></canvas>
+                                </div>
+                                <div class="as-graph-text">
+                                    <span>배정</span>
+                                    <div class="as-graph-title" onclick="popup(7)">
+                                        취소:
+                                        <h2 id="cancel_7"></h2>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="as-graph-box">
+                                <div class="as-graph">
+                                    <canvas id="donutChart_3" width="210" height="210"></canvas>
+                                </div>
+                                <div class="as-graph-text">
+                                    <span>미배정</span>
+                                    <div class="as-graph-title" onclick="popup(6)">
+                                        취소:
+                                        <h2 id="cancel_6"></h2>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="as-graph-box">
+                                <div class="as-graph">
+                                    <canvas id="donutChart_4" width="210" height="210"></canvas>
+                                </div>
+                                <div class="as-graph-text">
+                                    <span>처리중</span>
+                                    <div class="as-graph-title" onclick="popup(8)">
+                                        취소:
+                                        <h2 id="cancel_8"></h2>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="as-graph-box">
+                                <div class="as-graph">
+                                    <canvas id="donutChart_5" width="210" height="210"></canvas>
+                                </div>
+                                <div class="as-graph-text">
+                                    <span>작업완료</span>
+                                    <div class="as-graph-title" onclick="popup(9)">
+                                        취소:
+                                        <h2 id="cancel_9"></h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="status-box">
+                        <div class="status-month">
+                            <div class="month-title">
+                                <h1>
+                                    전월
+                                    <span>대비 A/S 비교 현황</span>
+                                </h1>
+
+                                <div>
+                                    <select id="year_2" onchange="getMonthAs()">
+                                        <option value="2025">2025년</option>
+                                        <option value="2024">2024년</option>
+                                    </select>
+
+                                    <select id="month_2" onchange="getMonthAs()">
+                                        <option value="01">1월</option>
+                                        <option value="02">2월</option>
+                                        <option value="03">3월</option>
+                                        <option value="04">4월</option>
+                                        <option value="05">5월</option>
+                                        <option value="06">6월</option>
+                                        <option value="07">7월</option>
+                                        <option value="08">8월</option>
+                                        <option value="09">9월</option>
+                                        <option value="10">10월</option>
+                                        <option value="11">11월</option>
+                                        <option value="12">12월</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="month-graph-box">
+                                <div class="month-graph">
+                                    <canvas id="barChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="status-year">
+                            <div class="year-title">
+                                <h1>
+                                    전년
+                                    <span>대비 A/S 비교 현황</span>
+                                </h1>
+                                <select id="year_3">
+                                    <option>2024년</option>
+                                    <option>2025년</option>
+                                    <option>2026년</option>
+                                </select>
+                            </div>
+                            <div class="year-graph-box">
+                                <div class="year-graph">
+                                    <canvas id="lineChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 취소 목록 팝업 -->
+    <div class="background">
+        <div class="popup-card">
+            <div class="popup-header">
+                <span class="popup-title" id="popup-title">취소 목록</span>
+                <button class="popup-x-btn" onclick="popup_close()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="popup-search-bar">
+                <div class="popup-search-wrap">
+                    <svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" placeholder="업체명을 입력해주세요." class="search-input" id="search"
+                        onkeypress="enterkey()" />
+                </div>
+            </div>
+            <div class="popup-table-wrap">
+                <table class="popup-table">
+                    <thead>
+                        <tr>
+                            <th style="width:70px">NO</th>
+                            <th style="width:155px">취소일</th>
+                            <th>고객/업체명</th>
+                            <th>고객 주소</th>
+                        </tr>
+                    </thead>
+                    <tbody id="list"></tbody>
+                </table>
+            </div>
+            <div class="popup-footer">
+                <div class="paging-wrap" id="pagingArea"></div>
+                <button class="popup-close-btn" onclick="popup_close()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 도넛 차트 시작
+        const centerImagePlugin = {
+            id: "centerImage",
+            afterDatasetsDraw(chart) {
+                const { ctx, chartArea } = chart;
+                const icon = chart.options.custom?.icon;
+
+                if (!icon || !icon.complete) return;
+
+                const centerX = (chartArea.left + chartArea.right) / 2;
+                const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+                const width = chartArea.right - chartArea.left;
+                const size = width * 0.22; // 반응형 사이즈
+                const offsetY = width * 0.12;
+
+                ctx.save();
+                ctx.drawImage(
+                    icon,
+                    centerX - size / 2,
+                    centerY - size / 2 - offsetY,
+                    size,
+                    size,
+                );
+                ctx.restore();
+            },
+        };
+
+        const centerTextPlugin = {
+            id: "centerText",
+            beforeDraw(chart) {
+                const { ctx, chartArea } = chart;
+                const data = chart.data.datasets[0].data;
+
+                const centerX = (chartArea.left + chartArea.right) / 2;
+                const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+                const success = data[0]; // 완료 / 접수 / 처리중 등
+                const text = `${success}건`;
+
+                const width = chartArea.right - chartArea.left;
+                const fontSize = Math.max(14, Math.round(width * 0.15));
+                const offsetY = width * 0.14;
+
+                // 테마 텍스트 컬러 (없으면 #000)
+                let textColor = getComputedStyle(document.body).getPropertyValue('--text-primary').trim();
+                if (!textColor) textColor = "#000";
+
+                ctx.save();
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                ctx.font = `bold ${fontSize}px Noto Sans CJK KR`;
+                ctx.fillStyle = textColor;
+                ctx.fillText(text, centerX, centerY + offsetY);
+
+                // 밑줄
+                const textWidth = ctx.measureText(text).width;
+                const underlineY = centerY + offsetY + Math.round(fontSize * 0.6);
+
+                ctx.beginPath();
+                ctx.moveTo(centerX - textWidth / 2, underlineY);
+                ctx.lineTo(centerX + textWidth / 2, underlineY);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = textColor;
+                ctx.stroke();
+
+                ctx.restore();
+            },
+        };
+
+        function createDonutChart(config) {
+            const { canvasId, icon, counts, labels, backgroundColor } = config;
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext("2d");
+            const iconImg = new Image();
+            iconImg.src = icon;
+
+            let dataArr = [counts.success, counts.cancel];
+            let viewBgColors = backgroundColor;
+
+            // 데이터가 0건일 때 강제로 회색 배경 링을 그림
+            if (counts.success === 0 && counts.cancel === 0) {
+                dataArr = [1];
+                let emptyColor = getComputedStyle(document.body).getPropertyValue('--border-color').trim();
+                if (!emptyColor) emptyColor = "#e5e7eb";
+                viewBgColors = [emptyColor];
+            }
+
+            // 기존 차트가 있으면 업데이트, 없으면 생성
+            const existingChart = Chart.getChart(canvas);
+            if (existingChart) {
+                existingChart.data.datasets[0].data = dataArr;
+                existingChart.data.datasets[0].backgroundColor = viewBgColors;
+                existingChart.options.custom.icon = iconImg;
+                existingChart.update();
+                config.instance = existingChart;
+            } else {
+                const chart = new Chart(ctx, {
+                    type: "doughnut",
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                data: dataArr,
+                                backgroundColor: viewBgColors,
+                                borderWidth: 0,
+                                hoverOffset: 0
+                            },
+                        ],
+                    },
+                    options: {
+                        cutout: "90%",
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false },
+                        },
+                        custom: {
+                            icon: iconImg,
+                        },
+                    },
+                    plugins: [centerTextPlugin, centerImagePlugin],
+                });
+                iconImg.onload = () => chart.update();
+                config.instance = chart;
+            }
+        }
+
+        // 막대차트 시작
+        function renderBarChart(datasets) {
+            const canvas = document.getElementById("barChart");
+
+            if (!canvas) {
+                console.error("barChart canvas not found");
+                return;
+            }
+
+            const ctx = canvas.getContext("2d");
+
+            if (barChart instanceof Chart) {
+                barChart.data.datasets = datasets;
+                barChart.update();
+                return;
+            }
+
+            barChart = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: labels_bar,
+                    datasets: datasets,
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                font: {
+                                    size: 16, // ← 기본 12~13 → 15~16 추천
+                                    weight: "600", // 살짝 굵게 (선택)
+                                },
+                                padding: 20, // 제목 간 간격도 조금 여유
+                            },
+                        },
+                        tooltip: {
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: "bold",
+                            },
+                            bodyFont: {
+                                size: 13,
+                            },
+                            callbacks: {
+                                label(context) {
+                                    return `${context.dataset.label} : ${context.raw}건`;
+                                },
+                            },
+                        },
+                        datalabels: {
+                            anchor: "end",
+                            align: "start",
+                            color: "#333",
+                            font: {
+                                size: 12,
+                                weight: "bold",
+                            },
+                            formatter(value) {
+                                return value;
+                            },
+                        },
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 5,
+                            },
+                            grace: "10%",
+                        },
+                    },
+                },
+                plugins: [ChartDataLabels],
+            });
+        }
+    </script>
+</body>
+
+</html>

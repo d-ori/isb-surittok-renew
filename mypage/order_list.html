@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script src="../js/common.js"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        let arr = [];
+        const currentUrl = "order";
+        const currentApi = "/youhu";
+        const page = params.get("page") || "1";
+        const startDate = params.get("startDate") || "";
+        const endDate = params.get("endDate") || "";
+
+        $(function () {
+            if (params.get("page") == null) {
+                location.href = `${currentUrl}_list.html?page=1&startDate=&endDate=`;
+            } else {
+                if (startDate == "" || endDate == "") {
+                    // 1. 현재 시스템의 UTC 밀리초를 가져옴
+                    const curr = new Date();
+                    const utc =
+                        curr.getTime() + curr.getTimezoneOffset() * 60 * 1000;
+
+                    // 2. UTC 밀리초에 한국 시간(9시간)을 더함
+                    const KR_TIME_DIFF = 9 * 60 * 60 * 1000;
+                    const kstNow = new Date(utc + KR_TIME_DIFF);
+
+                    // 3. 3개월 전 계산 (이미 KST로 보정된 kstNow를 복사해서 사용)
+                    const kstThreeMonthsAgo = new Date(kstNow.getTime());
+                    kstThreeMonthsAgo.setMonth(kstNow.getMonth() - 3);
+
+                    // 4. 날짜 포맷 유틸 (KST 객체이므로 getFullYear 등 로컬 메서드 사용 가능)
+                    const formatDate = (d) => {
+                        const year = d.getFullYear();
+                        const month = String(d.getMonth() + 1).padStart(2, "0");
+                        const day = String(d.getDate()).padStart(2, "0");
+                        return `${year}-${month}-${day}`;
+                    };
+
+                    const startStr = formatDate(kstThreeMonthsAgo);
+                    const endStr = formatDate(kstNow);
+
+                    location.href = `${currentUrl}_list.html?page=1&startDate=${startStr}&endDate=${endStr}`;
+                } else {
+                    $("#startDate").val(startDate);
+                    $("#endDate").val(endDate);
+                }
+                getList();
+            }
+        });
+
+        // 리스트
+        function getList() {
+            Common.sendAxios(
+                `${currentApi}?page=${page}&startDate=${$(
+                    "#startDate",
+                ).val()}&endDate=${$("#endDate").val()}`,
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        if (list.length == 0) {
+                            $("#list").append(
+                                $(
+                                    "<tr><td colspan='5'>검색 결과가 없습니다.</td></tr>",
+                                ),
+                            );
+                            return false;
+                        }
+
+                        $("#list").empty();
+
+                        Common.renderPaging(searchVO);
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const id = data.youhu_id;
+
+                            let tr = $(
+                                `<tr id="tr${id}" val="${id}" onclick="detail(event, ${id})">`,
+                            );
+
+                            const created_at = data.created_at;
+                            const name = data.name;
+                            const price = Common.numberWithCommas(data.price);
+                            const qntty = Common.numberWithCommas(data.qntty);
+                            const type = data.type;
+
+                            let status = "";
+                            let status_color = "delivery-s";
+
+                            switch (data.youhu_status) {
+                                case "BUY":
+                                    status = "구매중";
+                                    break;
+                                case "BUY_END":
+                                    status = "구매 완료";
+                                    break;
+                                case "SALE":
+                                    status = "판매중";
+                                    status_color = "delivery-b";
+                                    break;
+                                case "SALE_END":
+                                    status = "판매 완료";
+                                    status_color = "delivery-b";
+                                    break;
+                            }
+
+                            tr.append($(`<td>${created_at}</td>`));
+                            tr.append($(`<td>${name}</td>`));
+                            if (type == "Y") {
+                                tr.append($(`<td>${price}</td>`));
+                            } else {
+                                tr.append($(`<td>가격 협의</td>`));
+                            }
+                            tr.append($(`<td>${qntty}</td>`));
+                            tr.append(
+                                $(
+                                    `<td><p class='${status_color}'>${status}</p></td>`,
+                                ),
+                            );
+
+                            $("#list").append(tr);
+                        }
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // paging 이동
+        function pageMove(pageIndex) {
+            location.href = `${currentUrl}_list.html?page=${pageIndex}&startDate=${$(
+                "#startDate",
+            ).val()}&endDate=${$("#endDate").val()}`;
+        }
+
+        // 검색
+        function search() {
+            location.href = `${currentUrl}_list.html?page=1&startDate=${$(
+                "#startDate",
+            ).val()}&endDate=${$("#endDate").val()}`;
+        }
+
+        // 상세
+        function detail(e, id) {
+            var targetId = $(e.target).attr("id") || "";
+
+            if (targetId.includes("row")) {
+                return;
+            }
+
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_detail.html?id=${id}${queryString.replace(
+                "?",
+                "&",
+            )}`;
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents scroll-custom">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>주문정보</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 마이페이지 > 주문정보</p>
+                    </div>
+                </div>
+                <div class="contents-in contents-mypage">
+                    <div class="menu-mypage">
+                        <div class="menu-mypage-top">
+                            <img src="../img/ico_mypage.png" />
+                            <p>마이페이지</p>
+                        </div>
+                        <ul>
+                            <li>
+                                <p onclick="location.href = 'user_info.html'">
+                                    정보관리
+                                </p>
+                            </li>
+                            <li class="on">
+                                <p onclick="location.href = 'order_list.html'">
+                                    주문정보
+                                </p>
+                            </li>
+                            <li>
+                                <p
+                                    onclick="
+                                        location.href = 'inquiry_list.html'
+                                    "
+                                >
+                                    문의내역
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="mypage-wrap mypage-order-wrap">
+                        <div class="search">
+                            <p class="p-search-title">일시</p>
+                            <div class="search-in">
+                                <input
+                                    type="date"
+                                    class="search-input"
+                                    id="startDate"
+                                />
+                                <p class="p-search-title">~</p>
+                                <input
+                                    type="date"
+                                    class="search-input"
+                                    id="endDate"
+                                />
+                                <p class="btn btn-search" onclick="search()">
+                                    검색
+                                </p>
+                            </div>
+
+                            <div class="btn-wrap">
+                                <div
+                                    class="btn btn-add"
+                                    onclick="location.href = 'order_form.html'"
+                                >
+                                    <p>등록</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-wrap">
+                            <div class="mypage-in">
+                                <p class="info-top" style="margin-bottom: 0px">
+                                    주문정보
+                                </p>
+                                <div class="list">
+                                    <table>
+                                        <colgroup>
+                                            <col style="width: 200px" />
+                                            <col style="width: 35%" />
+                                            <col style="width: 45%" />
+                                            <col style="width: 20%" />
+                                            <col style="width: 150px" />
+                                        </colgroup>
+
+                                        <tbody>
+                                            <tr class="t-header">
+                                                <th>일시</th>
+                                                <th>자재명</th>
+                                                <th>금액</th>
+                                                <th>수량</th>
+                                                <th>처리상태</th>
+                                            </tr>
+                                        </tbody>
+
+                                        <tbody id="list"></tbody>
+                                    </table>
+                                </div>
+
+                                <div class="paging">
+                                    <div
+                                        class="paging-inner"
+                                        id="pagingArea"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

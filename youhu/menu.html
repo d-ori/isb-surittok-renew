@@ -1,0 +1,671 @@
+<script>
+    if (
+        localStorage.getItem("jwtToken_youhu") == null ||
+        localStorage.getItem("refreshToken_youhu") == null
+    ) {
+        location.href = "/youhu/login.html";
+    }
+
+    function logout() {
+        var logout = confirm("로그아웃 하시겠습니까?");
+
+        if (logout) {
+            Common.sendAxios(`/account/logout`)
+                .then(async (json) => {
+                    localStorage.clear();
+                    location.href = "/youhu/login.html";
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+    }
+
+    $(function () {
+        const URL = location.href;
+
+        var arr = ["유휴자재 구매", "유휴자재 판매"];
+
+        var arr2 = ["subMtrMng2", "subMtrMng3"];
+
+        let info = JSON.parse(localStorage.getItem("info_youhu"));
+
+        var splitArr = info.acesList || [];
+
+        const acesListStr = splitArr.join(",");
+
+        if (
+            acesListStr.indexOf("품목 분류 관리") == "-1" &&
+            acesListStr.indexOf("품목 정보 관리") == "-1" &&
+            acesListStr.indexOf("A/S BOM관리") == "-1" &&
+            acesListStr.indexOf("품목기준정보") == "-1"
+        ) {
+            $(".itemDiv").css("display", "none");
+        }
+
+        if (
+            acesListStr.indexOf("매입처 관리") == "-1" &&
+            acesListStr.indexOf("매입 품목 관리") == "-1" &&
+            acesListStr.indexOf("자재 관리") == "-1"
+        ) {
+            $(".prchsDiv").css("display", "none");
+        }
+
+        if (
+            acesListStr.indexOf("유휴자재 구매") == "-1" &&
+            acesListStr.indexOf("유휴자재 판매") == "-1" &&
+            acesListStr.indexOf("유휴자재 구매 문의") == "-1" &&
+            acesListStr.indexOf("유휴자재 1:1 문의") == "-1"
+        ) {
+            $(".mtrMngDiv").css("display", "none");
+        }
+
+        if (acesListStr.indexOf("협력업체 관리") == "-1") {
+            $(".clientDiv").css("display", "none");
+        }
+
+        if (
+            acesListStr.indexOf("A/S 기사 관리") == "-1" &&
+            acesListStr.indexOf("A/S 기사 현황") == "-1"
+        ) {
+            $(".repairDiv").css("display", "none");
+        }
+
+        if (
+            acesListStr.indexOf("고객 정보 관리") == "-1" &&
+            acesListStr.indexOf("설치 제품 정보") == "-1"
+        ) {
+            $(".cusDiv").css("display", "none");
+        }
+
+        if (
+            acesListStr.indexOf("접수 관리") == "-1" &&
+            acesListStr.indexOf("배정 관리") == "-1" &&
+            acesListStr.indexOf("처리 관리") == "-1" &&
+            acesListStr.indexOf("매출 관리") == "-1" &&
+            acesListStr.indexOf("취소 관리") == "-1"
+        ) {
+            $(".asDiv").css("display", "none");
+        }
+
+        if (acesListStr.indexOf("사용자 호출") == "-1") {
+            $(".glassDiv").css("display", "none");
+        }
+
+        if (acesListStr.indexOf("공지사항") == "-1") {
+            $(".noticeDiv").css("display", "none");
+        }
+
+        if (
+            acesListStr.indexOf("KPI 조회") == "-1" &&
+            acesListStr.indexOf("기술자별 월별 처리건수") == "-1" &&
+            acesListStr.indexOf("수주출하리드타임단축") == "-1" &&
+            acesListStr.indexOf("작업시간 감소") == "-1"
+        ) {
+            $(".kpiDiv").css("display", "none");
+        }
+
+        if (
+            acesListStr.indexOf("사용자 관리") == "-1" &&
+            acesListStr.indexOf("사용자 권한 관리") == "-1"
+        ) {
+            $(".userDiv").css("display", "none");
+        }
+
+        if (
+            acesListStr.indexOf("재고 관리") == "-1" &&
+            acesListStr.indexOf("입출고 관리") == "-1" &&
+            acesListStr.indexOf("입고 관리") == "-1" &&
+            acesListStr.indexOf("출고 관리") == "-1"
+        ) {
+            $(".stockDiv").css("display", "none");
+        }
+
+        for (var j = 0; j < arr.length; j++) {
+            $("#" + arr2[j]).css("display", "none");
+        }
+
+        for (var j = 0; j < arr.length; j++) {
+            var arrData = arr[j];
+
+            for (var i = 0; i < splitArr.length; i++) {
+                var data = splitArr[i];
+
+                if (data == arrData) {
+                    $("#" + arr2[j]).css("display", "flex");
+                }
+            }
+        }
+
+        // 초기 상태 설정: menu-on 클래스가 있으면 ico-menu 숨기고 ico-hover 보이기
+        $(".menu-on").find(".ico-menu").hide();
+        $(".menu-on").find(".ico-hover").show();
+
+        // 초기 상태 설정: sub-menu-on 클래스가 있으면 ico-sub-menu 숨기고 ico-sub-menu-hover 보이기
+        $(".sub-menu-on").find(".ico-sub-menu").hide();
+        $(".sub-menu-on").find(".ico-sub-menu-hover").show();
+
+        // 메뉴 마우스 오버 시
+        $(".menu li").hover(
+            function () {
+                if (!$(this).hasClass("menu-on")) {
+                    $(this).find(".ico-menu").hide();
+                    $(this).find(".ico-hover").show();
+                }
+            },
+            function () {
+                if (!$(this).hasClass("menu-on")) {
+                    $(this).find(".ico-menu").show();
+                    $(this).find(".ico-hover").hide();
+                }
+            },
+        );
+
+        // 서브메뉴 마우스 오버 시
+        $(".sub-menu-in").hover(
+            function () {
+                if (!$(this).hasClass("sub-menu-on")) {
+                    $(this).find(".ico-sub-menu").hide();
+                    $(this).find(".ico-sub-menu-hover").show();
+                }
+            },
+            function () {
+                if (!$(this).hasClass("sub-menu-on")) {
+                    $(this).find(".ico-sub-menu").show();
+                    $(this).find(".ico-sub-menu-hover").hide();
+                }
+            },
+        );
+
+        // li 클릭 시
+        $(".menu li").click(function (event) {
+            // 서브메뉴 클릭 시 상위 메뉴가 닫히지 않도록 이벤트 전파 방지
+            event.stopPropagation();
+
+            // 현재 클릭된 li가 이미 menu-on 클래스를 가지고 있는지 확인
+            var isCurrentlyOn = $(this).hasClass("menu-on");
+
+            // 모든 li에서 menu-on 클래스를 제거하고 모든 sub-menu를 숨기기
+            $(".menu li").removeClass("menu-on").find(".ico-menu").show();
+            $(".menu li").removeClass("menu-on").find(".ico-hover").hide();
+            $(".sub-menu").slideUp(500); // 부드럽게 닫기
+
+            // 클릭된 li에 menu-on 클래스를 추가하고 sub-menu 보이기
+            if (!isCurrentlyOn) {
+                $(this).addClass("menu-on");
+                $(this).find(".ico-menu").hide();
+                $(this).find(".ico-hover").show();
+                $(this).find(".sub-menu").slideDown(500); // 부드럽게 열기
+            } else {
+                // 현재 클릭된 li가 이미 menu-on 클래스를 가지고 있으면
+                $(this).removeClass("menu-on");
+                $(this).find(".ico-menu").show();
+                $(this).find(".ico-hover").hide();
+                $(this).find(".sub-menu").slideUp(500); // 부드럽게 닫기
+            }
+        });
+
+        // 서브메뉴 클릭 시
+        $(".sub-menu-in").click(function (event) {
+            // 서브메뉴 클릭 시에는 상위 li가 닫히지 않도록 이벤트 전파 방지
+            event.stopPropagation();
+        });
+
+        // ================================================== MENU ON ==================================================
+        // HOME
+        if (URL.includes("/gongbang_home/")) {
+            $(".menu-home").addClass("menu-on");
+            $(".menu-home").find(".ico-menu").hide();
+            $(".menu-home").find(".ico-hover").show();
+        }
+
+        // 품목 관리
+        if (URL.includes("/gongbang_item/")) {
+            $(".menu-item").addClass("menu-on");
+            $(".menu-item").find(".ico-menu").hide();
+            $(".menu-item").find(".ico-hover").show();
+            $(".sub-menu-item").show();
+
+            // 품목 관리 > 품목 분류 관리
+            if (URL.includes("/" + "itemCl" + "_")) {
+                $(".sub-menu-item-cl").addClass("sub-menu-on");
+                $(".sub-menu-item").find(".ico-sub-menu-item-cl").hide();
+                $(".sub-menu-item").find(".ico-sub-menu-item-cl-hover").show();
+            }
+
+            // 품목 관리 > 품목 정보 관리
+            else if (URL.includes("/" + "itemInfo" + "_")) {
+                $(".sub-menu-item-info").addClass("sub-menu-on");
+                $(".sub-menu-item").find(".ico-sub-menu-item-info").hide();
+                $(".sub-menu-item")
+                    .find(".ico-sub-menu-item-info-hover")
+                    .show();
+            }
+
+            // 품목 관리 > A/S BOM 관리
+            else if (URL.includes("/" + "itemBom" + "_")) {
+                $(".sub-menu-as-bom").addClass("sub-menu-on");
+                $(".sub-menu-item").find(".ico-sub-menu-as-bom").hide();
+                $(".sub-menu-item").find(".ico-sub-menu-as-bom-hover").show();
+            }
+
+            // 품목 관리 > 품목 기준 정보
+            else if (URL.includes("/" + "item" + "_")) {
+                $(".sub-menu-item-stndrd-info").addClass("sub-menu-on");
+                $(".sub-menu-item")
+                    .find(".ico-sub-menu-item-stndrd-info")
+                    .hide();
+                $(".sub-menu-item")
+                    .find(".ico-sub-menu-item-stndrd-info-hover")
+                    .show();
+            }
+        }
+
+        // 매입처 관리
+        if (URL.includes("/gongbang_prchs/")) {
+            $(".menu-prchs").addClass("menu-on");
+            $(".menu-prchs").find(".ico-menu").hide();
+            $(".menu-prchs").find(".ico-hover").show();
+            $(".sub-menu-prchs").show();
+
+            // 매입처 관리 > 매입처 관리
+            if (URL.includes("/" + "prchs" + "_")) {
+                $(".sub-menu-prchs-info").addClass("sub-menu-on");
+                $(".sub-menu-prchs").find(".ico-sub-menu-prchs-info").hide();
+                $(".sub-menu-prchs")
+                    .find(".ico-sub-menu-prchs-info-hover")
+                    .show();
+            }
+
+            // 매입처 관리 > 매입 품목 관리
+            else if (URL.includes("/" + "pitem" + "_")) {
+                $(".sub-menu-prchs-item").addClass("sub-menu-on");
+                $(".sub-menu-prchs").find(".ico-sub-menu-prchs-item").hide();
+                $(".sub-menu-prchs")
+                    .find(".ico-sub-menu-prchs-item-hover")
+                    .show();
+            }
+
+            // 매입처 관리 > 자재 관리
+            else if (URL.includes("/" + "material" + "_")) {
+                $(".sub-menu-prchs-material").addClass("sub-menu-on");
+                $(".sub-menu-prchs")
+                    .find(".ico-sub-menu-prchs-material")
+                    .hide();
+                $(".sub-menu-prchs")
+                    .find(".ico-sub-menu-prchs-material-hover")
+                    .show();
+            }
+        }
+
+        // 재고 관리
+        if (URL.includes("/gongbang_stock/")) {
+            $(".menu-stock").addClass("menu-on");
+            $(".menu-stock").find(".ico-menu").hide();
+            $(".menu-stock").find(".ico-hover").show();
+            $(".sub-menu-stock").show();
+
+            // 재고 관리 > 재고 관리
+            if (URL.includes("/" + "stock" + "_")) {
+                $(".sub-menu-stock-stock").addClass("sub-menu-on");
+                $(".sub-menu-stock").find(".ico-sub-menu-stock-stock").hide();
+                $(".sub-menu-stock")
+                    .find(".ico-sub-menu-stock-stock-hover")
+                    .show();
+            }
+
+            // 재고 관리 > 입출고 관리
+            else if (URL.includes("/" + "warehouse" + "_")) {
+                $(".sub-menu-stock-warehouse").addClass("sub-menu-on");
+                $(".sub-menu-stock")
+                    .find(".ico-sub-menu-stock-warehouse")
+                    .hide();
+                $(".sub-menu-stock")
+                    .find(".ico-sub-menu-stock-warehouse-hover")
+                    .show();
+            }
+
+            // 재고 관리 > 입고 관리
+            else if (URL.includes("/" + "inbnd" + "_")) {
+                $(".sub-menu-stock-inbnd").addClass("sub-menu-on");
+                $(".sub-menu-stock").find(".ico-sub-menu-stock-inbnd").hide();
+                $(".sub-menu-stock")
+                    .find(".ico-sub-menu-stock-inbnd-hover")
+                    .show();
+            }
+
+            // 재고 관리 > 출고 관리
+            else if (URL.includes("/" + "outbnd" + "_")) {
+                $(".sub-menu-stock-outbnd").addClass("sub-menu-on");
+                $(".sub-menu-stock").find(".ico-sub-menu-stock-outbnd").hide();
+                $(".sub-menu-stock")
+                    .find(".ico-sub-menu-stock-outbnd-hover")
+                    .show();
+            }
+        }
+
+        // 자재관리
+        if (URL.includes("/gongbang_material/")) {
+            $(".menu-material").addClass("menu-on");
+            $(".menu-material").find(".ico-menu").hide();
+            $(".menu-material").find(".ico-hover").show();
+            $(".sub-menu-material").show();
+
+            // 자재관리 > 유휴자재 구매
+            if (URL.includes("/" + "buy" + "_")) {
+                $(".sub-menu-material-buy").addClass("sub-menu-on");
+                $(".sub-menu-material")
+                    .find(".ico-sub-menu-material-buy")
+                    .hide();
+                $(".sub-menu-material")
+                    .find(".ico-sub-menu-material-buy-hover")
+                    .show();
+            }
+
+            // 자재관리 > 유휴자재 판매
+            else if (URL.includes("/" + "sale" + "_")) {
+                $(".sub-menu-material-sale").addClass("sub-menu-on");
+                $(".sub-menu-material")
+                    .find(".ico-sub-menu-material-sale")
+                    .hide();
+                $(".sub-menu-material")
+                    .find(".ico-sub-menu-material-sale-hover")
+                    .show();
+            }
+
+            // 자재관리 > 유휴자재 구매 문의
+            if (URL.includes("/" + "inqIdlMtrPrc" + "_")) {
+                $(".sub-menu-material-inqIdlMtrPrc").addClass("sub-menu-on");
+                $(".sub-menu-material")
+                    .find(".ico-sub-menu-material-inqIdlMtrPrc")
+                    .hide();
+                $(".sub-menu-material")
+                    .find(".ico-sub-menu-material-inqIdlMtrPrc-hover")
+                    .show();
+            }
+
+            // 자재관리 > 유휴자재 1:1 문의
+            if (URL.includes("/" + "inqIdlRsr" + "_")) {
+                $(".sub-menu-material-inqIdlRsr").addClass("sub-menu-on");
+                $(".sub-menu-material")
+                    .find(".ico-sub-menu-material-inqIdlRsr")
+                    .hide();
+                $(".sub-menu-material")
+                    .find(".ico-sub-menu-material-inqIdlRsr-hover")
+                    .show();
+            }
+        }
+
+        // 협력업체 관리
+        if (URL.includes("/gongbang_partner/")) {
+            $(".menu-partner").addClass("menu-on");
+            $(".menu-partner").find(".ico-menu").hide();
+            $(".menu-partner").find(".ico-hover").show();
+            $(".sub-menu-partner").show();
+
+            // 협력업체 관리 > 협력업체 관리
+            if (URL.includes("/" + "partner" + "_")) {
+                $(".sub-menu-partner-bcnc").addClass("sub-menu-on");
+                $(".sub-menu-partner")
+                    .find(".ico-sub-menu-partner-bcnc")
+                    .hide();
+                $(".sub-menu-partner")
+                    .find(".ico-sub-menu-partner-bcnc-hover")
+                    .show();
+            }
+        }
+
+        // A/S 기사 관리
+        if (URL.includes("/gongbang_repair/")) {
+            $(".menu-repair").addClass("menu-on");
+            $(".menu-repair").find(".ico-menu").hide();
+            $(".menu-repair").find(".ico-hover").show();
+            $(".sub-menu-repair").show();
+
+            // A/S 기사 관리 > A/S 기사 관리
+            if (URL.includes("/" + "repair" + "_")) {
+                $(".sub-menu-repair-as").addClass("sub-menu-on");
+                $(".sub-menu-repair").find(".ico-sub-menu-repair-as").hide();
+                $(".sub-menu-repair")
+                    .find(".ico-sub-menu-repair-as-hover")
+                    .show();
+            }
+
+            // A/S 기사 관리 > A/S 기사 현황
+            else if (URL.includes("/" + "repairState" + "_")) {
+                $(".sub-menu-repair-state").addClass("sub-menu-on");
+                $(".sub-menu-repair").find(".ico-sub-menu-repair-state").hide();
+                $(".sub-menu-repair")
+                    .find(".ico-sub-menu-repair-state-hover")
+                    .show();
+            }
+        }
+
+        // 고객 관리
+        if (URL.includes("/gongbang_custom/")) {
+            $(".menu-custom").addClass("menu-on");
+            $(".menu-custom").find(".ico-menu").hide();
+            $(".menu-custom").find(".ico-hover").show();
+            $(".sub-menu-custom").show();
+
+            // 고객 관리 > 고객 정보 관리
+            if (URL.includes("/" + "custom" + "_")) {
+                $(".sub-menu-custom-info").addClass("sub-menu-on");
+                $(".sub-menu-custom").find(".ico-sub-menu-custom-info").hide();
+                $(".sub-menu-custom")
+                    .find(".ico-sub-menu-custom-info-hover")
+                    .show();
+            }
+
+            // 고객 관리 > 설치 제품 정보
+            else if (URL.includes("/" + "citem" + "_")) {
+                $(".sub-menu-custom-item").addClass("sub-menu-on");
+                $(".sub-menu-custom").find(".ico-sub-menu-custom-item").hide();
+                $(".sub-menu-custom")
+                    .find(".ico-sub-menu-custom-item-hover")
+                    .show();
+            }
+        }
+
+        // A/S 관리
+        if (URL.includes("/gongbang_as/")) {
+            $(".menu-as").addClass("menu-on");
+            $(".menu-as").find(".ico-menu").hide();
+            $(".menu-as").find(".ico-hover").show();
+            $(".sub-menu-as").show();
+
+            // A/S 관리 > 접수 관리
+            if (URL.includes("/" + "as" + "_")) {
+                $(".sub-menu-as-r").addClass("sub-menu-on");
+                $(".sub-menu-as").find(".ico-sub-menu-as-r").hide();
+                $(".sub-menu-as").find(".ico-sub-menu-as-r-hover").show();
+            }
+
+            // A/S 관리 > 배정 관리
+            else if (URL.includes("/" + "assignment" + "_")) {
+                $(".sub-menu-as-assignment").addClass("sub-menu-on");
+                $(".sub-menu-as").find(".ico-sub-menu-as-assignment").hide();
+                $(".sub-menu-as")
+                    .find(".ico-sub-menu-as-assignment-hover")
+                    .show();
+            }
+
+            // A/S 관리 > 처리 관리
+            else if (URL.includes("/" + "process" + "_")) {
+                $(".sub-menu-as-process").addClass("sub-menu-on");
+                $(".sub-menu-as").find(".ico-sub-menu-as-process").hide();
+                $(".sub-menu-as").find(".ico-sub-menu-as-process-hover").show();
+            }
+
+            // A/S 관리 > 매출 관리
+            else if (URL.includes("/" + "sales" + "_")) {
+                $(".sub-menu-as-sales").addClass("sub-menu-on");
+                $(".sub-menu-as").find(".ico-sub-menu-as-sales").hide();
+                $(".sub-menu-as").find(".ico-sub-menu-as-sales-hover").show();
+            }
+
+            // A/S 관리 > 취소 관리
+            else if (URL.includes("/" + "cancel" + "_")) {
+                $(".sub-menu-as-cancel").addClass("sub-menu-on");
+                $(".sub-menu-as").find(".ico-sub-menu-as-cancel").hide();
+                $(".sub-menu-as").find(".ico-sub-menu-as-cancel-hover").show();
+            }
+        }
+
+        // 웨어러블 카메라
+        if (URL.includes("/gongbang_camera/")) {
+            $(".menu-camera").addClass("menu-on");
+            $(".menu-camera").find(".ico-menu").hide();
+            $(".menu-camera").find(".ico-hover").show();
+            $(".sub-menu-camera").show();
+
+            // 웨어러블 카메라 > 사용자 호출
+            if (URL.includes("/" + "camera" + "_")) {
+                $(".sub-menu-camera-info").addClass("sub-menu-on");
+                $(".sub-menu-camera").find(".ico-sub-menu-camera-info").hide();
+                $(".sub-menu-camera")
+                    .find(".ico-sub-menu-camera-info-hover")
+                    .show();
+            }
+        }
+
+        // 공지사항
+        if (URL.includes("/gongbang_notice/")) {
+            $(".menu-notice").addClass("menu-on");
+            $(".menu-notice").find(".ico-menu").hide();
+            $(".menu-notice").find(".ico-hover").show();
+            $(".sub-menu-notice").show();
+
+            // 공지사항 > 공지사항
+            if (URL.includes("/" + "notice" + "_")) {
+                $(".sub-menu-notice-info").addClass("sub-menu-on");
+                $(".sub-menu-notice").find(".ico-sub-menu-notice-info").hide();
+                $(".sub-menu-notice")
+                    .find(".ico-sub-menu-notice-info-hover")
+                    .show();
+            }
+        }
+
+        // KPI 관리
+        if (URL.includes("/gongbang_kpi/")) {
+            $(".menu-kpi").addClass("menu-on");
+            $(".menu-kpi").find(".ico-menu").hide();
+            $(".menu-kpi").find(".ico-hover").show();
+            $(".sub-menu-kpi").show();
+
+            // KPI 관리 > KPI 관리
+            if (URL.includes("/" + "kpi" + "_")) {
+                $(".sub-menu-kpi-info").addClass("sub-menu-on");
+                $(".sub-menu-kpi").find(".ico-sub-menu-kpi-info").hide();
+                $(".sub-menu-kpi").find(".ico-sub-menu-kpi-info-hover").show();
+            }
+
+            // KPI 관리 > KPI 관리
+            else if (URL.includes("/" + "count" + "_")) {
+                $(".sub-menu-kpi-count").addClass("sub-menu-on");
+                $(".sub-menu-kpi").find(".ico-sub-menu-kpi-count").hide();
+                $(".sub-menu-kpi").find(".ico-sub-menu-kpi-count-hover").show();
+            }
+
+            // KPI 관리 > KPI 관리
+            else if (URL.includes("/" + "day" + "_")) {
+                $(".sub-menu-kpi-day").addClass("sub-menu-on");
+                $(".sub-menu-kpi").find(".ico-sub-menu-kpi-day").hide();
+                $(".sub-menu-kpi").find(".ico-sub-menu-kpi-day-hover").show();
+            }
+
+            // KPI 관리 > KPI 관리
+            else if (URL.includes("/" + "hour" + "_")) {
+                $(".sub-menu-kpi-hour").addClass("sub-menu-on");
+                $(".sub-menu-kpi").find(".ico-sub-menu-kpi-hour").hide();
+                $(".sub-menu-kpi").find(".ico-sub-menu-kpi-hour-hover").show();
+            }
+        }
+
+        // 사용자 관리
+        if (URL.includes("/gongbang_setting/")) {
+            $(".menu-user").addClass("menu-on");
+            $(".menu-user").find(".ico-menu").hide();
+            $(".menu-user").find(".ico-hover").show();
+            $(".sub-menu-user").show();
+
+            // 사용자 관리 > 사용자 등록
+            if (URL.includes("/" + "user" + "_")) {
+                $(".sub-menu-user-info").addClass("sub-menu-on");
+                $(".sub-menu-user").find(".ico-sub-menu-user-info").hide();
+                $(".sub-menu-user")
+                    .find(".ico-sub-menu-user-info-hover")
+                    .show();
+            }
+
+            // 사용자 관리 > 사용자 권한 관리
+            else if (URL.includes("/" + "authority" + "_")) {
+                $(".sub-menu-user-authority").addClass("sub-menu-on");
+                $(".sub-menu-user").find(".ico-sub-menu-user-authority").hide();
+                $(".sub-menu-user")
+                    .find(".ico-sub-menu-user-authority-hover")
+                    .show();
+            }
+        }
+    });
+
+    // ================================================== MENU 이동 ==================================================
+    // 웨어러블 카메라 > 사용자 호출
+    function sub_menu_camera() {
+        // URL = '../gongbang_camera/camera_list.html';
+        $(".menu-camera").addClass("menu-on");
+        $(".menu-camera").find(".ico-menu").hide();
+        $(".menu-camera").find(".ico-hover").show();
+
+        $(".sub-menu-camera").show();
+        $(".sub-menu-camera-info").addClass("sub-menu-on");
+        $(".sub-menu-camera").find(".ico-sub-menu-camera-info").hide();
+        $(".sub-menu-camera").find(".ico-sub-menu-camera-info-hover").show();
+
+        window.open("https://realglasses.asijang.co.kr/", "_blank");
+    }
+</script>
+
+<ul>
+    <!-- 유휴자재 관리 -->
+    <li class="menu-material mtrMngDiv">
+        <div class="menu-in">
+            <img src="../img/ico_material.png" class="ico-menu" />
+            <img src="../img/ico_material_h.png" class="ico-hover" />
+            <p class="menu-title">유휴자재 관리</p>
+        </div>
+        <div class="sub-menu sub-menu-material">
+            <div
+                id="subMtrMng2"
+                class="sub-menu-in sub-menu-material-buy"
+                onclick="location.href = '../gongbang_material/buy_list.html'"
+            >
+                <img
+                    src="../img/ico_arrow_right.png"
+                    class="ico-sub-menu ico-sub-menu-material-buy"
+                />
+                <img
+                    src="../img/ico_arrow_right_h.png"
+                    class="ico-sub-menu-hover ico-sub-menu-material-buy-hover"
+                />
+                <p class="sub-menu-title">유휴자재 구매</p>
+            </div>
+
+            <div
+                id="subMtrMng3"
+                class="sub-menu-in sub-menu-material-sale"
+                onclick="location.href = '../gongbang_material/sale_list.html'"
+            >
+                <img
+                    src="../img/ico_arrow_right.png"
+                    class="ico-sub-menu ico-sub-menu-material-sale"
+                />
+                <img
+                    src="../img/ico_arrow_right_h.png"
+                    class="ico-sub-menu-hover ico-sub-menu-material-sale-hover"
+                />
+                <p class="sub-menu-title">유휴자재 판매</p>
+            </div>
+        </div>
+    </li>
+</ul>

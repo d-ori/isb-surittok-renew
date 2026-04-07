@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+        <!-- 카카오맵 연동 -->
+        <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "prchs";
+        const currentApi = "/prch";
+
+        function kakaopost() {
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    document.querySelector("#zipcode").value = data.zonecode;
+                    document.querySelector("#addr1").value = data.address + " ";
+                },
+            }).open();
+        }
+
+        $(function () {
+            getDetail();
+        });
+
+        function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const name = data.name?.trim() || "-";
+                    const owner = data.owner?.trim() || "-";
+                    const tel = data.tel?.trim() || "-";
+                    const addr1 = data.addr1 || "";
+                    const addr2 = data.addr2 || "";
+                    const addr3 = data.addr3 || "";
+                    const bizno = data.bizno?.trim() || "-";
+                    const note = data.note?.replaceAll("<br>", "\r\n");
+                    const mainPitem = data.mainPitem;
+
+                    $("#name").val(name);
+                    $("#owner").val(owner);
+                    $("#tel").val(Common.formatPhoneNumber(tel));
+                    $("#addr1").val(addr1);
+                    $("#addr2").val(addr2);
+                    $("#zipcode").val(addr3);
+                    $("#bizno").val(Common.formatBusinessNumber(bizno));
+                    $("#note").val(note);
+                    $("#mainPitem").val(mainPitem);
+
+                    const searchVO = json.searchVO;
+
+                    for (let i = 0; i < searchVO.length; i++) {
+                        $("#pItemList").append(`
+                            <div class="info-in ">
+                                <input
+                                    type="text"
+                                    value="${searchVO[i].name}"
+                                    style="width: 718px; background: #E4E8EA; color: #676767;"
+                                    readonly
+                                />
+                            </div>
+                        `);
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function modify() {
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_form.html${queryString}`;
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            params.delete("id");
+
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_list.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_list.html`;
+            }
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>매입처 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 매입처 관리 > 매입처 관리</p>
+                    </div>
+                </div>
+                <div
+                    class="contents-in scroll-custom"
+                    style="height: calc(100vh - 350px)"
+                >
+                    <div class="info-in info-in-modify-info">
+                        <p>매입처</p>
+                        <input type="text" id="name" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>대표 품목</p>
+                        <input type="text" id="mainPitem" readonly />
+                    </div>
+
+                    <div id="pItemList"></div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>대표</p>
+                        <input type="text" id="owner" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>연락처</p>
+                        <input type="text" id="tel" readonly />
+                    </div>
+
+                    <div class="info-in info-addr info-in-modify-info">
+                        <p>주소</p>
+                        <div class="addr-wrap">
+                            <div class="addr-zipcode-wrap">
+                                <input type="text" readonly id="zipcode" />
+                            </div>
+                            <input
+                                type="text"
+                                id="addr1"
+                                class="addr-dtl"
+                                style="cursor: text"
+                                readonly
+                            />
+                            <input
+                                type="text"
+                                id="addr2"
+                                class="addr-dtl"
+                                readonly
+                            />
+                        </div>
+                    </div>
+                    <div class="info-in info-in-modify-info">
+                        <p>사업자등록번호</p>
+                        <input type="text" id="bizno" readonly />
+                    </div>
+                    <div class="info-in info-in-rm info-in-modify-info">
+                        <p>비고</p>
+                        <textarea
+                            class="scroll-custom"
+                            id="note"
+                            readonly
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>뒤로</p>
+                    </div>
+
+                    <div class="btn btn-add" onclick="modify()">
+                        <p>수정</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "itemBom";
+        const currentApi = "/item/bom";
+
+        $(function () {
+            getClList();
+
+            if (id != null) {
+                $("#saveBtn").html("수정");
+            } else {
+                $(".btn-del").css("display", "none");
+                $("#saveBtn").html("등록");
+            }
+        });
+
+        function getClList(item_cl_id) {
+            Common.sendAjax(
+                `/api/v1/item/cl?keyword=&page=1&sort=&usePageNavy=false`,
+                "",
+                "GET",
+                function (json) {
+                    try {
+                        var list = json.data;
+
+                        $("#item_cl_list").append(
+                            '<option value="">품목 분류를 선택해주세요.</option>'
+                        );
+
+                        $("#item_info_list").append(
+                            '<option value="">품목 정보를 선택해주세요.</option>'
+                        );
+
+                        for (var i = 0; i < list.length; i++) {
+                            var data = list[i];
+                            $("#item_cl_list").append(
+                                '<option value="' +
+                                    data.item_cl_id +
+                                    '">' +
+                                    data.name +
+                                    "</option>"
+                            );
+                        }
+
+                        if (id != null) {
+                            getDetail();
+                        }
+                    } catch (Excpetion) {
+                        console.log("스크립트 에러 " + Excpetion);
+                    }
+                }
+            );
+        }
+
+        function getInfoList(item_info_id) {
+            $("#item_info_list option").remove();
+
+            $("#item_info_list").append(
+                '<option value="">품목 정보를 선택해주세요.</option>'
+            );
+
+            if ($("#item_cl_list").val() == "") return;
+
+            Common.sendAjax(
+                `/api/v1/item/info?keyword=&page=1&sort=&item_cl_id=${$(
+                    "#item_cl_list"
+                ).val()}&usePageNavy=false`,
+                "",
+                "GET",
+                function (json) {
+                    try {
+                        var list = json.data;
+
+                        for (var i = 0; i < list.length; i++) {
+                            var data = list[i];
+                            $("#item_info_list").append(
+                                '<option value="' +
+                                    data.item_info_id +
+                                    '">' +
+                                    data.name +
+                                    "</option>"
+                            );
+                        }
+
+                        if (item_info_id != undefined) {
+                            $("#item_info_list").val(item_info_id);
+                        }
+                    } catch (Excpetion) {
+                        console.log("스크립트 에러 " + Excpetion);
+                    }
+                }
+            );
+        }
+
+        function getDetail() {
+            Common.sendAjax(`${currentApi}/${id}`, "", "GET", function (json) {
+                try {
+                    const data = json.data;
+
+                    const name = data.name.replaceAll("<br>", "\r\n");
+                    const item_cl_id = data.item_cl_id;
+
+                    const item_info_id = data.item_info_id;
+
+                    $("#name").val(name);
+                    $("#item_cl_list").val(item_cl_id);
+                    getInfoList(item_info_id);
+                } catch (Excpetion) {
+                    console.log("스크립트 에러 " + Excpetion);
+                }
+            });
+        }
+
+        function saveClick() {
+            const formData = new FormData();
+            const name = $("#name")
+                .val()
+                .replace(/(?:\r\n|\r|\n)/g, "<br>");
+            let method = "";
+
+            const item_info_id = $("#item_info_list").val();
+
+            if (Common.nullCheck(item_info_id, "item_info_list", "품목 정보"))
+                return;
+            if (Common.nullCheck(name, "name", "품목 자재")) return;
+
+            formData.append("name", name);
+            formData.append("item_info_id", item_info_id);
+
+            if (id != null) {
+                method = "/put";
+                formData.append("item_bom_id", id);
+            }
+
+            Common.sendAxios(`${currentApi}${method}`, formData)
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        alert(json.msg);
+
+                        if (id == null) {
+                            const params = new URLSearchParams(
+                                window.location.search
+                            );
+                            params.delete("id");
+
+                            const queryString = params.toString();
+                            location.href = `${currentUrl}_list.html${queryString}`;
+                        } else {
+                            const queryString = window.location.search;
+                            location.href = `${currentUrl}_detail.html${queryString}`;
+                        }
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                        $(`#${json.data}`).focus();
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function deletion() {
+            if (
+                confirm(
+                    "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다."
+                ) == true
+            ) {
+                const formData = new FormData();
+                formData.append("id_list", id);
+
+                Common.sendAxios(`${currentApi}/delete`, formData)
+                    .then(async (json) => {
+                        alert(json.msg);
+                        location.href = `${currentUrl}_list.html`;
+                    })
+                    .catch((err) => {
+                        console.error("ERROR : ", err);
+                    });
+            }
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_detail.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_detail.html`;
+            }
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>A/S BOM 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 품목정보 > A/S BOM 관리</p>
+                    </div>
+                </div>
+
+                <div class="contents-in scroll-custom" style="height: 264px">
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            품목 분류
+                        </p>
+                        <select
+                            class="input-select scroll-custom"
+                            id="item_cl_list"
+                            onchange="getInfoList()"
+                        ></select>
+                    </div>
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            품목 정보
+                        </p>
+                        <select
+                            class="input-select scroll-custom"
+                            id="item_info_list"
+                        ></select>
+                    </div>
+                    <div class="info-in info-in-t" style="height: 96px">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            품목 자재
+                        </p>
+                        <textarea
+                            class="scroll-custom"
+                            maxlength="60"
+                            style="height: 84px"
+                            id="name"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="deletion()">
+                        <p>삭제</p>
+                    </div>
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>뒤로</p>
+                    </div>
+                    <div class="btn btn-add" onclick="saveClick()">
+                        <p id="saveBtn"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

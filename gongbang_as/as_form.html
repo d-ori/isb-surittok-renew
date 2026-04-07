@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+        <!-- 카카오맵 연동 -->
+        <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    </head>
+    <script>
+        const id = params.get("id");
+        const currentUrl = "as";
+        const currentApi = "/as";
+
+        function kakaopost() {
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    document.querySelector("#zipcode").value = data.zonecode;
+                    document.querySelector("#addr1").value = data.address + " ";
+                    document.querySelector("#addr2").value = "";
+                },
+            }).open();
+        }
+
+        function formatTime(timeStr) {
+            // "HH:mm" 형식 들어온다고 가정
+            let [hour, minute] = timeStr.split(":");
+            hour = String(Number(hour)); // 숫자로 바꿨다가 다시 문자로 → 앞의 0 제거됨
+            return `${hour}:${minute}`;
+        }
+
+        $(function () {
+            if (id != null) {
+                getDetail();
+                $("#saveBtn").html("수정");
+            } else {
+                $(".btn-del").css("display", "none");
+                $("#saveBtn").html("등록");
+            }
+        });
+
+        function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const cus_id = data.cus_id;
+                    const cus_name = data.cus_name;
+                    const citem_id = data.citem_id;
+                    const item_name = data.item_name;
+                    const addr1 = data.addr1;
+                    const addr2 = data.addr2;
+                    const addr3 = data.addr3;
+                    const phone = data.phone;
+                    const symptom_cus = data.symptom_cus.replaceAll(
+                        "<br>",
+                        "\r\n",
+                    );
+                    const as_request = data.as_request;
+
+                    if (as_request == "N") {
+                        $("input[name='as_request'][value='N']").prop(
+                            "checked",
+                            true,
+                        );
+                    } else {
+                        $("input[name='as_request'][value='Y']").prop(
+                            "checked",
+                            true,
+                        );
+                    }
+
+                    $("#cus_id").val(cus_id);
+                    const cus_name_rpr = data.cus_name_rpr;
+                    $("#cus_name").val(cus_name + " / " + cus_name_rpr);
+                    $("#citem_id").val(citem_id);
+                    $("#item_name").val(item_name);
+                    $("#addr1").val(addr1);
+                    $("#addr2").val(addr2);
+                    $("#zipcode").val(addr3);
+                    $("#phone").val(phone);
+                    $("#symptom_cus").val(symptom_cus);
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function saveClick() {
+            const formData = new FormData();
+            const cus_id = $("#cus_id").val();
+            const citem_id = $("#citem_id").val();
+            const addr1 = $("#addr1").val();
+            const addr2 = $("#addr2").val();
+            const addr3 = $("#zipcode").val();
+            const phone = $("#phone").val();
+            const symptom_cus = ($("#symptom_cus").val() || "").replaceAll(
+                "<br>",
+                "\r\n",
+            );
+            const as_request = document.querySelector(
+                'input[name="as_request"]:checked',
+            ).value;
+            let method = "";
+
+            if (Common.nullCheck(cus_id, "cus_id", "고객/업체명")) return;
+            if (Common.nullCheck(citem_id, "citem_id", "제품명")) return;
+            if (Common.nullCheck(addr1, "addr1", "주소")) return;
+            if (Common.nullCheck(phone, "phone", "연락처")) return;
+
+            formData.append("cus_id", cus_id);
+            formData.append("citem_id", citem_id);
+            formData.append("addr1", addr1);
+            formData.append("addr2", addr2);
+            formData.append("addr3", addr3);
+            formData.append("phone", phone);
+            formData.append("symptom_cus", symptom_cus);
+            formData.append("as_request", as_request);
+
+            if (id != null) {
+                method = "/put";
+                formData.append("as_id", id);
+            }
+
+            Common.sendAxios(`${currentApi}${method}`, formData)
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        alert(json.msg);
+
+                        if (id == null) {
+                            location.href = `assignment_form.html?id=${json.data.as_id}`;
+                        } else {
+                            const queryString = window.location.search;
+                            location.href = `${currentUrl}_detail.html${queryString}`;
+                        }
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                        $(`#${json.data}`).focus();
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_detail.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_detail.html`;
+            }
+        }
+
+        function getCustomList(page = 1) {
+            Common.sendAxios(
+                `/custom?&keyword=${decodeURI(
+                    $("#search").val(),
+                )}&page=${page}&sort=${decodeURI("a.created_at DESC")}&cate=${$(
+                    "#cate",
+                ).val()}`,
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        $("#list").empty();
+                        $("#pagingArea").empty();
+
+                        const as_request = document.querySelector(
+                            'input[name="as_request"]:checked',
+                        ).value;
+
+                        if (list.length == 0 || as_request == "N") {
+                            const colspan = $("#list")
+                                .closest("table")
+                                .find("colgroup col").length;
+
+                            const registerHtml = `
+                                <tr>
+                                    <td colspan="${colspan}" style="padding: 30px 0; text-align: center;">
+                                        <p style="margin-bottom: 15px; color: #666; font-weight: bold;">
+                                            찾으시는 고객이 없나요? 정보를 입력하여 신규 등록할 수 있습니다.
+                                        </p>
+
+                                        <div style="display: flex; justify-content: center; gap: 10px; align-items: stretch;">
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                                <input type="text" id="new_name"
+                                                    placeholder="*접수처명" style="width: 210px;height: 30px;border-radius: 4px; border: solid 1px #D5D7D9; color: #676767;">
+                                                <input type="text" class="number" inputmode="numeric" id="new_phone" maxlength="11"
+                                                    placeholder="*접수처 연락처"  style="width: 210px;height: 30px;border-radius: 4px; border: solid 1px #D5D7D9; color: #676767;">
+                                                <input type="text" id="new_name_rpr"
+                                                    placeholder="*수리처명" style="width: 210px;height: 30px;border-radius: 4px; border: solid 1px #D5D7D9; color: #676767;">
+                                                <input type="text" class="number" inputmode="numeric" id="new_phone_rpr" maxlength="11"
+                                                    placeholder="*수리처 연락처" style="width: 210px;height: 30px;border-radius: 4px; border: solid 1px #D5D7D9; color: #676767;">
+                                            </div>
+
+                                            <button type="button" onclick="saveCustom()" class="btn-primary"
+                                                    style="width: 100px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold;">
+                                                신규<br>등록
+                                            </button>
+                                        </div>
+                                        <p style="margin-top: 10px; font-size: 12px; color: #999;">* 연락처는 '-' 없이 숫자만 입력해주세요.</p>
+                                    </td>
+                                </tr>
+                            `;
+
+                            $("#list").html(registerHtml);
+                            return false;
+                        } else {
+                            Common.renderPaging(searchVO);
+
+                            for (let i = 0; i < list.length; i++) {
+                                const data = list[i];
+                                const id = data.cus_id;
+                                let tr = $(
+                                    `<tr id="tr${id}" onclick="selectCustom(${id},'${data.name} / ${data.name_rpr}','${data.addr1_rpr}','${data.addr2_rpr}','${data.addr3_rpr}'
+                                ,'${data.phone_rpr}')">`,
+                                );
+
+                                const listno =
+                                    searchVO.totalCnt -
+                                    ((searchVO.page - 1) * searchVO.recordSize +
+                                        i);
+                                const name = data.name;
+                                const phone = data.phone;
+                                const addr1 = data.addr1 || "";
+                                const addr2 = data.addr2 || "";
+                                const addr =
+                                    (addr1 + " " + addr2).trim() || "-";
+
+                                const name_rpr = data.name_rpr;
+                                const phone_rpr = data.phone_rpr;
+                                const addr1_rpr = data.addr1_rpr || "";
+                                const addr2_rpr = data.addr2_rpr || "";
+                                const addr_rpr =
+                                    (addr1_rpr + " " + addr2_rpr).trim() || "-";
+
+                                tr.append($($(`<td>${listno}</td>`)));
+                                tr.append($(`<td>${name}<br>${name_rpr}</td>`));
+                                tr.append(
+                                    $(`<td>${phone}<br>${phone_rpr}</td>`),
+                                );
+                                tr.append($(`<td>${addr}<br>${addr_rpr}</td>`));
+
+                                $("#list").append(tr);
+                            }
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function pageMove(pageIndex) {
+            getCustomList(pageIndex);
+        }
+
+        function selectCustom(id, name, addr1, addr2, addr3, phone) {
+            if (id != $("#cus_id").val()) {
+                $("#citem_id").val("");
+                $("#item_name").val("");
+            }
+
+            $("#cus_id").val(id);
+            $("#cus_name").val(name);
+
+            $("#addr1").val(addr1);
+            $("#addr2").val(addr2);
+            $("#zipcode").val(addr3);
+            $("#phone").val(phone);
+
+            popup_close();
+
+            popup_item();
+        }
+
+        function saveCustom() {
+            const formData = new FormData();
+            const name = $("#new_name").val();
+            const phone = $("#new_phone").val();
+            const addr1 = "";
+            const addr2 = "";
+            const addr3 = "";
+            const note = "";
+
+            if (Common.nullCheck(name, "new_name", "접수처명")) return;
+            if (Common.nullCheck(phone, "new_phone", "접수처 연락처")) return;
+
+            formData.append("name", name);
+            formData.append("phone", phone);
+            formData.append("addr1", addr1);
+            formData.append("addr2", addr2);
+            formData.append("addr3", addr3);
+            formData.append("note", note);
+
+            const name_rpr = $("#new_name_rpr").val();
+            const phone_rpr = $("#new_phone_rpr").val();
+            const addr1_rpr = "";
+            const addr2_rpr = "";
+            const addr3_rpr = "";
+            const note_rpr = "";
+
+            if (Common.nullCheck(name, "new_name_rpr", "수리처명")) return;
+            if (Common.nullCheck(phone, "new_phone_rpr", "수리처 연락처"))
+                return;
+
+            formData.append("name_rpr", name_rpr);
+            formData.append("phone_rpr", phone_rpr);
+            formData.append("addr1_rpr", addr1_rpr);
+            formData.append("addr2_rpr", addr2_rpr);
+            formData.append("addr3_rpr", addr3_rpr);
+            formData.append("note_rpr", note_rpr);
+
+            Common.sendAxios(`/custom`, formData)
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        alert("신규 업체가 추가되었습니다.");
+
+                        $("#cus_id").val(json.data.cus_id);
+                        $("#cus_name").val(name + " / " + name_rpr);
+
+                        popup_close();
+
+                        popup_item();
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                        $(`#${json.data}`).focus();
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // 고객정보관리 팝업 열기
+        function popup() {
+            $("#cate").val("all");
+            $("#search").val("");
+            getCustomList();
+
+            $(".background").css({ "z-index": "1000000" });
+            $(".show-use").css({ "z-index": "100" });
+            document.querySelector(".background").className =
+                "background show-use";
+        }
+
+        // 고객정보관리 팝업 닫기
+        function popup_close() {
+            $(".background").css({ "z-index": "-1" });
+            document.querySelector(".background").className = "background";
+            $("#keyword").val("");
+        }
+
+        // 설치제품목록 팝업
+        function popup_item() {
+            const cus_id = $("#cus_id").val();
+
+            if (cus_id == "" || cus_id == null || cus_id == undefined) {
+                alert("거래처 선택 후 제품을 선택해 주세요");
+                popup();
+                return false;
+            }
+
+            Common.sendAxios(
+                `/citem/as?cus_id=${cus_id}&keyword=${decodeURI(
+                    $("#search_item").val(),
+                )}`,
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        $("#listItem").empty();
+
+                        if (list.length == 0) {
+                            const colspan = $("#listItem")
+                                .closest("table")
+                                .find("colgroup col").length;
+
+                            const registerHtml = `
+                            <tr>
+                                <td colspan="${colspan}" style="padding: 30px 0; text-align: center;">
+                                    <p style="margin-bottom: 15px; color: #666;">
+                                        찾으시는 제품이 없나요? 신규 등록 후 접수할 수 있습니다.
+                                    </p>
+                                    <div style="display: flex; justify-content: center; gap: 10px; align-items: center;">
+                                        <input type="text" id="new_item_name"
+                                            placeholder="제품명" class="form-input" style="width: 250px;height: 30px;border-radius: 4px; border: solid 1px #D5D7D9; color: #676767;">
+                                        <button type="button" onclick="saveCitem()" class="btn-primary"
+                                                style="padding: 8px 20px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
+                                            신규 등록
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+
+                            $("#listItem").html(registerHtml); // 기존 내용을 지우고 폼을 보여줌
+                            return false;
+                        }
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const id = data.citem_id;
+
+                            let tr = $(
+                                `<tr id="tr${id}" onclick="selectItem(${id},'${data.item_name}')">`,
+                            );
+
+                            const listno =
+                                searchVO.totalCnt -
+                                ((searchVO.page - 1) * searchVO.recordSize + i);
+                            const ins_at = data.ins_at.split(" ")[0];
+                            const item_name = data.item_name;
+
+                            tr.append($($(`<td>${listno}</td>`)));
+                            tr.append($(`<td>${item_name}</td>`));
+                            tr.append($(`<td>${ins_at}</td>`));
+
+                            $("#listItem").append(tr);
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+
+            $(".background-item").css({ "z-index": "1000000" });
+            $(".show-use-item").css({ "z-index": "100" });
+            document.querySelector(".background-item").className =
+                "background-item show-use-item";
+        }
+
+        function popup_item_close() {
+            $(".background-item").css({ "z-index": "-1" });
+            document.querySelector(".background-item").className =
+                "background-item";
+            $("#search_item").val("");
+        }
+
+        function selectItem(id, name) {
+            $("#citem_id").val(id);
+            $("#item_name").val(name);
+
+            popup_item_close();
+        }
+
+        function saveCitem() {
+            const formData = new FormData();
+            const cus_id = $("#cus_id").val();
+            const item_name = $("#new_item_name").val();
+            const repair_id = $("#repair_id").val() || 0;
+            const repair_cmpn_id = $("#repair_cmpn_id").val() || 0;
+
+            if (Common.nullCheck(item_name, "new_item_name", "제품명")) return;
+
+            formData.append("cus_id", cus_id);
+            formData.append("item_name", item_name);
+            formData.append("repair_id", repair_id);
+            formData.append("repair_cmpn_id", repair_cmpn_id);
+            formData.append(
+                "ins_at",
+                new Date().toISOString().substring(0, 10),
+            );
+
+            Common.sendAxios(`/citem`, formData)
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        alert("신규 제품이 추가되었습니다.");
+
+                        $("#citem_id").val(json.data.citem_id);
+                        $("#item_name").val(item_name);
+
+                        popup_item_close();
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                        $(`#${json.data}`).focus();
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+    </script>
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>접수관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > A/S 관리 > 접수관리</p>
+                    </div>
+                </div>
+
+                <div class="contents-in scroll-custom">
+                    <div class="info-in">
+                        <p class="as-p">
+                            <span class="r-value">*&nbsp;</span>
+                            접수 타입
+                        </p>
+
+                        <input
+                            type="radio"
+                            name="as_request"
+                            class="input-radio"
+                            value="N"
+                            checked
+                        />
+                        <p
+                            class="info-title"
+                            style="
+                                background-color: #fff;
+                                justify-content: left;
+                                width: 80px;
+                                background: none;
+                                justify-content: left;
+                                padding-left: 10px;
+                            "
+                        >
+                            신규
+                        </p>
+
+                        <input
+                            type="radio"
+                            name="as_request"
+                            class="input-radio"
+                            value="Y"
+                        />
+                        <p
+                            class="info-title"
+                            style="
+                                background-color: #fff;
+                                justify-content: left;
+                                width: 80px;
+                                background: none;
+                                justify-content: left;
+                                padding-left: 10px;
+                            "
+                        >
+                            재콜
+                        </p>
+                    </div>
+
+                    <div class="info-in">
+                        <p class="as-p">
+                            <span class="r-value">*&nbsp;</span>
+                            접수처/수리처
+                        </p>
+                        <input
+                            type="text"
+                            readonly
+                            onclick="popup()"
+                            style="cursor: pointer"
+                            id="cus_name"
+                        />
+                        <input type="hidden" id="cus_id" />
+                    </div>
+
+                    <div class="info-in">
+                        <p class="as-p">
+                            <span class="r-value">*&nbsp;</span>
+                            제품명
+                        </p>
+                        <input
+                            type="text"
+                            onclick="popup_item()"
+                            style="cursor: pointer"
+                            id="item_name"
+                            readonly
+                        />
+                        <input type="hidden" id="citem_id" />
+                    </div>
+
+                    <div class="info-in info-addr">
+                        <p class="as-p">
+                            <span class="r-value">*&nbsp;</span>
+                            A/S 방문 주소
+                        </p>
+                        <div class="addr-wrap">
+                            <div class="addr-zipcode-wrap">
+                                <input
+                                    type="text"
+                                    readonly
+                                    class="addr-zipcode"
+                                    id="zipcode"
+                                    onclick="kakaopost()"
+                                />
+                                <p onclick="kakaopost()" class="btn-addr">
+                                    우편번호 검색
+                                </p>
+                            </div>
+                            <input
+                                type="text"
+                                id="addr1"
+                                class="addr-dtl"
+                                onclick="kakaopost()"
+                                readonly
+                            />
+                            <input
+                                type="text"
+                                id="addr2"
+                                class="addr-dtl"
+                                placeholder="상세주소를 입력해주세요."
+                            />
+                        </div>
+                    </div>
+
+                    <div class="info-in">
+                        <p class="as-p">
+                            <span class="r-value">*&nbsp;</span>
+                            연락처
+                        </p>
+                        <input
+                            class="number"
+                            type="text"
+                            id="phone"
+                            placeholder="'-' 를 제외하고 입력해주세요."
+                            maxlength="11"
+                        />
+                    </div>
+
+                    <div class="info-in info-in-t" style="height: 76px">
+                        <p class="as-p">고객 증상</p>
+                        <textarea
+                            class="scroll-custom"
+                            style="height: 64px"
+                            id="symptom_cus"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>뒤로</p>
+                    </div>
+                    <div class="btn btn-add" onclick="saveClick()">
+                        <p id="saveBtn"></p>
+                    </div>
+                </div>
+
+                <!-- 고객정보관리 팝업 -->
+                <div class="background">
+                    <div class="window">
+                        <div class="popup popup-list-dtl" style="width: 749px">
+                            <div class="popup-hd"><p>고객정보관리</p></div>
+                            <div class="popup-search">
+                                <div class="popup-search-in">
+                                    <select
+                                        class="popup-search-select"
+                                        id="cate"
+                                    >
+                                        <option value="all">전체</option>
+                                        <option value="name">업체명</option>
+                                        <option value="phone">연락처</option>
+                                    </select>
+                                    <div class="popup-search-in">
+                                        <input
+                                            type="text"
+                                            placeholder="검색어를 입력해주세요."
+                                            class="search-input"
+                                            id="search"
+                                            onkeypress="
+                                                if (event.keyCode == 13)
+                                                    getCustomList();
+                                            "
+                                        />
+                                    </div>
+                                    <img
+                                        src="../img/ico_search_popup.png"
+                                        class="ico-search-popup"
+                                        onclick="getCustomList()"
+                                    />
+                                </div>
+                            </div>
+                            <div class="popup-in">
+                                <div class="contents-in popup-contents-in">
+                                    <div class="list popup-list">
+                                        <table>
+                                            <colgroup>
+                                                <col style="width: 100px" />
+                                                <col style="width: 30%" />
+                                                <col style="width: 20%" />
+                                                <col style="width: 50%" />
+                                            </colgroup>
+                                            <tbody>
+                                                <tr>
+                                                    <th>NO</th>
+                                                    <th>접수처/수리처</th>
+                                                    <th>연락처</th>
+                                                    <th>주소</th>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody id="list"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="paging popup-paging">
+                                        <div
+                                            class="paging-inner popup-paging-inner"
+                                            id="pagingArea"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div class="popup-close">
+                                    <p onclick="popup_close()">닫기</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 설치제품목록 팝업 -->
+                <div class="background-item">
+                    <div class="window">
+                        <div class="popup popup-list-dtl" style="width: 749px">
+                            <div class="popup-hd"><p>제품 목록</p></div>
+                            <div class="popup-search">
+                                <div class="popup-search-in">
+                                    <div class="popup-search-in">
+                                        <input
+                                            type="text"
+                                            placeholder="검색어를 입력해주세요."
+                                            class="search-input"
+                                            id="search_item"
+                                            onkeypress="
+                                                if (event.keyCode == 13)
+                                                    popup_item();
+                                            "
+                                        />
+                                    </div>
+                                    <img
+                                        src="../img/ico_search_popup.png"
+                                        class="ico-search-popup"
+                                        onclick="popup_item()"
+                                    />
+                                </div>
+                            </div>
+                            <div class="popup-in">
+                                <div class="contents-in popup-contents-in">
+                                    <div class="list popup-list">
+                                        <table>
+                                            <colgroup>
+                                                <col style="width: 100px" />
+                                                <col style="width: 100%" />
+                                                <col style="width: 200px" />
+                                            </colgroup>
+
+                                            <tbody>
+                                                <tr>
+                                                    <th>NO</th>
+                                                    <th>제품명</th>
+                                                    <th>설치일자</th>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody id="listItem"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="popup-close">
+                                    <p onclick="popup_item_close()">닫기</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

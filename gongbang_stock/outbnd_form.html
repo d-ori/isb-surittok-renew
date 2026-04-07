@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+        <!-- 카카오맵 연동 -->
+        <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "outbnd";
+        const currentApi = "/outbnd";
+
+        $(function () {
+            getItem();
+
+            if (id != null) {
+                getDetail();
+                $(".prcitm_name_edit").show();
+                $(".edit").addClass("info-in-modify-info");
+
+                $("#saveBtn").html("수정");
+            } else {
+                $(".prcitm_name_view").show();
+                $("#outbnd_at").val(new Date().toISOString().slice(0, 10));
+                $(".btn-del").css("display", "none");
+                $("#saveBtn").html("등록");
+            }
+        });
+
+        function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const prch_name = data.prch_name?.trim() || "-";
+                    const prcitm_name = data.prcitm_name?.trim() || "-";
+                    const item_code = data.item_code?.trim() || "-";
+                    const outbnd_qty = data.outbnd_qty;
+                    const outbnd_price = data.outbnd_price;
+                    const amount = Common.numberWithCommas(data.amount);
+                    const note = data.outbnd_note?.replaceAll("<br>", "\r\n");
+                    const outbnd_at = data.outbnd_at.substring(0, 10);
+                    const material_id = data.material_id;
+                    const standard = data.standard?.trim() || "-";
+                    const order_cmpn = data.order_cmpn;
+
+                    $("#outbnd_at").val(outbnd_at);
+                    $("#prch_name").val(prch_name);
+                    $("#prcitm_name").val(prcitm_name);
+                    $("#prcitm_name_").val(prcitm_name);
+                    $("#item_code").val(item_code);
+                    $("#outbnd_qty").val(outbnd_qty);
+                    $("#outbnd_price").val(outbnd_price);
+                    $("#amount").val(amount);
+                    $("#note").val(note);
+                    $("#material_id").val(material_id);
+                    $("#standard").val(standard);
+                    $("#order_cmpn").val(order_cmpn);
+
+                    const type = data.type;
+                    $(`input[name='type'][value='${data.type}']`).prop(
+                        "checked",
+                        true,
+                    );
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // 체크박스
+        function check() {
+            $("input[name=_selected_all_]").on("change", function () {
+                $("input[name=_selected_]").prop("checked", this.checked);
+                if (this.checked) {
+                    $("tr").addClass("selected-row");
+                } else {
+                    $("tr").removeClass("selected-row");
+                }
+            });
+
+            $("input[name=_selected_]").on("change", function () {
+                $(this).closest("tr").toggleClass("selected-row", this.checked);
+
+                const allChecked =
+                    $("input[name=_selected_]").length ===
+                    $("input[name=_selected_]:checked").length;
+                $("input[name=_selected_all_]").prop("checked", allChecked);
+            });
+        }
+
+        // 선택 → 수정 → back, 선택해제
+        function uncheck() {
+            $(":checkbox:checked").prop("checked", false);
+        }
+
+        function getItem(page = 1) {
+            Common.sendAxios(
+                `/material?keyword=${decodeURI(
+                    $("#search").val(),
+                )}&page=${page}&sort=${decodeURI("prch_name")}&cate=${$(
+                    "#cate",
+                ).val()}`,
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        $("#list").empty();
+
+                        Common.renderPaging(searchVO);
+
+                        if (list.length == 0) {
+                            $("#list").append(
+                                $(
+                                    `<tr><td colspan='${$("#list").closest("table").find("colgroup col").length}'>검색 결과가 없습니다.</td></tr>`,
+                                ),
+                            );
+                            return false;
+                        }
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const id = data.material_id;
+
+                            const listno = searchVO.totalCnt - i;
+                            const prch_name = data.prch_name?.trim() || "-";
+                            const prcitm_name = data.prcitm_name?.trim() || "-";
+                            const item_code = data.item_code?.trim() || "-";
+                            const price = Common.numberWithCommas(data.price);
+                            const current_qty = Common.numberWithCommas(
+                                data.current_qty,
+                            );
+                            const standard = data.standard?.trim() || "-";
+
+                            let tr = $(
+                                `<tr id="tr${id}" onclick="selectItem(${id}, '${prch_name}', '${prcitm_name}', '${item_code}', '${data.price}', '${standard}', '${current_qty}')">`,
+                            );
+
+                            tr.append($($(`<td>${listno}</td>`)));
+                            tr.append($(`<td>${prch_name}</td>`));
+                            tr.append($(`<td>${prcitm_name}</td>`));
+                            tr.append($(`<td>${item_code}</td>`));
+                            tr.append($(`<td>${standard}</td>`));
+                            tr.append($(`<td>${price} 원</td>`));
+                            tr.append($(`<td>${current_qty} 개</td>`));
+
+                            $("#list").append(tr);
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function pageMove(pageIndex) {
+            getItem(pageIndex);
+        }
+
+        function selectItem(
+            id,
+            prch_name,
+            prcitm_name,
+            item_code,
+            price,
+            standard,
+            current_qty,
+        ) {
+            $("#material_id").val(id);
+            $("#prch_name").val(prch_name);
+            $("#prcitm_name").val(prcitm_name);
+            $("#item_code").val(item_code);
+            $("#outbnd_price").val(price);
+            $("#standard").val(standard);
+
+            $("#amount").val("0");
+            $("#outbnd_qty").val("");
+
+            popup_close();
+        }
+
+        function saveClick() {
+            const formData = new FormData();
+            // 유틸리티 함수 정의
+            const getNum = (id) =>
+                Number($(id).val()?.toString().replace(/,/g, "") || 0);
+
+            // 사용
+            const outbnd_price = $("#outbnd_price").val();
+            const outbnd_qty = getNum("#outbnd_qty");
+            const material_id = $("#material_id").val();
+            const amount = $("#amount").val()?.replaceAll(",", "");
+            const note = ($("#note").val() || "")?.replaceAll("<br>", "\r\n");
+            const outbnd_at = $("#outbnd_at").val();
+            const type = document.querySelector(
+                'input[name="type"]:checked',
+            ).value;
+            let method = "";
+            const order_cmpn = $("#order_cmpn").val();
+
+            formData.append("material_id", material_id);
+            formData.append("outbnd_price", outbnd_price);
+            formData.append("outbnd_qty", outbnd_qty);
+            formData.append("amount", amount);
+            formData.append("note", note);
+            formData.append("outbnd_at", outbnd_at);
+            formData.append("type", type);
+            formData.append("order_cmpn", order_cmpn);
+
+            if (outbnd_at == "") {
+                alert("출고일을 입력해주세요.");
+                return;
+            }
+
+            if (material_id == "") {
+                alert("품목를 선택해주세요.");
+                return;
+            }
+
+            if (outbnd_price == "") {
+                alert("출고 단가를 입력해주세요.");
+                $("#outbnd_price").focus();
+                return;
+            }
+
+            if (outbnd_qty == "" || outbnd_qty == "0") {
+                alert("출고 수량을 입력해주세요.");
+                $("#outbnd_qty").focus();
+                return;
+            }
+
+            if (id != null) {
+                method = "/put";
+                formData.append("outbnd_id", id);
+            }
+
+            Common.sendAxios(`${currentApi}${method}`, formData)
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        alert(json.msg);
+                        if (id == null) {
+                            const params = new URLSearchParams(
+                                window.location.search,
+                            );
+                            params.delete("id");
+                            const queryString = params.toString();
+                            location.href = `${currentUrl}_list.html${queryString}`;
+                        } else {
+                            const queryString = window.location.search;
+                            location.href = `${currentUrl}_detail.html${queryString}`;
+                        }
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                        $(`#${json.data}`).focus();
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_detail.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_detail.html`;
+            }
+        }
+
+        // 고객정보관리 팝업 열기
+        function popup() {
+            $(".background").css({ "z-index": "1000000" });
+            $(".show-use").css({ "z-index": "100" });
+            document.querySelector(".background").className =
+                "background show-use";
+        }
+
+        // 고객정보관리 팝업 닫기
+        function popup_close() {
+            $(".background").css({ "z-index": "-1" });
+            document.querySelector(".background").className = "background";
+        }
+
+        function cal() {
+            let price = Number($("#outbnd_price").val()?.replaceAll(",", ""));
+
+            $("#amount").val(
+                Common.numberWithCommas(price * $("#outbnd_qty").val()),
+            );
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>출고 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 재고 관리 > 출고 관리</p>
+                    </div>
+                </div>
+                <div
+                    class="contents-in scroll-custom"
+                    style="height: calc(100vh - 350px)"
+                >
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            타입
+                        </p>
+
+                        <input
+                            type="radio"
+                            name="type"
+                            class="input-radio"
+                            value="1"
+                            checked
+                        />
+                        <p
+                            class="info-title"
+                            style="
+                                background-color: #fff;
+                                justify-content: left;
+                                width: 80px;
+                                background: none;
+                                justify-content: left;
+                                padding-left: 10px;
+                            "
+                        >
+                            기사
+                        </p>
+
+                        <input
+                            type="radio"
+                            name="type"
+                            class="input-radio"
+                            value="2"
+                        />
+                        <p
+                            class="info-title"
+                            style="
+                                background-color: #fff;
+                                justify-content: left;
+                                width: 80px;
+                                background: none;
+                                justify-content: left;
+                                padding-left: 10px;
+                            "
+                        >
+                            자재 판매
+                        </p>
+
+                        <input
+                            type="radio"
+                            name="type"
+                            class="input-radio"
+                            value="3"
+                        />
+                        <p
+                            class="info-title"
+                            style="
+                                background-color: #fff;
+                                justify-content: left;
+                                width: 80px;
+                                background: none;
+                                justify-content: left;
+                                padding-left: 10px;
+                            "
+                        >
+                            서비스
+                        </p>
+                    </div>
+
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            출고일자
+                        </p>
+                        <input type="date" id="outbnd_at" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>발주처</p>
+                        <input
+                            type="text"
+                            id="order_cmpn"
+                            placeholder="발주처를 입력해주세요."
+                        />
+                    </div>
+
+                    <div class="info-in edit">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            품목명
+                        </p>
+                        <input
+                            type="text"
+                            id="prcitm_name"
+                            class="prcitm_name_view"
+                            style="cursor: pointer; display: none"
+                            readonly
+                            onclick="popup()"
+                            placeholder="출고 품목를 선택해주세요."
+                        />
+
+                        <input
+                            type="text"
+                            id="prcitm_name_"
+                            class="prcitm_name_edit"
+                            style="display: none"
+                            readonly
+                        />
+                        <input type="hidden" id="material_id" />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            매입처명
+                        </p>
+                        <input type="text" id="prch_name" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            품목코드
+                        </p>
+                        <input type="text" id="item_code" readonly />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            규격
+                        </p>
+                        <input type="text" id="standard" readonly />
+                    </div>
+
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            단가 (VAT 포함)
+                        </p>
+                        <input
+                            type="text"
+                            id="outbnd_price"
+                            class="number"
+                            placeholder="숫자만 입력해주세요."
+                            onkeyup="cal()"
+                        />
+                    </div>
+
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            출고 수량
+                        </p>
+                        <input
+                            type="text"
+                            id="outbnd_qty"
+                            class="number"
+                            placeholder="숫자만 입력해주세요."
+                            onkeyup="cal()"
+                        />
+                    </div>
+
+                    <div class="info-in info-in-modify-info">
+                        <p>출고 총 금액 (원)</p>
+                        <input type="text" id="amount" value="0" readonly />
+                    </div>
+
+                    <div class="info-in info-in-rm">
+                        <p>비고</p>
+                        <textarea
+                            class="scroll-custom"
+                            id="note"
+                            placeholder="비고를 입력해주세요."
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>뒤로</p>
+                    </div>
+                    <div class="btn btn-add" onclick="saveClick()">
+                        <p id="saveBtn"></p>
+                    </div>
+                </div>
+
+                <!-- 품목 팝업 -->
+                <div class="background">
+                    <div class="window">
+                        <div class="popup popup-list-dtl" style="width: 1000px">
+                            <div class="popup-hd"><p>품목 목록</p></div>
+                            <div class="popup-search">
+                                <div class="popup-search-in">
+                                    <select
+                                        class="popup-search-select"
+                                        id="cate"
+                                    >
+                                        <option value="">전체</option>
+                                        <option value="prch">매입처명</option>
+                                        <option value="name">품목명</option>
+                                    </select>
+                                    <div class="popup-search-in">
+                                        <input
+                                            type="text"
+                                            placeholder="검색어를 입력해주세요."
+                                            class="search-input"
+                                            id="search"
+                                            onkeypress="getItem()"
+                                        />
+                                    </div>
+                                    <img
+                                        src="../img/ico_search_popup.png"
+                                        class="ico-search-popup"
+                                        onclick="getItem()"
+                                    />
+                                </div>
+                            </div>
+                            <div class="popup-in">
+                                <div class="contents-in popup-contents-in">
+                                    <div class="list popup-list">
+                                        <table>
+                                            <colgroup>
+                                                <col style="width: 100px" />
+                                                <col style="width: 30%" />
+                                                <col style="width: 30%" />
+                                                <col style="width: 20%" />
+                                                <col style="width: 20%" />
+                                                <col style="width: 100px" />
+                                                <col style="width: 100px" />
+                                            </colgroup>
+                                            <tbody>
+                                                <tr>
+                                                    <th>NO</th>
+                                                    <th>매입처명</th>
+                                                    <th>품목명</th>
+                                                    <th>품목코드</th>
+                                                    <th>규격</th>
+                                                    <th>단가</th>
+                                                    <th>재고 수량</th>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody id="list"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="paging popup-paging">
+                                        <div
+                                            class="paging-inner popup-paging-inner"
+                                            id="pagingArea"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div class="popup-close">
+                                    <p onclick="popup_close()">닫기</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

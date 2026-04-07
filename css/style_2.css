@@ -1,0 +1,26 @@
+html,body { height: 100%; box-sizing: border-box; } 
+html,body { background-color: #EDEFF3; display: flex; width: 100%; justify-content: center; align-items: center; height: 100%; } 
+.content_box { width:1593px; height: 767px; display: flex; justify-content: center; align-items: center; background-color: white; font-size: 30px; } 
+.input_box { width: min(721px, 100%); min-height: 624px; display: flex; flex-direction: column; justify-content: center; align-items: stretch; } 
+.title_box { display: flex; text-align: center; flex-direction: column; align-items: center; gap: 20px; } 
+h1 { color: #3d3d3d; font-size: 30px; font-weight: 700; line-height: 1.2; /* 폰트 렌더링 차이 완화 */ margin: 0; } 
+.title_box>p { font-size: 20px; color: #635B5B; } 
+.form_box { display: flex; flex-direction: column; gap: 12px; width: 100%; /* 여기서 간격 조정 */ } 
+.form_box input { display: flex; height: 56px; align-items: center; gap:12px; padding: 8px 24px; border-radius: 6px; border: 1px solid #D5D7D9; } 
+.form_box input::placeholder { color:#A6AFB9; font-size: 16px; font-family: "Noto Sans KR"; } 
+.form_box input:first-of-type { margin-top: 44px; } 
+.btn_box { display: flex; margin-top: 44px; width: 100%; gap: 21px; } 
+.btn_box button { width: 350px; height: 56px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; } 
+.join_btn { background-color: #4E8EED; color: #fff; } 
+.cancel_btn { background-color: #A6AFB9; color: #fff; } 
+.as-list table tbody tr { border: 1px solid #A6AFB9; } 
+.as-list table tbody tr td { border: 1px solid #A6AFB9; } 
+.list table tbody tr { border: 1px solid #A6AFB9; } 
+.list table tbody tr td { border: 1px solid #A6AFB9; } 
+
+body,
+ .header { min-width: 1024px; } 
+ .contents-area { min-width: 1280px; height: 100%; } 
+
+ /* 실제 내용 폭 */
+ .inner { max-width: 1600px; margin: 0 auto; } 

@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "citem";
+        const currentApi = "/citem";
+
+        let fileList_drawing = [];
+        let fileList_eqpmn = [];
+        let fileList_inst = [];
+
+        const imageConfigs = {
+            drawings: {
+                fileList: () => fileList_drawing,
+                setFileList: (v) => (fileList_drawing = v),
+                previewId: "preview_drawing",
+            },
+            eqpmn: {
+                fileList: () => fileList_eqpmn,
+                setFileList: (v) => (fileList_eqpmn = v),
+                previewId: "preview_eqpmn",
+            },
+            inst: {
+                fileList: () => fileList_inst,
+                setFileList: (v) => (fileList_inst = v),
+                previewId: "preview_inst",
+            },
+        };
+
+        $(function () {
+            updateSortable("drawings");
+            updateSortable("eqpmn");
+            updateSortable("inst");
+
+            getCustomList();
+            getRepairList();
+
+            if (id != null) {
+                getDetail();
+                $("#saveBtn").html("수정");
+            } else {
+                $("#ins_at").val(new Date().toISOString().substring(0, 10));
+                $(".btn-del").css("display", "none");
+                $("#saveBtn").html("등록");
+            }
+        });
+
+        async function addFilesFromUrls(
+            fileDto,
+            targetList,
+            renderFunc,
+            columnName,
+        ) {
+            for (let i = 0; i < fileDto.length; i++) {
+                const file = fileDto[i];
+                if (file.upload_column === columnName) {
+                    await addFileFromUrl(file.upload_url, targetList);
+                }
+            }
+            renderFunc(columnName);
+        }
+
+        async function addFileFromUrl(url, targetList) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+
+                // MIME 타입 기반으로 확장자 결정 (간단히 png/jpg만)
+                const extension = blob.type === "image/png" ? "png" : "jpg";
+
+                // File 객체 생성
+                const file = new File([blob], `image_from_url.${extension}`, {
+                    type: blob.type,
+                });
+
+                // 리스트에 추가
+                if (targetList.length < 10) {
+                    targetList.push(file);
+                } else {
+                    alert("최대 10개까지 가능합니다.");
+                }
+            } catch (error) {
+                console.error("URL 이미지 변환 실패:", error);
+            }
+        }
+
+        async function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const ins_at = data.ins_at.substring(0, 10);
+                    const cus_name = data.cus_name;
+                    const rpr_name = data.rpr_name;
+                    const cus_id = data.cus_id;
+                    const cns_name = data.cns_name;
+                    const item_name = data.item_name;
+                    const standard = data.standard;
+                    const repair_cmpn_id = data.repair_cmpn_id;
+                    const repair_id = data.repair_id;
+                    const repair_cmpn = data.repair_cmpn;
+                    const repair_name = data.repair_name;
+                    const addr = data.addr;
+                    const note = (data.note || "").replaceAll("<br>", "\r\n");
+                    const wty_start = data.wty_start?.substring(0, 10);
+                    const wty_end = data.wty_end?.substring(0, 10);
+
+                    $("#ins_at").val(ins_at);
+                    $("#cus_name").val(cus_name);
+                    $("#rpr_name").val(rpr_name);
+                    $("#cus_id").val(cus_id);
+                    $("#cns_name").val(cns_name);
+                    $("#item_name").val(item_name);
+                    $("#standard").val(standard);
+                    $("#repair_cmpn_id").val(repair_cmpn_id);
+                    $("#repair_id").val(repair_id);
+                    $("#repair_cmpn").val(repair_cmpn);
+                    $("#repair_name").val(repair_name);
+                    $("#addr").val(addr);
+                    $("#note").val(note);
+                    $("#wty_start").val(wty_start);
+                    $("#wty_end").val(wty_end);
+
+                    const fileDto = json.searchVO;
+
+                    await addFilesFromUrls(
+                        fileDto,
+                        fileList_eqpmn,
+                        renderPreview,
+                        "eqpmn",
+                    );
+                    await addFilesFromUrls(
+                        fileDto,
+                        fileList_drawing,
+                        renderPreview,
+                        "drawings",
+                    );
+                    await addFilesFromUrls(
+                        fileDto,
+                        fileList_inst,
+                        renderPreview,
+                        "inst",
+                    );
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function saveClick() {
+            const formData = new FormData();
+            const ins_at = $("#ins_at").val();
+            const cus_id = $("#cus_id").val();
+            const cns_name = $("#cns_name").val();
+            const item_name = $("#item_name").val();
+            const standard = $("#standard").val();
+            const repair_id = $("#repair_id").val() || 0;
+            const addr = $("#addr").val();
+            const note = ($("#note").val() || "").replaceAll("<br>", "\r\n");
+            const wty_start = $("#wty_start").val();
+            const wty_end = $("#wty_end").val();
+            const repair_cmpn_id = $("#repair_cmpn_id").val() || 0;
+
+            let method = "";
+
+            if (Common.nullCheck(cus_id, "cus_id", "고객사")) return;
+            if (Common.nullCheck(item_name, "item_name", "제품명")) return;
+
+            formData.append("ins_at", ins_at);
+            formData.append("cus_id", cus_id);
+            formData.append("cns_name", cns_name);
+            formData.append("item_name", item_name);
+            formData.append("standard", standard);
+            formData.append("repair_id", repair_id);
+            formData.append("addr", addr);
+            formData.append("note", note);
+            formData.append("wty_start", wty_start);
+            formData.append("wty_end", wty_end);
+            formData.append("repair_cmpn_id", repair_cmpn_id);
+
+            if (fileList_drawing.length != 0) {
+                fileList_drawing.forEach((file) => {
+                    formData.append("drawing_file", file);
+                });
+            }
+
+            if (fileList_eqpmn.length != 0) {
+                fileList_eqpmn.forEach((file) => {
+                    formData.append("eqpmn_file", file);
+                });
+            }
+
+            if (fileList_inst.length != 0) {
+                fileList_inst.forEach((file) => {
+                    formData.append("inst_file", file);
+                });
+            }
+
+            if (id != null) {
+                method = "/put";
+                formData.append("citem_id", id);
+            }
+
+            Common.sendAxios(`${currentApi}${method}`, formData)
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        alert(json.msg);
+
+                        if (id == null) {
+                            const params = new URLSearchParams(
+                                window.location.search,
+                            );
+                            params.delete("id");
+
+                            const queryString = params.toString();
+                            location.href = `${currentUrl}_list.html${queryString}`;
+                        } else {
+                            const queryString = window.location.search;
+                            location.href = `${currentUrl}_detail.html${queryString}`;
+                        }
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                        $(`#${json.data}`).focus();
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function deletion() {
+            if (
+                confirm(
+                    "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다.",
+                ) == true
+            ) {
+                const formData = new FormData();
+                formData.append("id_list", id);
+
+                Common.sendAxios(`${currentApi}/delete`, formData)
+                    .then(async (json) => {
+                        alert(json.msg);
+                        location.href = `${currentUrl}_list.html`;
+                    })
+                    .catch((err) => {
+                        console.error("ERROR : ", err);
+                    });
+            }
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_detail.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_detail.html`;
+            }
+        }
+
+        // 고객정보관리 팝업
+        function getCustomList(page = 1) {
+            Common.sendAxios(
+                `/custom?&keyword=${decodeURI(
+                    $("#search").val(),
+                )}&page=${page}&sort=${decodeURI("a.created_at DESC")}&cate=${$(
+                    "#cate",
+                ).val()}`,
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        $("#list").empty();
+
+                        if (list.length == 0) {
+                            $("#list").append(
+                                $(
+                                    "<tr><td colspan='4'>검색 결과가 없습니다.</td></tr>",
+                                ),
+                            );
+                            return false;
+                        }
+
+                        Common.renderPaging(searchVO);
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const id = data.cus_id;
+                            let tr = $(
+                                `<tr id="tr${id}" onclick="selectCustom(${id},'${data.name}','${data.name_rpr}')">`,
+                            );
+
+                            const listno =
+                                searchVO.totalCnt -
+                                ((searchVO.page - 1) * searchVO.recordSize + i);
+                            const name = data.name;
+                            const phone = data.phone;
+                            const addr1 = data.addr1 || "";
+                            const addr2 = data.addr2 || "";
+                            const addr = (addr1 + " " + addr2).trim() || "-";
+
+                            const name_rpr = data.name_rpr;
+                            const phone_rpr = data.phone_rpr;
+                            const addr1_rpr = data.addr1_rpr || "";
+                            const addr2_rpr = data.addr2_rpr || "";
+                            const addr_rpr =
+                                (addr1_rpr + " " + addr2_rpr).trim() || "-";
+
+                            tr.append($($(`<td>${listno}</td>`)));
+                            tr.append($(`<td>${name}<br>${name_rpr}</td>`));
+                            tr.append($(`<td>${phone}<br>${phone_rpr}</td>`));
+                            tr.append($(`<td>${addr}<br>${addr_rpr}</td>`));
+
+                            $("#list").append(tr);
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function pageMove(pageIndex) {
+            getCustomList(pageIndex);
+        }
+
+        function selectCustom(id, name, rpr_name) {
+            $("#cus_id").val(id);
+            $("#cus_name").val(name);
+            $("#rpr_name").val(rpr_name);
+
+            popup_close();
+        }
+
+        // 고객정보관리 팝업 열기
+        function popup() {
+            $(".background").css({ "z-index": "1000000" });
+            $(".show-use").css({ "z-index": "100" });
+            document.querySelector(".background").className =
+                "background show-use";
+        }
+
+        // 고객정보관리 팝업 닫기
+        function popup_close() {
+            $(".background").css({ "z-index": "-1" });
+            document.querySelector(".background").className = "background";
+        }
+
+        // 설치제품목록 팝업
+        function popup_repair() {
+            $(".background-item").css({ "z-index": "1000000" });
+            $(".show-use-item").css({ "z-index": "100" });
+            document.querySelector(".background-item").className =
+                "background-item show-use-item";
+        }
+
+        function popup_repair_close() {
+            $(".background-item").css({ "z-index": "-1" });
+            document.querySelector(".background-item").className =
+                "background-item";
+        }
+
+        function pageMove_(pageIndex) {
+            getRepairList(pageIndex);
+        }
+
+        // 기사 리스트
+        function getRepairList(page_repair = 1) {
+            Common.sendAxios(
+                `/repair/all?&keyword=${decodeURI(
+                    $("#search_repair").val(),
+                )}&page=${page_repair}&sort=${decodeURI("b.name")}&cate=${$(
+                    "#cate_repair",
+                ).val()}`,
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        $("#listRepair").empty();
+
+                        if (list.length == 0) {
+                            $("#listRepair").append(
+                                $(
+                                    "<tr><td colspan='4'>검색 결과가 없습니다.</td></tr>",
+                                ),
+                            );
+                            return false;
+                        }
+
+                        Common.renderPaging_(searchVO, "#pagingArea_repair");
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const id = data.account_id;
+                            const cmpn_id = data.cmpn_id;
+
+                            let tr = $(
+                                `<tr id="tr${id}" onclick="selectRapair(${id},'${data.name}',${cmpn_id},'${data.cmpn_name}')">`,
+                            );
+
+                            const listno =
+                                searchVO.totalCnt -
+                                ((searchVO.page - 1) * searchVO.recordSize + i);
+                            const name = data.name;
+                            const cmpn_name = data.cmpn_name;
+                            const phone = data.phone;
+
+                            tr.append($($(`<td>${listno}</td>`)));
+                            tr.append($(`<td>${cmpn_name}</td>`));
+                            tr.append($(`<td>${name}</td>`));
+                            tr.append($(`<td>${phone}</td>`));
+
+                            $("#listRepair").append(tr);
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function selectRapair(id, name, cmpn_id, cmpn_name) {
+            $("#repair_id").val(id);
+            $("#repair_name").val(name);
+            $("#repair_cmpn_id").val(cmpn_id);
+            $("#repair_cmpn").val(cmpn_name);
+
+            popup_repair_close();
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>설치 제품 정보</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 고객 관리 > 설치 제품 정보</p>
+                    </div>
+                </div>
+                <div class="contents-in scroll-custom">
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            설치일자
+                        </p>
+                        <input type="date" id="ins_at" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            접수처명
+                        </p>
+                        <input
+                            type="text"
+                            readonly
+                            onclick="popup()"
+                            style="cursor: pointer"
+                            id="cus_name"
+                        />
+                        <input type="hidden" readonly id="cus_id" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            수리처명
+                        </p>
+                        <input
+                            type="text"
+                            readonly
+                            onclick="popup()"
+                            style="cursor: pointer"
+                            id="rpr_name"
+                        />
+                    </div>
+
+                    <div class="info-in">
+                        <p>공사명칭</p>
+                        <input type="text" id="cns_name" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            제품명
+                        </p>
+                        <input type="text" id="item_name" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>규격</p>
+                        <input type="text" id="standard" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>설치업체</p>
+                        <input
+                            type="text"
+                            readonly
+                            onclick="popup_repair()"
+                            style="cursor: pointer"
+                            id="repair_cmpn"
+                        />
+                        <input type="hidden" readonly id="repair_cmpn_id" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>설치기사</p>
+                        <input
+                            type="text"
+                            readonly
+                            onclick="popup_repair()"
+                            style="cursor: pointer"
+                            id="repair_name"
+                        />
+                        <input type="hidden" readonly id="repair_id" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>설치장소</p>
+                        <input type="text" id="addr" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>보증 시작일</p>
+                        <input type="date" id="wty_start" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>보증 종료일</p>
+                        <input type="date" id="wty_end" />
+                    </div>
+
+                    <div class="info-in info-file">
+                        <div class="info-file-in">
+                            <p>도면 이미지</p>
+
+                            <div>
+                                <div class="info-file-inner">
+                                    <div class="file-btn">
+                                        <input
+                                            type="file"
+                                            id="upload_drawing"
+                                            class="input-file info-file-custom"
+                                            accept="image/*"
+                                            required
+                                            multiple
+                                            onchange="readURL(this, 'drawings')"
+                                        />
+
+                                        <label
+                                            for="upload_drawing"
+                                            class="input-file-button"
+                                        >
+                                            이미지 업로드
+                                        </label>
+
+                                        <div
+                                            class="btn-img-del"
+                                            onclick="imgClear('drawings')"
+                                        >
+                                            <p>이미지 모두 삭제</p>
+                                        </div>
+                                        <div>
+                                            <span
+                                                style="
+                                                    margin-left: 20px;
+                                                    color: #7c828a;
+                                                "
+                                            >
+                                                * 이미지 최대 10장 등록
+                                            </span>
+                                            <br />
+                                            <span
+                                                style="
+                                                    margin-left: 20px;
+                                                    color: #7c828a;
+                                                "
+                                            >
+                                                * PDF 등록 불가
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="img-list scroll-custom">
+                                        <ul
+                                            class="image-preview"
+                                            id="preview_drawing"
+                                        ></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-in info-file">
+                        <div class="info-file-in">
+                            <p>장비일람 이미지</p>
+
+                            <div>
+                                <div class="info-file-inner">
+                                    <div class="file-btn">
+                                        <input
+                                            type="file"
+                                            id="upload_eqpmn"
+                                            class="input-file info-file-custom"
+                                            accept="image/*"
+                                            required
+                                            multiple
+                                            onchange="readURL(this, 'eqpmn')"
+                                        />
+
+                                        <label
+                                            for="upload_eqpmn"
+                                            class="input-file-button"
+                                        >
+                                            이미지 업로드
+                                        </label>
+                                        <div
+                                            class="btn-img-del"
+                                            onclick="imgClear('eqpmn')"
+                                        >
+                                            <p>이미지 모두 삭제</p>
+                                        </div>
+                                        <div>
+                                            <span
+                                                style="
+                                                    margin-left: 20px;
+                                                    color: #7c828a;
+                                                "
+                                            >
+                                                * 이미지 최대 10장 등록
+                                            </span>
+                                            <br />
+                                            <span
+                                                style="
+                                                    margin-left: 20px;
+                                                    color: #7c828a;
+                                                "
+                                            >
+                                                * PDF 등록 불가
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="img-list scroll-custom">
+                                        <ul
+                                            class="image-preview"
+                                            id="preview_eqpmn"
+                                        ></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-in info-file">
+                        <div class="info-file-in">
+                            <p>설치 이미지</p>
+
+                            <div>
+                                <div class="info-file-inner">
+                                    <div class="file-btn">
+                                        <input
+                                            type="file"
+                                            id="upload_inst"
+                                            class="input-file info-file-custom"
+                                            accept="image/*"
+                                            required
+                                            multiple
+                                            onchange="readURL(this, 'inst')"
+                                        />
+
+                                        <label
+                                            for="upload_inst"
+                                            class="input-file-button"
+                                        >
+                                            이미지 업로드
+                                        </label>
+
+                                        <div
+                                            class="btn-img-del"
+                                            onclick="imgClear('inst')"
+                                        >
+                                            <p>이미지 모두 삭제</p>
+                                        </div>
+                                        <div>
+                                            <span
+                                                style="
+                                                    margin-left: 20px;
+                                                    color: #7c828a;
+                                                "
+                                            >
+                                                * 이미지 최대 10장 등록
+                                            </span>
+                                            <br />
+                                            <span
+                                                style="
+                                                    margin-left: 20px;
+                                                    color: #7c828a;
+                                                "
+                                            >
+                                                * PDF 등록 불가
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="img-list scroll-custom">
+                                        <ul
+                                            class="image-preview"
+                                            id="preview_inst"
+                                        ></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-in info-in-rm">
+                        <p>비고</p>
+                        <textarea class="scroll-custom" id="note"></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="deletion()">
+                        <p>삭제</p>
+                    </div>
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>뒤로</p>
+                    </div>
+                    <div class="btn btn-add" onclick="saveClick()">
+                        <p id="saveBtn"></p>
+                    </div>
+                </div>
+
+                <!-- 접수처/수리처 목록 팝업 -->
+                <div class="background">
+                    <div class="window">
+                        <div class="popup popup-list-dtl" style="width: 749px">
+                            <div class="popup-hd">
+                                <p>접수처/수리처 목록</p>
+                            </div>
+                            <div class="popup-search">
+                                <div class="popup-search-in">
+                                    <select
+                                        class="popup-search-select"
+                                        id="cate"
+                                    >
+                                        <option value="all">전체</option>
+                                        <option value="name">고객명</option>
+                                        <option value="phone">연락처</option>
+                                        <option value="addr">주소</option>
+                                    </select>
+                                    <div class="popup-search-in">
+                                        <input
+                                            type="text"
+                                            placeholder="검색어를 입력해주세요."
+                                            class="search-input"
+                                            id="search"
+                                            onkeypress="getCustomList()"
+                                        />
+                                    </div>
+                                    <img
+                                        src="../img/ico_search_popup.png"
+                                        class="ico-search-popup"
+                                        onclick="getCustomList()"
+                                    />
+                                </div>
+                            </div>
+                            <div class="popup-in">
+                                <div class="contents-in popup-contents-in">
+                                    <div class="list popup-list">
+                                        <table>
+                                            <colgroup>
+                                                <col style="width: 100px" />
+                                                <col style="width: 30%" />
+                                                <col style="width: 20%" />
+                                                <col style="width: 50%" />
+                                            </colgroup>
+                                            <tbody>
+                                                <tr>
+                                                    <th>NO</th>
+                                                    <th>
+                                                        접수처명
+                                                        <br />
+                                                        수리처명
+                                                    </th>
+                                                    <th>
+                                                        접수처 연락처
+                                                        <br />
+                                                        수리처 연락처
+                                                    </th>
+                                                    <th>
+                                                        접수처 주소
+                                                        <br />
+                                                        수리처 주소
+                                                    </th>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody id="list"></tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="paging popup-paging">
+                                        <div
+                                            class="paging-inner popup-paging-inner"
+                                            id="pagingArea"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div class="popup-close">
+                                    <p onclick="popup_close()">닫기</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- A/S 기사 목록 팝업 -->
+                <div class="background-item">
+                    <div class="window">
+                        <div class="popup popup-list-dtl" style="width: 749px">
+                            <div class="popup-hd"><p>A/S 기사 목록</p></div>
+                            <div class="popup-search">
+                                <div class="popup-search-in">
+                                    <select
+                                        class="popup-search-select"
+                                        id="cate_repair"
+                                    >
+                                        <option value="all">전체</option>
+                                        <option value="cmpn">업체명</option>
+                                        <option value="repair">기사명</option>
+                                    </select>
+
+                                    <div class="popup-search-in">
+                                        <input
+                                            type="text"
+                                            placeholder="검색어를 입력해주세요."
+                                            class="search-input"
+                                            id="search_repair"
+                                            onkeypress="getRepairList()"
+                                        />
+                                    </div>
+                                    <img
+                                        src="../img/ico_search_popup.png"
+                                        class="ico-search-popup"
+                                        onclick="getRepairList()"
+                                    />
+                                </div>
+                            </div>
+                            <div class="popup-in">
+                                <div class="contents-in popup-contents-in">
+                                    <div class="list popup-list">
+                                        <table>
+                                            <colgroup>
+                                                <col style="width: 100px" />
+                                                <col style="width: 35%" />
+                                                <col style="width: 35%" />
+                                                <col style="width: 30%" />
+                                            </colgroup>
+
+                                            <tbody>
+                                                <tr>
+                                                    <th>NO</th>
+                                                    <th>업체명</th>
+                                                    <th>기사명</th>
+                                                    <th>연락처</th>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody id="listRepair"></tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="paging popup-paging">
+                                        <div
+                                            class="paging-inner popup-paging-inner"
+                                            id="pagingArea_repair"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div class="popup-close">
+                                    <p onclick="popup_repair_close()">닫기</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function readURL(input, type) {
+                const config = imageConfigs[type];
+                const files = Array.from(input.files);
+
+                const MAX_SIZE = 5 * 1024 * 1024;
+                const MAX_COUNT = 10;
+
+                const overSizeFiles = [];
+                let overCount = false;
+
+                let list = config.fileList();
+
+                files.forEach((file) => {
+                    if (file.size > MAX_SIZE) {
+                        overSizeFiles.push(file.name);
+                        return;
+                    }
+
+                    if (list.length >= MAX_COUNT) {
+                        overCount = true;
+                        return;
+                    }
+
+                    list.push(file);
+                });
+
+                if (overSizeFiles.length) {
+                    alert(
+                        "5MB를 초과하여 업로드되지 않은 이미지:\n\n" +
+                            overSizeFiles.join("\n"),
+                    );
+                }
+
+                if (overCount) {
+                    alert("이미지는 최대 10개까지 업로드할 수 있습니다.");
+                }
+
+                input.value = "";
+                renderPreview(type);
+            }
+
+            async function renderPreview(type) {
+                const config = imageConfigs[type];
+                const list = config.fileList();
+                const container = document.getElementById(config.previewId);
+
+                container.innerHTML = "";
+
+                for (let i = 0; i < list.length; i++) {
+                    const file = list[i];
+                    const reader = new FileReader();
+
+                    await new Promise((resolve) => {
+                        reader.onload = (e) => {
+                            const li = document.createElement("li");
+                            li.className = "image-item";
+                            li.setAttribute("data-index", i);
+
+                            const img = document.createElement("img");
+                            img.src = e.target.result;
+
+                            const btn = document.createElement("button");
+                            btn.innerText = "X";
+                            btn.className = "delete-btn";
+                            btn.onclick = () => {
+                                list.splice(i, 1);
+                                renderPreview(type);
+                            };
+
+                            li.append(img, btn);
+                            container.appendChild(li);
+                            resolve();
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                updateSortable(type);
+            }
+
+            function updateSortable(type) {
+                const config = imageConfigs[type];
+                $("#" + config.previewId)
+                    .sortable({
+                        update: function () {
+                            const list = config.fileList();
+                            const newOrder = [];
+
+                            $("#" + config.previewId + " .image-item").each(
+                                function () {
+                                    const index = $(this).data("index");
+                                    newOrder.push(list[index]);
+                                },
+                            );
+
+                            config.setFileList([...newOrder]);
+                            setTimeout(() => renderPreview(type), 100);
+                        },
+                    })
+                    .disableSelection();
+            }
+
+            function imgClear(type) {
+                imageConfigs[type].setFileList([]);
+                renderPreview(type);
+            }
+        </script>
+
+        <div
+            id="imgModal"
+            style="
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                justify-content: center;
+                align-items: center;
+            "
+        >
+            <img id="modalImg" src="" style="max-width: 90%; max-height: 90%" />
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const lists = document.querySelectorAll(".img-list"); // 모든 img-list 선택
+                if (!lists.length) return;
+
+                const modal = document.getElementById("imgModal");
+                const modalImg = document.getElementById("modalImg");
+
+                lists.forEach((list) => {
+                    list.addEventListener("click", (e) => {
+                        if (e.target.tagName === "IMG") {
+                            modalImg.src = e.target.src;
+                            modal.style.display = "flex";
+                        }
+                    });
+                });
+
+                modal.addEventListener("click", () => {
+                    modal.style.display = "none";
+                    modalImg.src = "";
+                });
+            });
+        </script>
+    </body>
+</html>

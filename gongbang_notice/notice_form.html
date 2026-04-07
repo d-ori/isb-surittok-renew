@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        const cmpn_no = getCookie("cmpn_no");
+        const no = document.location.href.split("no=")[1].split("&")[0];
+
+        $(function () {
+            Common.sendAjax(
+                `/admin/itemBom/no?item_bom_no=${no}`,
+                "",
+                "POST",
+                true,
+                function (json) {
+                    try {
+                        const mtrlsNm = json.data[0].name.replaceAll(
+                            "<br>",
+                            "\r\n"
+                        );
+
+                        $("#mtrlsNm").val(mtrlsNm);
+
+                        getCate(json.data[0].item_cate_no);
+
+                        getItem(
+                            json.data[0].item_cate_no,
+                            json.data[0].item_info_no
+                        );
+                    } catch (Excpetion) {
+                        console.log("스크립트 에러 " + Excpetion);
+                    }
+                }
+            );
+        });
+
+        function getCate(item_cate_no) {
+            $("#itemCategory option").remove();
+
+            Common.sendAjax(
+                `/admin/itemCate/cmpnNo?cmpn_no=${cmpn_no}`,
+                "",
+                "POST",
+                true,
+                function (json) {
+                    try {
+                        const list = json.data;
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+
+                            $("#itemCategory").append(
+                                '<option value="' +
+                                    data.item_cate_no +
+                                    '">' +
+                                    data.name +
+                                    "</option>"
+                            );
+                        }
+                        $("#itemCategory").val(item_cate_no);
+                    } catch (Excpetion) {
+                        console.log("스크립트 에러 " + Excpetion);
+                    }
+                }
+            );
+        }
+
+        function getItem(item_cate_no, item_info_no) {
+            $("#itemNm option").remove();
+
+            Common.sendAjax(
+                `/admin/itemInfo/itemCateNo?item_cate_no=${item_cate_no}`,
+                "",
+                "POST",
+                true,
+                function (json) {
+                    try {
+                        const list = json.data;
+
+                        for (let j = 0; j < list.length; j++) {
+                            const data = list[j];
+
+                            $("#itemNm").append(
+                                '<option value="' +
+                                    data.item_info_no +
+                                    '">' +
+                                    data.name +
+                                    "</option>"
+                            );
+                        }
+
+                        $("#itemNm").val(item_info_no);
+                    } catch (Excpetion) {
+                        console.log("스크립트 에러 " + Excpetion);
+                    }
+                }
+            );
+        }
+
+        function getItemList() {
+            $("#itemNm option").remove();
+
+            const item_cate_no = $("#itemCategory").val();
+
+            Common.sendAjax(
+                `/admin/itemInfo/itemCateNo?item_cate_no=${item_cate_no}`,
+                "",
+                "POST",
+                true,
+                function (json) {
+                    try {
+                        const list = json.data;
+
+                        $("#itemNm").append(
+                            '<option value="null">품목을 선택해주세요.</option>'
+                        );
+
+                        for (let j = 0; j < list.length; j++) {
+                            const data = list[j];
+
+                            $("#itemNm").append(
+                                '<option value="' +
+                                    data.item_info_no +
+                                    '">' +
+                                    data.name +
+                                    "</option>"
+                            );
+                        }
+                    } catch (Excpetion) {
+                        console.log("스크립트 에러 " + Excpetion);
+                    }
+                }
+            );
+        }
+
+        function deletion() {
+            if (
+                confirm(
+                    "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다."
+                ) == true
+            ) {
+                //확인
+                Common.sendAjax(
+                    `/admin/itemBom/delete?item_bom_no=${no}`,
+                    "",
+                    "POST",
+                    true,
+                    function (json) {
+                        alert("삭제되었습니다.");
+                        location.href = "itemBom_list.html";
+                    }
+                );
+            }
+        }
+
+        function modify() {
+            const itemNm = $("#itemNm").val();
+            const mtrlsNm = $("#mtrlsNm")
+                .val()
+                .replace(/(?:\r\n|\r|\n)/g, "<br>");
+
+            if (mtrlsNm == "" || mtrlsNm == "null") {
+                alert("자재를 입력해 주세요");
+                $("#mtrlsNm").focus();
+                return false;
+            }
+
+            if (itemNm == "" || itemNm == "null") {
+                alert("품목을 선택해 주세요");
+                $("#itemNm").focus();
+                return false;
+            }
+
+            Common.sendAjax(
+                `/admin/itemBom/put?name=${mtrlsNm}&item_bom_no=${no}&item_info_no=${itemNm}`,
+                "",
+                "POST",
+                true,
+                function (json) {
+                    if (json.result == "400") {
+                        alert("중복되었습니다.\n품목정보를 확인해주세요.");
+                        $("#itemCategory").focus();
+                    } else {
+                        alert("수정되었습니다.");
+                        location.href = "itemBom_list.html";
+                    }
+                }
+            );
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>A/S BOM 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 품목정보 > A/S BOM 관리</p>
+                    </div>
+                </div>
+                <div class="contents-in scroll-custom" style="height: 264px">
+                    <div class="info-in">
+                        <p><span class="r-value">*&nbsp;</span>분류</p>
+                        <select
+                            class="input-select scroll-custom"
+                            id="itemCategory"
+                            onclick="getItemList()"
+                        ></select>
+                    </div>
+                    <div class="info-in">
+                        <p><span class="r-value">*&nbsp;</span>품목</p>
+                        <select
+                            class="input-select scroll-custom"
+                            id="itemNm"
+                        ></select>
+                    </div>
+                    <div class="info-in info-in-t" style="height: 96px">
+                        <p><span class="r-value">*&nbsp;</span>자재</p>
+                        <textarea
+                            class="scroll-custom"
+                            id="mtrlsNm"
+                            style="height: 84px"
+                        ></textarea>
+                    </div>
+                </div>
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="deletion()">
+                        <p>삭제</p>
+                    </div>
+                    <div class="btn btn-add" onclick="modify()">
+                        <p>수정</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

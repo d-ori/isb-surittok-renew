@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A/S 이력관리시스템</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reset-css@5.0.1/reset.min.css" />
+    <link rel="shortcut icon" href="./img/ico_shortIcon.png" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <link rel="stylesheet" href="./css/modern.css" />
+    <script src="./js/axios.min.js"></script>
+    <script type="text/javascript" src="./js/common.js"></script>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+</head>
+<script>
+    $(function () {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+            const btn = document.querySelector('.theme-toggle-btn');
+            if (btn) btn.innerHTML = '<span id="theme-icon">☀️</span> Light Mode';
+        }
+    });
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
+        const btn = document.querySelector('.theme-toggle-btn');
+        if (newTheme === 'dark') {
+            btn.innerHTML = '<span id="theme-icon">☀️</span> Light Mode';
+        } else {
+            btn.innerHTML = '<span id="theme-icon">🌙</span> Dark Mode';
+        }
+    }
+
+    function join() {
+        const bizno = Common.valueCheck("#bizno", "사업자등록번호");
+        const id = Common.valueCheck("#id", "아이디");
+        const name = Common.valueCheck("#name", "이름");
+        const pw = Common.valueCheck("#pw", "비밀번호");
+        const pw_check = Common.valueCheck("#pw_check", "비밀번호 확인");
+        if (pw != pw_check) {
+            alert("동일한 비밀번호를 입력해주세요.");
+            $("#pw_check").focus();
+
+            return;
+        }
+        const phone = Common.valueCheck("#phone", "휴대폰 번호");
+
+        let formData = new FormData();
+        formData.append("bizno", bizno);
+        formData.append("id", id);
+        formData.append("name", name);
+        formData.append("pw", pw);
+        formData.append("phone", phone);
+
+        Common.sendAxios("/account/join", formData)
+            .then((json) => {
+                alert(json.msg);
+
+                if (json.code === 200) {
+                    location.href = "/gongbang_home/home.html";
+                }
+            })
+            .catch((err) => {
+                console.error("로그인 에러:", err);
+            });
+    }
+</script>
+
+<body>
+    <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span> Dark Mode
+    </button>
+
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>회원가입</h1>
+                <p>A/S 이력관리시스템 회원가입을 위해 정보를 입력해주세요.</p>
+            </div>
+
+            <div class="form-group">
+                <label>사업자등록번호</label>
+                <input type="text" id="bizno" class="mod-input number" maxlength="10" placeholder="'-' 를 제외하고 입력해주세요"
+                    autocomplete="off" />
+            </div>
+
+            <div class="form-group">
+                <label>아이디</label>
+                <input type="text" id="id" class="mod-input" maxlength="20" placeholder="원하시는 아이디를 입력해주세요"
+                    autocomplete="off" />
+            </div>
+
+            <div class="form-group">
+                <label>이름 (담당자명)</label>
+                <input type="text" id="name" class="mod-input" maxlength="20" placeholder="이름을 입력해주세요"
+                    autocomplete="off" />
+            </div>
+
+            <div class="form-group">
+                <label>비밀번호</label>
+                <input type="password" id="pw" class="mod-input" maxlength="20" placeholder="비밀번호를 입력해주세요" />
+            </div>
+
+            <div class="form-group">
+                <label>비밀번호 확인</label>
+                <input type="password" id="pw_check" class="mod-input" maxlength="20"
+                    placeholder="비밀번호를 다시 한 번 입력해주세요" />
+            </div>
+
+            <div class="form-group">
+                <label>연락처</label>
+                <input type="text" id="phone" class="mod-input number" maxlength="11" placeholder="'-' 를 제외하고 입력해주세요"
+                    autocomplete="off" />
+            </div>
+
+            <div class="auth-actions" style="flex-direction: column-reverse;">
+                <button type="button" class="btn-secondary" onclick="history.back()">돌아가기</button>
+                <button type="button" class="btn-primary" onclick="join()">회원가입 완료</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

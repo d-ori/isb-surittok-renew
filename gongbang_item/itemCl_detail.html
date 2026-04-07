@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "itemCl";
+        const currentApi = "/item/cl";
+
+        $(function () {
+            getDetail();
+        });
+
+        function getDetail() {
+            Common.sendAjax(`${currentApi}/${id}`, "", "GET", function (json) {
+                try {
+                    const data = json.data;
+
+                    const name = data.name;
+
+                    $("#name").val(name);
+                } catch (Excpetion) {
+                    console.log("스크립트 에러 " + Excpetion);
+                }
+            });
+        }
+
+        function modify() {
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_form.html${queryString}`;
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            params.delete("id");
+
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_list.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_list.html`;
+            }
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>품목 분류 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 품목정보 > 품목 분류 관리</p>
+                    </div>
+                </div>
+                <div class="contents-in scroll-custom" style="height: 104px">
+                    <div class="info-in info-in-modify-info">
+                        <p>품목 분류</p>
+                        <input type="text" id="name" readonly />
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>뒤로</p>
+                    </div>
+
+                    <div class="btn btn-add" onclick="modify()">
+                        <p>수정</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

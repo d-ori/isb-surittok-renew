@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        let arr = [];
+        const cmpn_no = getCookie("cmpn_no");
+        const ob =
+            document.location.href.split("ob=")[1] == undefined
+                ? "no_desc"
+                : document.location.href.split("ob=")[1];
+
+        // 선택 → 수정 → back, 선택해제
+        function uncheck() {
+            $(":checkbox:checked").prop("checked", false);
+        }
+
+        // search - Enter
+        function enterkey() {
+            if (window.event.keyCode == 13) {
+                location.href = `itemBom_list.html?pstartno=0&keyword=${decodeURI(
+                    $("#search").val()
+                )}&cmpn_no=${cmpn_no}&cate=${$("#cate").val()}&ob=${ob}`;
+            }
+        }
+
+        // 체크박스
+        $(function () {
+            if (location.href.split("html")[1] == "") {
+                location.href = `itemBom_list.html?pstartno=0&keyword=&cmpn_no=${cmpn_no}&cate=all&ob=${ob}`;
+            }
+
+            switch (ob) {
+                case "no_desc":
+                    $("#sort_no").attr("src", "../img/ico_arrow_down.png");
+                    break;
+                case "no_asc":
+                    $("#sort_no").attr("src", "../img/ico_arrow_up.png");
+                    break;
+                case "cate_desc":
+                    $("#sort_cate").attr("src", "../img/ico_arrow_down.png");
+                    break;
+                case "cate_asc":
+                    $("#sort_cate").attr("src", "../img/ico_arrow_up.png");
+                    break;
+                case "info_desc":
+                    $("#sort_info").attr("src", "../img/ico_arrow_down.png");
+                    break;
+                case "info_asc":
+                    $("#sort_info").attr("src", "../img/ico_arrow_up.png");
+                    break;
+                case "bom_desc":
+                    $("#sort_bom").attr("src", "../img/ico_arrow_down.png");
+                    break;
+                case "bom_asc":
+                    $("#sort_bom").attr("src", "../img/ico_arrow_up.png");
+                    break;
+            }
+
+            getList();
+
+            $("input[name=_selected_all_]").on("change", function () {
+                $("input[name=_selected_]").prop("checked", this.checked);
+                if (this.checked) {
+                    $("tr").addClass("selected-row");
+                } else {
+                    $("tr").removeClass("selected-row");
+                }
+            });
+
+            $("input[name=_selected_]").on("change", function () {
+                $(this).closest("tr").toggleClass("selected-row", this.checked);
+
+                const allChecked =
+                    $("input[name=_selected_]").length ===
+                    $("input[name=_selected_]:checked").length;
+                $("input[name=_selected_all_]").prop("checked", allChecked);
+            });
+        });
+
+        // 리스트
+        function getList() {
+            const pstartno = document.location.href
+                .split("pstartno=")[1]
+                .split("&")[0];
+            const keyword = decodeURI(
+                document.location.href.split("keyword=")[1].split("&")[0]
+            );
+            const cate = document.location.href.split("cate=")[1].split("&")[0];
+
+            $("#cate").val(cate);
+            $("#search").val(keyword);
+
+            Common.sendAjax(
+                `/admin/itemBom?keyword=${keyword}&pstartno=${pstartno}&ob=${ob}&cate=${cate}&cmpn_no=${cmpn_no}`,
+                "",
+                "POST",
+                true,
+                function (json) {
+                    try {
+                        const list = json.data.list;
+                        const paging = json.data.paging[0];
+
+                        if (list.length == 0) {
+                            $("#list").append(
+                                $(
+                                    "<tr><td colspan='6'>검색 결과가 없습니다.</td></tr>"
+                                )
+                            );
+                            return false;
+                        }
+
+                        $("#list").empty();
+
+                        // 하단 페이징
+                        const pagetotal = paging.pagetotal;
+                        const startpage = paging.startpage;
+                        const pstartno = Number(paging.pstartno);
+                        const endpage = paging.endpage;
+                        const onepagelimit = paging.onepagelimit;
+                        const bottomlimit = paging.bottomlimit;
+                        const listcount = paging.listcount;
+                        const total = listcount - pstartno;
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const no = data.item_bom_no;
+                            let tr;
+                            tr = $(
+                                `<tr id="tr${no}" class="list_check" val="${no}" onclick="modify(event, ${no})">`
+                            );
+                            const cate_name = data.cate_name;
+                            const info_name = data.info_name;
+                            const bom_name = data.bom_name
+                                .split("<br>")
+                                .join(" ");
+                            const listno =
+                                listcount - (pstartno * onepagelimit + i);
+
+                            tr.append(
+                                $(
+                                    `
+                                        <td id="rowDiv_${no}">
+                                            <input
+                                                type="checkbox"
+                                                name="_selected_"
+                                                value="ROW_${no}"
+                                                id="row-${no}"
+                                            /><label id="row_${no}" for="row-${no}"></label>
+                                        </td>'
+                                    `
+                                )
+                            );
+                            tr.append($($(`<td>${listno}</td>`)));
+                            tr.append($(`<td>${cate_name}</td>`));
+                            tr.append($(`<td>${info_name}</td>`));
+                            tr.append($(`<td>${bom_name}</td>`));
+                            $("#list").append(tr);
+                        }
+
+                        // 하단 페이징
+                        $("#pagingArea")
+                            .empty()
+                            .append(
+                                $("<p>")
+                                    .text("<<")
+                                    .click(function () {
+                                        if (pstartno > 0) {
+                                            location.href = `itemBom_list.html?pstartno=0&keyword=${keyword}&cmpn_no=${cmpn_no}&cate=${$(
+                                                "#cate"
+                                            ).val()}&ob=${ob}`;
+                                        } else {
+                                            alert("처음 페이지 입니다.");
+                                        }
+                                    })
+                            )
+                            .append(
+                                $("<p>")
+                                    .text("<")
+                                    .click(function () {
+                                        if (pstartno > 0) {
+                                            location.href = `itemBom_list.html?pstartno=${
+                                                pstartno - 1
+                                            }&keyword=${keyword}&cmpn_no=${cmpn_no}&cate=${$(
+                                                "#cate"
+                                            ).val()}&ob=${ob}`;
+                                        } else {
+                                            alert("처음 페이지 입니다.");
+                                        }
+                                    })
+                            )
+                            .append(function () {
+                                for (let i = startpage; i <= endpage; i++) {
+                                    $(this).append(
+                                        $("<p>")
+                                            .text(i)
+                                            .toggleClass(
+                                                "pstarno",
+                                                pstartno + 1 == i
+                                            )
+                                            .click(function () {
+                                                location.href = `itemBom_list.html?pstartno=${
+                                                    Number($(this).text()) - 1
+                                                }&keyword=${keyword}&cmpn_no=${cmpn_no}&cate=${$(
+                                                    "#cate"
+                                                ).val()}&ob=${ob}`;
+                                            })
+                                    );
+                                }
+                            })
+                            .append(
+                                $("<p>")
+                                    .text(">")
+                                    .click(function () {
+                                        if (pstartno + 1 < pagetotal) {
+                                            location.href = `itemBom_list.html?pstartno=${
+                                                pstartno + 1
+                                            }&keyword=${keyword}&cmpn_no=${cmpn_no}&cate=${$(
+                                                "#cate"
+                                            ).val()}&ob=${ob}`;
+                                        } else {
+                                            alert("마지막 페이지입니다.");
+                                            return false;
+                                        }
+                                    })
+                            )
+                            .append(
+                                $("<p>")
+                                    .text(">>")
+                                    .click(function () {
+                                        if (pstartno + 1 < pagetotal) {
+                                            location.href = `itemBom_list.html?pstartno=${
+                                                pagetotal - 1
+                                            }&keyword=${keyword}&cmpn_no=${cmpn_no}&cate=${$(
+                                                "#cate"
+                                            ).val()}&ob=${ob}`;
+                                        } else {
+                                            alert("마지막 페이지입니다.");
+                                            return false;
+                                        }
+                                    })
+                            );
+                    } catch (Excpetion) {
+                        console.log("스크립트 에러 " + Excpetion);
+                    }
+                }
+            );
+        }
+
+        // sort
+        function sort(select) {
+            if (select == "cate") {
+                switch (ob) {
+                    case "cate_desc":
+                        select = "cate_asc";
+                        break;
+                    case "cate_asc":
+                        select = "cate_desc";
+                        break;
+                    default:
+                        select = "cate_desc";
+                }
+            } else if (select == "info") {
+                switch (ob) {
+                    case "info_desc":
+                        select = "info_asc";
+                        break;
+                    case "info_asc":
+                        select = "info_desc";
+                        break;
+                    default:
+                        select = "info_desc";
+                }
+            } else if (select == "bom") {
+                switch (ob) {
+                    case "bom_desc":
+                        select = "bom_asc";
+                        break;
+                    case "bom_asc":
+                        select = "bom_desc";
+                        break;
+                    default:
+                        select = "bom_desc";
+                }
+            } else if (select == "no") {
+                switch (ob) {
+                    case "no_desc":
+                        select = "no_asc";
+                        break;
+                    case "no_asc":
+                        select = "no_desc";
+                        break;
+                    default:
+                        select = "no_desc";
+                }
+            }
+
+            const pstartno = document.location.href
+                .split("pstartno=")[1]
+                .split("&")[0];
+            const keyword = decodeURI(
+                document.location.href.split("keyword=")[1].split("&")[0]
+            );
+
+            location.href = `itemBom_list.html?pstartno=${pstartno}&keyword=${keyword}&cmpn_no=${cmpn_no}&cate=${$(
+                "#cate"
+            ).val()}&ob=${select}`;
+        }
+
+        // 검색
+        function search() {
+            location.href = `itemBom_list.html?pstartno=0&keyword=${decodeURI(
+                $("#search").val()
+            )}&cmpn_no=${cmpn_no}&cate=${$("#cate").val()}&ob=${ob}`;
+        }
+
+        // 선택 삭제
+        function deletion() {
+            let str = "";
+
+            const selectedRows = document.querySelectorAll(
+                ".list_check.selected-row"
+            );
+
+            for (let i = 0; i < selectedRows.length; i++) {
+                if (i == selectedRows.length - 1) {
+                    str += selectedRows[i].getAttribute("val");
+                } else {
+                    str += selectedRows[i].getAttribute("val") + ",";
+                }
+            }
+
+            if (selectedRows.length > 0) {
+                if (
+                    confirm(
+                        "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다."
+                    ) == true
+                ) {
+                    Common.sendAjax(
+                        `/admin/itemBom/delete?item_bom_no=${str}`,
+                        "",
+                        "POST",
+                        true,
+                        function (json) {
+                            alert("삭제되었습니다.");
+                            location.href = "itemBom_list.html";
+                        }
+                    );
+                }
+            } else {
+                alert("데이터를 선택해주세요.");
+            }
+        }
+
+        // 등록
+        function add() {
+            location.href = `itemBom_detail.html`;
+        }
+
+        // 수정
+        function modify(e, no) {
+            var targetId = $(e.target).attr("id") || "";
+
+            if (targetId.includes("row")) {
+                return;
+            }
+
+            location.href = `itemBom_form.html?no=${no}`;
+        }
+    </script>
+
+    <body onLoad="uncheck()">
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>A/S BOM 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 품목정보 > A/S BOM 관리</p>
+                    </div>
+                </div>
+                <div class="search">
+                    <img src="../img/ico_search.png" class="ico-search" />
+                    <select class="search-select" id="cate">
+                        <option value="all">전체</option>
+                        <option value="cate">분류</option>
+                        <option value="info">품목</option>
+                        <option value="bom">자재</option>
+                    </select>
+                    <div class="search-in">
+                        <input
+                            type="text"
+                            id="search"
+                            placeholder="검색어를 입력해주세요."
+                            class="search-input"
+                            onkeypress="enterkey()"
+                        />
+                        <p class="btn btn-search" onclick="search()">검색</p>
+                    </div>
+                    <div class="btn-wrap">
+                        <div class="btn btn-del" onclick="deletion()">
+                            <p>선택 삭제</p>
+                        </div>
+                        <div class="btn btn-add" onclick="add()">
+                            <p>등록</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="contents-in">
+                    <div class="list">
+                        <table>
+                            <colgroup>
+                                <col style="width: 60px" />
+                                <col style="width: 15%" />
+                                <col style="width: 28%" />
+                                <col style="width: 28%" />
+                                <col style="width: 29%" />
+                            </colgroup>
+                            <tbody>
+                                <tr class="t-header">
+                                    <th class="check">
+                                        <input
+                                            type="checkbox"
+                                            name="_selected_all_"
+                                            id="select-all"
+                                        /><label for="select-all"></label>
+                                    </th>
+                                    <th>
+                                        No.<img
+                                            src="../img/ico_arrow_down.png"
+                                            class="ico-sort"
+                                            id="sort_no"
+                                            onclick="sort('no')"
+                                        />
+                                    </th>
+                                    <th>
+                                        분류<img
+                                            src="../img/ico_arrow_down.png"
+                                            class="ico-sort"
+                                            id="sort_info"
+                                            onclick="sort('info')"
+                                        />
+                                    </th>
+                                    <th>
+                                        품목<img
+                                            src="../img/ico_arrow_down.png"
+                                            class="ico-sort"
+                                            id="sort_cate"
+                                            onclick="sort('cate')"
+                                        />
+                                    </th>
+                                    <th>
+                                        자재<img
+                                            src="../img/ico_arrow_down.png"
+                                            class="ico-sort"
+                                            id="sort_bom"
+                                            onclick="sort('bom')"
+                                        />
+                                    </th>
+                                </tr>
+                            </tbody>
+
+                            <tbody id="list"></tbody>
+                        </table>
+                    </div>
+                    <div class="paging">
+                        <div class="paging-inner" id="pagingArea"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

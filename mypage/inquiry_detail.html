@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script src="../js/common.js"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "inquiry";
+        const currentApi = "/inquiry";
+        let info = JSON.parse(localStorage.getItem("info"));
+
+        $(function () {
+            getDetail();
+        });
+
+        function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    if (data.status == "PENDING") {
+                        if (info.cmpn_id != data.cmpn_id) {
+                            $("#answerP").html("답변 등록");
+                        }
+                    } else if (data.status == "ANSWERED") {
+                        if (info.cmpn_id != data.cmpn_id) {
+                            $("#answerP").html("답변 수정");
+                        }
+                    } else {
+                        alert("삭제된 문의입니다.");
+                        location.href = `${currentUrl}_list.html`;
+                    }
+
+                    const title = data.title;
+                    const content = (data.content || "").replaceAll(
+                        "<br>",
+                        "\r\n"
+                    );
+                    const answer = (data.answer || "").replaceAll(
+                        "<br>",
+                        "\r\n"
+                    );
+                    const created_at = data.created_at;
+
+                    $("#title").val(title);
+                    $("#content").val(content);
+                    $("#created_at").html(created_at);
+                    $("#answer").html(answer);
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function modify() {
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_form.html${queryString}`;
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            params.delete("id");
+
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_list.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_list.html`;
+            }
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents scroll-custom">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>문의내역</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 마이페이지 > 문의내역</p>
+                    </div>
+                </div>
+                <div class="contents-in contents-mypage">
+                    <div class="menu-mypage">
+                        <div class="menu-mypage-top">
+                            <img src="../img/ico_mypage.png" />
+                            <p>마이페이지</p>
+                        </div>
+                        <ul>
+                            <li>
+                                <p onclick="location.href='user_info.html'">
+                                    정보관리
+                                </p>
+                            </li>
+                            <li>
+                                <p onclick="location.href='order_list.html'">
+                                    주문정보
+                                </p>
+                            </li>
+                            <li class="on">
+                                <p onclick="location.href='inquiry_list.html'">
+                                    문의내역
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="order-wrap inquiry-wrap">
+                        <div class="mypage-in">
+                            <p class="info-top" style="margin-bottom: 0px">
+                                문의하기
+                            </p>
+
+                            <div class="inquiry-info">
+                                <p class="inquiry-title">제목</p>
+                                <input
+                                    type="text"
+                                    style="
+                                        border: none;
+                                        width: calc(100% - 350px);
+                                    "
+                                    id="title"
+                                    readonly
+                                />
+                                <span id="created_at"></span>
+                            </div>
+                            <div class="inquiry-info-txt">
+                                <textarea
+                                    style="border: none"
+                                    id="content"
+                                    readonly
+                                ></textarea>
+                            </div>
+
+                            <div
+                                class="inquiry-info"
+                                style="
+                                    border-top: 1px solid #d5d7d9;
+                                    height: 150px;
+                                "
+                            >
+                                <p class="inquiry-title">답변내용</p>
+                                <textarea id="answer" disabled></textarea>
+                            </div>
+
+                            <div
+                                class="btn-wrap"
+                                style="
+                                    padding-bottom: 20px;
+                                    top: auto;
+                                    bottom: 20px;
+                                "
+                            >
+                                <div class="btn btn-del" onclick="backPage()">
+                                    <p>목록</p>
+                                </div>
+                                <div class="btn btn-add" onclick="modify()">
+                                    <p id="answerP">수정</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

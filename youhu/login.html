@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>유휴자재관리</title>
+        <link rel="shortcut icon" href="./img/ico_shortIcon.png" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        <link rel="stylesheet" href="./css/common.css" />
+        <link rel="stylesheet" href="./css/style.css" />
+        <script src="./js/axios.min.js"></script>
+        <script type="text/javascript" src="./js/common.js?ver=1"></script>
+    </head>
+    <script>
+        if (
+            localStorage.getItem("jwtToken_youhu") != null &&
+            localStorage.getItem("refreshToken_youhu") != null
+        ) {
+            location.href = "/youhu/gongbang_material/buy_list.html";
+        }
+
+        function enterkey() {
+            if (window.event.keyCode == 13) {
+                login();
+            }
+        }
+
+        function login() {
+            const id = Common.valueCheck("#id", "아이디");
+            const pw = Common.valueCheck("#pw", "비밀번호");
+
+            let formData = new FormData();
+            formData.append("id", id);
+            formData.append("pw", pw);
+
+            Common.sendAxios("/account/login", formData)
+                .then((json) => {
+                    if (json.code === 200) {
+                        localStorage.setItem(
+                            "jwtToken_youhu",
+                            json.token.accessToken,
+                        );
+                        localStorage.setItem(
+                            "refreshToken_youhu",
+                            json.token.refreshToken,
+                        );
+
+                        localStorage.setItem(
+                            "info_youhu",
+                            JSON.stringify(json.data),
+                        );
+
+                        location.href =
+                            "/youhu/gongbang_material/buy_list.html";
+                    } else {
+                        alert(json.msg);
+                    }
+                })
+                .catch((err) => {
+                    console.error("로그인 에러:", err);
+                });
+        }
+    </script>
+
+    <body class="login">
+        <div class="login-l">
+            <img src="./img/img_login.png" class="login-img" />
+            <div class="p-title">
+                <p class="p-title-top">유휴자재관리</p>
+            </div>
+        </div>
+        <div class="login-r">
+            <div class="login-info">
+                <p class="login-title">로그인</p>
+                <p class="login-sub-title"></p>
+                <input
+                    type="text"
+                    id="id"
+                    class="id"
+                    placeholder="아이디"
+                    onkeypress="enterkey()"
+                />
+                <input
+                    type="password"
+                    id="pw"
+                    class="pw"
+                    placeholder="비밀번호"
+                    onkeypress="enterkey()"
+                />
+                <p class="login-btn" onclick="login()">로그인</p>
+            </div>
+        </div>
+    </body>
+</html>

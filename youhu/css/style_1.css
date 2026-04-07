@@ -1,0 +1,80 @@
+
+/* .contents-area { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #EDEFF3; overflow: hidden; } */
+.contents-area { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #EDEFF3; overflow-y: auto; padding: 15px 0; } 
+/* .contents-wrap { width: calc(100% - 75px); min-height: calc(100% - 60px); display: flex; flex-direction: column; gap: 13px; } */
+.contents-wrap { width: calc(100% - 40px); min-height: calc(100% - 40px); display: flex; flex-direction: column; gap: 13px; } 
+.status-as { width: 100%; flex: 1; background-color:#ffffff; border-radius: 10px; border: 1px solid #CFDBDE; display: flex; justify-content:top; flex-direction: column; align-items: center; } 
+.status-box { height: 420px; width: 100%; border-radius: 10px; display: flex; gap: 10px; } 
+.status-box .status-month { flex:1; background-color:white; border-radius: 10px; border: 1px solid #CFDBDE; height: 100%; border-radius: 10px; display: flex; justify-content:top; flex-direction: column; align-items: center; } 
+.status-box .status-year { flex:1; background-color: white; height: 100%; border: 1px solid #CFDBDE;; border-radius: 10px; display: flex; justify-content:top; flex-direction: column; align-items: center; } 
+
+/* a/s 현황 */
+.status-as .as-title { width: calc(100% - 34px ); height: 55px; display:flex; align-items: center; justify-content: space-between; color: #11263C; border-bottom: 1px solid #DFEAED; } 
+.status-as .as-title h1 { font-size: 25px; font-weight: 800; } 
+.status-as .as-title p { font-size: 20px; color: #8181A5; } 
+.status-as .as-title span { font-weight: 800; border-left: 1px solid #8181A5; display: inline-block; width: 170px; text-align: end; margin-left: 10px; } 
+.status-as .as-contents { width: calc(100% - 56.6px); height: 255px; margin-top: 12.8px; display: flex; gap: 73px; justify-content: center; align-items: center; } 
+.as-contents .as-graph-box { width: 244px; height: 100%; } 
+.as-graph-box:nth-child(1) { width: 260px; border-right: 2px dashed #D1E0E4; } 
+.as-graph-box:nth-child(1) .as-graph-text { display: flex; align-items: center; font-size: 22px; font-weight: 800; padding-right: 20px; } 
+
+.as-graph-box .as-graph { width: 100%; height: 210px; } 
+.as-graph-box .as-graph-text { display: flex; align-items: center; font-size: 22px; font-weight: 800; justify-content:end; gap: 17px; } 
+.as-graph-box .as-graph-text .as-graph-title { width: 88px; height: 33px; background-color: #FFD7D7; border-radius: 4px; font-size: 18px; color: #FF3333; display: flex; justify-content: center; align-items: center; cursor: pointer; } 
+.as-graph-title h2 { text-decoration: underline; font-weight: 800; } 
+.as-graph-box .as-graph-text-non { display: flex; align-items: center; font-size: 22px; font-weight: 800; justify-content: center; } 
+
+/* a/s 전월 대비 */
+
+
+.status-month .month-title { width: calc(100% - 30px ); height: 60px; display:flex; align-items: center; justify-content: space-between; color: #11263C; border-bottom: 1px solid #DFEAED; } 
+.month-title h1 { font-size: 25px; color: #3354F4; } 
+.month-title h1 span { color: #11263C; } 
+.month-title select { width: 120px; height: 32px; align-items: center; padding: 0 10px; border-radius: 6px; border: 1px solid var(--Color-line, #E4E8EA); color: #A5ADB8; font-size: 16px; } 
+.month-graph-box { width: calc(100% - 30px); height: 350px; display: flex; flex-direction: column; justify-content: space-between; margin-top: 12.8px; } 
+.month-graph-box .month-graph { width: 100%; height: 345px; } 
+.month-graph-box .month-graph-text { width:100%; height: 38px; display: flex; justify-content: center; align-items: center; gap: 40px; } 
+.month-graph-text .graph-this-month { font-size: 18px; color: #A1A1A1; } 
+.graph-this-month span { display: inline-block; width: 45px; height: 4.5px; background-color:#2D9CDB; margin-right: 8px; vertical-align: middle; } 
+.month-graph-text .graph-last-month { font-size: 18px; color: #A1A1A1; } 
+.graph-last-month span { display: inline-block; width: 45px; height: 4.5px; background-color:#88E5E1; margin-right: 8px; vertical-align: middle; } 
+
+/* a/s 전년 대비 */
+
+
+.status-year .year-title { width: calc(100% - 30px ); height: 60px; display:flex; align-items: center; justify-content: space-between; color: #11263C; border-bottom: 1px solid #DFEAED; } 
+.year-title h1 { font-size: 25px; color:#F0854B } 
+.year-title h1 span { color: #11263C; } 
+.year-title select { width: 120px; height: 32px; align-items: center; padding: 0 10px; border-radius: 6px; border: 1px solid var(--Color-line, #E4E8EA); color: #A5ADB8; font-size: 16px; } 
+.year-graph-box { width: calc(100% - 30px); height: 350px; display: flex; flex-direction: column; justify-content: space-between; margin-top: 12.8px; } 
+.year-graph-box .year-graph { width: 100%; height: 345px; } 
+.year-graph-box .year-graph-text { width:100%; height: 38px; display: flex; justify-content: center; align-items: center; gap: 40px; } 
+.year-graph-text .graph-this-year { font-size: 18px; color: #A1A1A1; } 
+.graph-this-year span { display: inline-block; width: 45px; height: 4.5px; background-color:#2D9CDB; margin-right: 8px; vertical-align: middle; } 
+.year-graph-text .graph-last-year { font-size: 18px; color: #A1A1A1; } 
+.graph-last-year span { display: inline-block; width: 45px; height: 4.5px; background-color:#88E5E1; margin-right: 8px; vertical-align: middle; } 
+
+
+/* 취소 목록 팝업 */
+
+.popup-wrap { position: fixed; inset: 0; z-index: 9999; display: none; } 
+.popup-dim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.35); } 
+.popup-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 720px; height:700px; background: #fff; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.2); overflow: hidden; } 
+
+/* 헤더 */
+.popup-header { padding: 20px; border-bottom: 1px solid #e5e5e5; font-size: 25px; font-weight: 800; display: flex; justify-content: center; } 
+
+/* 바디 */
+.popup-body { padding: 20px; font-size: 15px; } 
+.popup-table { width: 100%; border-collapse: collapse; text-align: center; border-top: 2px solid #3d3d3d; } 
+.popup-table th { background: #F3F3F3; padding: 10px; font-weight: 800; border-bottom: 1px solid #ddd; color: #696969; } 
+.popup-table td { padding: 12px 0; border-bottom: 1px solid #eee; } 
+
+/* 페이지네이션 */
+.popup-pagination { margin-top: 400px; text-align: center; } 
+.popup-pagination button,.popup-pagination span { margin: 0 4px; padding: 4px 8px; border: none; background: none; cursor: pointer; } 
+.popup-pagination .active { color: #2d5cff; font-weight: bold; } 
+
+/* 하단 */
+.popup-footer { width: 100%; } 
+.popup-close { cursor: pointer; text-decoration: underline; font-weight: 600; width: 50px; margin-left: 90%; } 

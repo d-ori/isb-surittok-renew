@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script src="../js/common.js"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+    <script>
+        $(function () {
+            getAccountList();
+            getAces();
+            // Common.sendAjax(
+            //     "/admin/user/all?cmpn_no=" + cmpn_no + "",
+            //     "",
+            //     "POST",
+            //     true,
+            //     function (json) {
+            //         try {
+            //             var list = json.data;
+            //             $("#user").append(
+            //                 '<option value="null">사용자를 선택해주세요.</option>'
+            //             );
+            //             for (var i = 0; i < list.length; i++) {
+            //                 var data = list[i];
+            //                 $("#user").append(
+            //                     '<option value="' +
+            //                         data.admin_no +
+            //                         '">' +
+            //                         data.name +
+            //                         "</option>"
+            //                 );
+            //             }
+            //         } catch (Excpetion) {
+            //             console.log("스크립트 에러 " + Excpetion);
+            //         }
+            //     }
+            // );
+        });
+
+        async function getAces() {
+            Common.sendAxios(`/aces`)
+                .then(async (json) => {
+                    const data = json.data;
+                    let html = "";
+
+                    // 데이터를 3개씩 묶은 2차원 배열 생성
+                    for (let i = 0; i < data.length; i += 3) {
+                        const chunk = data.slice(i, i + 3);
+
+                        html += `<div class="authority-in">`;
+
+                        chunk.forEach((item) => {
+                            html += `
+                                <div class="authority-inner">
+                                    <input type="checkbox" id="perm_${item.aces_id}" value="${item.aces_id}">
+                                    <label for="perm_${item.aces_id}"></label>
+                                    <p style="background: #FFFFFF; width: 140px; justify-content: start;">${item.name}</p>
+                                </div>
+                            `;
+                        });
+
+                        html += `</div>`;
+                    }
+
+                    $("#permissionArea").append(html);
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function getPerm() {
+            var admin_no = $("#user").val();
+
+            if (admin_no != "null") {
+                Common.sendAjax(
+                    "/admin/user/no?admin_no=" + admin_no,
+                    "",
+                    "POST",
+                    true,
+                    function (json) {
+                        try {
+                            var list = json.data[0];
+                            var arr = [
+                                "품목분류관리",
+                                "품목정보관리",
+                                "A/SBOM관리",
+                                "품목기준정보",
+                                "매입처관리",
+                                "매입품목관리",
+                                "협력업체관리",
+                                "협력업체기사관리",
+                                "A/S기사관리",
+                                "사용자 관리",
+                                "설치제품정보",
+                                "접수관리",
+                                "배정관리",
+                                "처리관리",
+                                "사용자호출",
+                                "사용자등록",
+                            ];
+
+                            var splitArr = list.aces.split(",");
+                            for (var j = 0; j < arr.length; j++) {
+                                $(
+                                    'input:checkbox[id="permission' + j + '"]'
+                                ).prop("checked", false);
+                            }
+                            for (var j = 0; j < arr.length; j++) {
+                                var arrData = arr[j];
+
+                                for (var i = 0; i < splitArr.length; i++) {
+                                    var data = splitArr[i];
+
+                                    if (data == arrData) {
+                                        $(
+                                            'input:checkbox[id="permission' +
+                                                j +
+                                                '"]'
+                                        ).prop("checked", true);
+                                    }
+                                }
+                            }
+                        } catch (Excpetion) {
+                            console.log("스크립트 에러 " + Excpetion);
+                        }
+                    }
+                );
+            } else {
+                $('input:checkbox[name="permission"]').prop("checked", false);
+            }
+        }
+
+        // API
+        function saveClick() {
+            const account_id = $("#account_id").val();
+
+            if (!account_id) {
+                alert("사용자를 선택해주세요.");
+                return false;
+            }
+
+            // 1. 체크된 모든 체크박스의 value를 가져와서 배열로 만든 뒤 콤마로 연결
+            const aces = $("#permissionArea input[type='checkbox']:checked")
+                .map((index, el) => $(el).val()) // 각 체크박스의 value 추출
+                .get() // jQuery 객체를 일반 배열로 변환
+                .join(","); // 배열 요소를 콤마로 결합 (마지막 콤마 걱정 없음)
+
+            // 2. FormData 객체 생성 및 데이터 추가
+            const formData = new FormData();
+            formData.append("account_id", account_id);
+            formData.append("name_list", aces); // 콤마로 연결된 문자열 전송
+
+            Common.sendAxios(`/account/put/aces`, formData)
+                .then(async (json) => {
+                    if (json.code != 200) return;
+
+                    alert("사용자 권한이 수정되었습니다.");
+                    location.reload();
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function getAccountList(page = 1) {
+            Common.sendAxios(
+                `/account?keyword=${decodeURI($("#search").val())}`
+            )
+                .then(async (json) => {
+                    if (json.code != 200) return;
+
+                    const list = json.data;
+
+                    $("#list").empty();
+
+                    if (list.length == 0) {
+                        $("#list").append(
+                            $(
+                                "<tr><td colspan='4'>검색 결과가 없습니다.</td></tr>"
+                            )
+                        );
+                        return false;
+                    }
+
+                    for (let i = 0; i < list.length; i++) {
+                        const data = list[i];
+                        const id = data.account_id;
+                        let tr = $(
+                            `<tr id="tr${id}" onclick="selectAccount(${id},'${data.cmpn_name}')">`
+                        );
+
+                        const listno = list.length - i;
+                        const cmpn_name = data.cmpn_name;
+                        const name = data.name;
+                        const phone = data.phone;
+
+                        tr.append($($(`<td>${listno}</td>`)));
+                        tr.append($(`<td>${cmpn_name}</td>`));
+                        tr.append($(`<td>${name}</td>`));
+                        tr.append($(`<td>${phone}</td>`));
+
+                        $("#list").append(tr);
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function selectAccount(id, cmpn_name) {
+            Common.sendAxios(`/account/${id}`)
+                .then(async (json) => {
+                    if (json.code != 200) return;
+
+                    // 1. 서버에서 받아온 해당 계정의 권한 리스트
+                    const list = json.data;
+
+                    console.log(list);
+
+                    // 2. 초기화: 일단 모든 체크박스의 체크를 해제합니다.
+                    $("#permissionArea input[type='checkbox']").prop(
+                        "checked",
+                        false
+                    );
+
+                    // 3. 체크 적용: list를 순회하며 해당 ID를 가진 체크박스만 체크합니다.
+                    if (list && list.length > 0) {
+                        list.forEach((item) => {
+                            // getAces에서 id를 "perm_${item.aces_id}"로 만들었으므로 이를 이용합니다.
+                            $(`#perm_${item.aces_id}`).prop("checked", true);
+                        });
+                    }
+
+                    $("#account_name").val(cmpn_name);
+                    $("#account_id").val(id);
+
+                    popup_close();
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // 사용자 관리 팝업 열기
+        function popup() {
+            $(".background").css({ "z-index": "1000000" });
+            $(".show-use").css({ "z-index": "100" });
+            document.querySelector(".background").className =
+                "background show-use";
+        }
+
+        // 사용자 관리 팝업 닫기
+        function popup_close() {
+            $(".background").css({ "z-index": "-1" });
+            document.querySelector(".background").className = "background";
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>사용자 권한 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">
+                            HOME > 사용자 관리 > 사용자 권한 관리
+                        </p>
+                    </div>
+                </div>
+                <div class="contents-in scroll-custom">
+                    <div
+                        class="info-in info-in-modify-info"
+                        style="margin-bottom: 25px"
+                    >
+                        <p style="font-size: 14px; font-weight: 700">사용자</p>
+                        <input
+                            type="text"
+                            id="account_name"
+                            style="cursor: pointer"
+                            onclick="popup()"
+                            readonly
+                        />
+
+                        <input type="hidden" id="account_id" />
+                    </div>
+
+                    <div class="info-in" style="align-items: baseline">
+                        <p style="font-size: 14px; font-weight: 700">
+                            접근권한
+                        </p>
+                        <div class="authority-wrap" id="permissionArea"></div>
+                    </div>
+                </div>
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-add" onclick="saveClick()">
+                        <p>설정</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 사용자 관리 팝업 -->
+            <div class="background">
+                <div class="window">
+                    <div class="popup popup-list-dtl" style="width: 749px">
+                        <div class="popup-hd"><p>사용자 관리</p></div>
+                        <div class="popup-search">
+                            <div class="popup-search-in">
+                                <div class="popup-search-in">
+                                    <input
+                                        type="text"
+                                        placeholder="업체명을 입력해주세요."
+                                        class="search-input"
+                                        id="search"
+                                        onkeypress="getAccountList()"
+                                    />
+                                </div>
+                                <img
+                                    src="../img/ico_search_popup.png"
+                                    class="ico-search-popup"
+                                    onclick="getAccountList()"
+                                />
+                            </div>
+                        </div>
+                        <div class="popup-in">
+                            <div class="contents-in popup-contents-in">
+                                <div class="list popup-list">
+                                    <table>
+                                        <colgroup>
+                                            <col style="width: 100px" />
+                                            <col style="width: 35%" />
+                                            <col style="width: 35%" />
+                                            <col style="width: 30%" />
+                                        </colgroup>
+                                        <tbody>
+                                            <tr>
+                                                <th>NO</th>
+                                                <th>업체명</th>
+                                                <th>대표자명</th>
+                                                <th>연락처</th>
+                                            </tr>
+                                        </tbody>
+
+                                        <tbody id="list"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="popup-close">
+                                <p onclick="popup_close()">닫기</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

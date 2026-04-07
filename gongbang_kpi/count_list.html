@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+
+        <script
+            type="text/javascript"
+            src="https://www.gstatic.com/charts/loader.js"
+        ></script>
+    </head>
+
+    <script>
+        const currentApi = "/kpi/year";
+
+        let chartData = [["월", "기술자별 월별 총 처리건수"]];
+
+        $(function () {
+            const select = document.getElementById("year");
+            const startYear = 2026;
+            const currentYear = new Date().getFullYear();
+
+            for (let year_ = currentYear; year_ >= startYear; year_--) {
+                let option = document.createElement("option");
+                option.value = year_;
+                option.textContent = year_;
+                select.appendChild(option);
+            }
+
+            getCustomList();
+            getRepairList();
+            getList();
+        });
+
+        // 리스트
+        function getList() {
+            const year = $("#year").val();
+            const cus_id = $("#cus_id").val();
+            const repair_id = $("#repair_id").val();
+
+            if (cus_id == "0") {
+                $("#cus_name").val("전체");
+            }
+
+            if (repair_id == "0") {
+                $("#repair_name").val("전체");
+            }
+
+            Common.sendAxios(
+                `${currentApi}?year=${year}&cus_id=${cus_id}&repair_id=${repair_id}`,
+            )
+                .then(async (json) => {
+                    const list = json.data;
+
+                    if (list.length == 0) {
+                        $("#list").append(
+                            $(
+                                "<tr><td colspan='13'>검색 결과가 없습니다.</td></tr>",
+                            ),
+                        );
+                        return false;
+                    }
+
+                    $("#list").empty();
+
+                    chartData = [["월", "기술자별 월별 총 처리건수"]];
+
+                    // 1~12월 미리 초기화
+                    for (let i = 1; i <= 12; i++) {
+                        const monthLabel = i + "월";
+                        chartData.push([monthLabel, null]);
+                    }
+
+                    let tr;
+
+                    for (let i = 0; i < 2; i++) {
+                        switch (i) {
+                            case 0:
+                                tr = $(`<tr id="total_count_rtOfImp">`).append(
+                                    `<td colspan=3">총 A/S 처리(건)</td>`,
+                                );
+                                break;
+                            case 1:
+                                tr = $(`<tr id="total_count_rtOfImp">`).append(
+                                    `<td colspan="3">기술자별 월별 총 처리건수<br>(목표값 : ${list[0].kpi_count} 건)</td>`,
+                                );
+                                break;
+                        }
+
+                        for (let k = 0; k < list.length; k++) {
+                            const data = list[k];
+                            const month = data.month;
+                            const total_count = data.total_count;
+                            const avg_hours = data.avg_hours;
+                            const avg_days = data.avg_days;
+                            const kpi_count = data.kpi_count;
+                            const kpi_day = data.kpi_day;
+                            const kpi_hour = data.kpi_hour;
+                            const kpi_before_count = data.kpi_before_count;
+                            const kpi_before_day = data.kpi_before_day;
+                            const kpi_before_hour = data.kpi_before_hour;
+                            const repairCnt = data.repair_count;
+
+                            let tdValue;
+
+                            switch (i) {
+                                case 0:
+                                    tdValue = total_count;
+                                    break;
+                                case 1:
+                                    tdValue = total_count / repairCnt;
+
+                                    chartData[month][1] = tdValue;
+
+                                    if (
+                                        tdValue !== 0 &&
+                                        !Number.isInteger(tdValue)
+                                    ) {
+                                        chartData[month][1] =
+                                            Math.round(tdValue * 10) / 10;
+                                    }
+
+                                    break;
+                            }
+
+                            if (total_count == 0) {
+                                tdValue = 0;
+
+                                chartData[month][1] = tdValue;
+                            }
+
+                            if (tdValue !== 0 && tdValue % 1 !== 0) {
+                                tdValue = tdValue.toFixed(1); // 문자열 반환
+                            }
+
+                            tr.append(`<td>${tdValue}</td>`);
+                        }
+
+                        $("#list").append(tr);
+                    }
+
+                    // 구글 차트 로드
+                    google.charts.load("current", {
+                        packages: ["corechart"],
+                    });
+                    google.charts.setOnLoadCallback(drawChart);
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // 차트 그리는 함수
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable(chartData);
+
+            var options = {
+                curveType: "function",
+                legend: { position: "bottom" },
+                // Y축 설정 추가
+                vAxis: {
+                    minValue: 0, // 최소값을 0으로 설정
+                    viewWindow: {
+                        min: 0, // 뷰포트 하단을 0으로 고정 (-200 방지)
+                    },
+                },
+                // 차트 영역 여백 조정 (선택사항)
+                chartArea: {
+                    width: "90%",
+                    height: "70%",
+                },
+            };
+
+            var chart = new google.visualization.LineChart(
+                document.getElementById("line_chart"),
+            );
+            chart.draw(data, options);
+        }
+
+        window.addEventListener("resize", drawChart);
+
+        function getCustomList(page = 1) {
+            Common.sendAxios(
+                `/custom?&keyword=${decodeURI(
+                    $("#search").val(),
+                )}&page=${page}&sort=${decodeURI("a.created_at DESC")}&cate=${$(
+                    "#cate",
+                ).val()}`,
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        $("#list_cus").empty();
+
+                        if (list.length == 0) {
+                            $("#list_cus").append(
+                                $(
+                                    "<tr><td colspan='4'>검색 결과가 없습니다.</td></tr>",
+                                ),
+                            );
+                            return false;
+                        }
+
+                        Common.renderPaging(searchVO);
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const id = data.cus_id;
+                            let tr = $(
+                                `<tr id="tr${id}" onclick="selectCustom(${id},'${data.name}')">`,
+                            );
+
+                            const listno =
+                                searchVO.totalCnt -
+                                ((searchVO.page - 1) * searchVO.recordSize + i);
+                            const name = data.name;
+                            const phone = data.phone;
+                            const addr1 = data.addr1 || "";
+                            const addr2 = data.addr2 || "";
+                            const addr = (addr1 + " " + addr2).trim() || "-";
+
+                            const name_rpr = data.name_rpr;
+                            const phone_rpr = data.phone_rpr;
+                            const addr1_rpr = data.addr1_rpr || "";
+                            const addr2_rpr = data.addr2_rpr || "";
+                            const addr_rpr =
+                                (addr1_rpr + " " + addr2_rpr).trim() || "-";
+
+                            tr.append($($(`<td>${listno}</td>`)));
+                            tr.append($(`<td>${name}<br>${name_rpr}</td>`));
+                            tr.append($(`<td>${phone}<br>${phone_rpr}</td>`));
+                            tr.append($(`<td>${addr}<br>${addr_rpr}</td>`));
+
+                            $("#list_cus").append(tr);
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function pageMove(pageIndex) {
+            getCustomList(pageIndex);
+        }
+
+        // 고객정보관리 팝업 열기
+        function popup() {
+            $(".background").css({ "z-index": "1000000" });
+            $(".show-use").css({ "z-index": "100" });
+            document.querySelector(".background").className =
+                "background show-use";
+        }
+
+        // 고객정보관리 팝업 닫기
+        function popup_close() {
+            $(".background").css({ "z-index": "-1" });
+            document.querySelector(".background").className = "background";
+        }
+
+        function selectCustom(id, name) {
+            $("#cus_id").val(id);
+            $("#cus_name").val(name);
+
+            getList();
+
+            popup_close();
+        }
+
+        // 기사 팝업
+        function popup_repair() {
+            $(".background-item").css({ "z-index": "1000000" });
+            $(".show-use-item").css({ "z-index": "100" });
+            document.querySelector(".background-item").className =
+                "background-item show-use-item";
+        }
+
+        function popup_repair_close() {
+            $(".background-item").css({ "z-index": "-1" });
+            document.querySelector(".background-item").className =
+                "background-item";
+        }
+
+        // 기사 리스트
+        function getRepairList() {
+            Common.sendAxios(
+                `/repair?&keyword=${decodeURI(
+                    $("#search_repair").val(),
+                )}&page=1&sort=${decodeURI("a.name")}&cate=&usePageNavy=false`,
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        $("#listRepair").empty();
+
+                        if (list.length == 0) {
+                            $("#listRepair").append(
+                                $(
+                                    "<tr><td colspan='3'>검색 결과가 없습니다.</td></tr>",
+                                ),
+                            );
+                            return false;
+                        }
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const id = data.account_id;
+
+                            let tr = $(
+                                `<tr id="tr${id}" onclick="selectRapair(${id},'${data.name}')">`,
+                            );
+
+                            if (cate == id) {
+                                $("#repair_name").val(data.name);
+                            }
+
+                            const listno =
+                                searchVO.totalCnt -
+                                ((searchVO.page - 1) * searchVO.recordSize + i);
+                            const name = data.name;
+                            const phone = data.phone;
+
+                            tr.append($($(`<td>${listno}</td>`)));
+                            tr.append($(`<td>${name}</td>`));
+                            tr.append($(`<td>${phone}</td>`));
+
+                            $("#listRepair").append(tr);
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function selectRapair(id, name) {
+            $("#repair_name").val(name);
+            $("#repair_id").val(id);
+
+            getList();
+
+            popup_repair_close();
+        }
+
+        function init() {
+            $("#repair_id").val("0");
+            $("#cus_id").val("0");
+
+            getList();
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>기술자별 월별 처리건수</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">
+                            HOME > KPI 관리 > 기술자별 월별 처리건수
+                        </p>
+                    </div>
+                </div>
+
+                <div class="search" style="height: 53px">
+                    <p class="p-search-title">연도</p>
+                    <div class="search-in">
+                        <select
+                            id="year"
+                            onchange="getList()"
+                            style="width: 100px; padding-left: 10px"
+                            class="search-input"
+                        ></select>
+                    </div>
+
+                    <p class="p-search-title">A/S 기사</p>
+                    <div class="search-in">
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="repair_name"
+                            style="width: 220px; cursor: pointer"
+                            readonly
+                            onclick="popup_repair()"
+                        />
+                        <input type="hidden" id="repair_id" value="0" />
+                    </div>
+
+                    <p class="p-search-title">접수처명</p>
+                    <div class="search-in">
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="cus_name"
+                            style="width: 300px; cursor: pointer"
+                            readonly
+                            onclick="popup()"
+                        />
+                        <input type="hidden" id="cus_id" value="0" />
+                    </div>
+
+                    <p class="btn btn-search" onclick="init()">전체</p>
+                </div>
+
+                <div class="home-kpi scroll-custom" style="height: 270px">
+                    <div class="home-in">
+                        <div
+                            id="line_chart"
+                            style="width: 100%; height: 240px"
+                        ></div>
+                    </div>
+                </div>
+
+                <div
+                    class="home-as scroll-custom"
+                    style="height: calc(100% - 424px)"
+                >
+                    <div
+                        class="home-in"
+                        style="
+                            width: calc(100% - 22px);
+                            margin-top: 10px;
+                            margin-bottom: 10px;
+                        "
+                    >
+                        <div
+                            class="list as-list kpi-as-list scroll-custom"
+                            style="height: 95%; margin-top: 5px"
+                        >
+                            <table>
+                                <tbody>
+                                    <tr class="t-header">
+                                        <th
+                                            colspan="3"
+                                            style="
+                                                border-right: 1px solid #e4e8ea;
+                                            "
+                                        >
+                                            항목/월(Month)
+                                        </th>
+                                        <th>1월</th>
+                                        <th>2월</th>
+                                        <th>3월</th>
+                                        <th>4월</th>
+                                        <th>5월</th>
+                                        <th>6월</th>
+                                        <th>7월</th>
+                                        <th>8월</th>
+                                        <th>9월</th>
+                                        <th>10월</th>
+                                        <th>11월</th>
+                                        <th>12월</th>
+                                    </tr>
+                                </tbody>
+
+                                <tbody id="list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 고객정보관리 팝업 -->
+                <div class="background">
+                    <div class="window">
+                        <div class="popup popup-list-dtl" style="width: 749px">
+                            <div class="popup-hd"><p>고객정보관리</p></div>
+                            <div class="popup-search">
+                                <div class="popup-search-in">
+                                    <select
+                                        class="popup-search-select"
+                                        id="cate"
+                                    >
+                                        <option value="all">전체</option>
+                                        <option value="name">고객명</option>
+                                        <option value="phone">연락처</option>
+                                    </select>
+                                    <div class="popup-search-in">
+                                        <input
+                                            type="text"
+                                            placeholder="검색어를 입력해주세요."
+                                            class="search-input"
+                                            id="search"
+                                            onkeypress="getCustomList()"
+                                        />
+                                    </div>
+                                    <img
+                                        src="../img/ico_search_popup.png"
+                                        class="ico-search-popup"
+                                        onclick="getCustomList()"
+                                    />
+                                </div>
+                            </div>
+                            <div class="popup-in">
+                                <div class="contents-in popup-contents-in">
+                                    <div class="list popup-list">
+                                        <table>
+                                            <colgroup>
+                                                <col style="width: 100px" />
+                                                <col style="width: 30%" />
+                                                <col style="width: 20%" />
+                                                <col style="width: 50%" />
+                                            </colgroup>
+                                            <tbody>
+                                                <tr>
+                                                    <th>NO</th>
+                                                    <th>이름 / 업체명</th>
+                                                    <th>연락처</th>
+                                                    <th>주소</th>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody id="list_cus"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="paging popup-paging">
+                                        <div
+                                            class="paging-inner popup-paging-inner"
+                                            id="pagingArea"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div class="popup-close">
+                                    <p onclick="popup_close()">닫기</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- A/S 기사 목록 팝업 -->
+                <div class="background-item">
+                    <div class="window">
+                        <div class="popup popup-list-dtl" style="width: 749px">
+                            <div class="popup-hd"><p>A/S 기사 목록</p></div>
+                            <div class="popup-search">
+                                <div class="popup-search-in">
+                                    <div class="popup-search-in">
+                                        <input
+                                            type="text"
+                                            placeholder="검색어를 입력해주세요."
+                                            class="search-input"
+                                            id="search_repair"
+                                            onkeypress="getRepairList()"
+                                        />
+                                    </div>
+                                    <img
+                                        src="../img/ico_search_popup.png"
+                                        class="ico-search-popup"
+                                        onclick="getRepairList()"
+                                    />
+                                </div>
+                            </div>
+                            <div class="popup-in">
+                                <div class="contents-in popup-contents-in">
+                                    <div
+                                        class="list popup-list"
+                                        style="height: calc(100vh - 458px)"
+                                    >
+                                        <table>
+                                            <colgroup>
+                                                <col style="width: 100px" />
+                                                <col style="width: 50%" />
+                                                <col style="width: 50%" />
+                                            </colgroup>
+
+                                            <tbody>
+                                                <tr>
+                                                    <th>NO</th>
+                                                    <th>기사명</th>
+                                                    <th>연락처</th>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody id="listRepair"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="popup-close">
+                                    <p onclick="popup_repair_close()">닫기</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>유휴자재관리</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script src="../js/common.js"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+
+        <!-- Sheet JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.14.3/xlsx.full.min.js"></script>
+        <!-- FileSaver savaAs 이용 -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
+    </head>
+
+    <script>
+        let arr = [];
+        const currentUrl = "buy";
+        const currentApi = "/youhu";
+        const page = params.get("page") || "1";
+        const keyword = decodeURI(params.get("keyword")) || "";
+
+        $(function () {
+            if (params.get("page") == null) {
+                location.href = `${currentUrl}_list.html?page=1&keyword=&youhu_status=BUY`;
+            } else {
+                getList();
+            }
+        });
+
+        // 리스트
+        function getList() {
+            $("#search").val(keyword);
+
+            Common.sendAxios(
+                `${currentApi}?keyword=${keyword}&page=${page}&youhu_status=BUY`
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        if (list.length == 0) {
+                            $("#list").append(
+                                $(
+                                    `<tr><td colspan='${$("#list").closest("table").find("colgroup col").length}'>검색 결과가 없습니다.</td></tr>`,
+                                ),
+                            );
+                            return false;
+                        }
+
+                        $("#list").empty();
+
+                        Common.renderPaging(searchVO);
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const id = data.youhu_id;
+                            let tr = $(
+                                `<tr id="tr${id}" val="${id}" onclick="detail(event, ${id})">`
+                            );
+
+                            const listno =
+                                searchVO.totalCnt -
+                                ((searchVO.page - 1) * searchVO.recordSize + i);
+
+                            const name = data.name?.trim() || "-";
+                            const cmpn_name = data.cmpn_name?.trim() || "-";
+                            const price = Common.numberWithCommas(data.price);
+                            const qntty = Common.numberWithCommas(data.qntty);
+                            const standard = data.standard?.trim() || "-";
+                            const phone = Common.formatPhoneNumber(data.phone);
+                            const created_at =
+                                data.created_at.substring(0, 10)?.trim() || "-";
+                            const type = data.type;
+
+                            tr.append($($(`<td>${listno}</td>`)));
+                            tr.append($(`<td>${name}</td>`));
+                            tr.append($(`<td>${cmpn_name}</td>`));
+                            if (type == "Y") {
+                                tr.append($(`<td>${price}</td>`));
+                            } else {
+                                tr.append($(`<td>가격 협의</td>`));
+                            }
+                            tr.append($(`<td>${qntty}</td>`));
+                            tr.append($(`<td>${standard}</td>`));
+                            tr.append($(`<td>${phone}</td>`));
+                            tr.append($(`<td>${created_at}</td>`));
+
+                            $("#list").append(tr);
+                        }
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // paging 이동
+        function pageMove(pageIndex) {
+            location.href = `${currentUrl}_list.html?page=${pageIndex}&keyword=${keyword}&youhu_status=BUY`;
+        }
+
+        // search - Enter
+        function enterkey() {
+            if (window.event.keyCode == 13) {
+                search();
+            }
+        }
+
+        // 검색
+        function search() {
+            location.href = `${currentUrl}_list.html?page=1&keyword=${decodeURI(
+                $("#search").val()
+            )}&youhu_status=BUY`;
+        }
+
+        // 등록
+        function add() {
+            location.href = `${currentUrl}_form.html`;
+        }
+
+        // 상세
+        function detail(e, id) {
+            var targetId = $(e.target).attr("id") || "";
+
+            if (targetId.includes("row")) {
+                return;
+            }
+
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_detail.html?id=${id}${queryString.replace(
+                "?",
+                "&"
+            )}`;
+        }
+
+        // 엑셀 다운로드
+        function excel_download() {
+            Common.sendAxios(
+                `${currentApi}?keyword=${keyword}&page=${page}&youhu_status=BUY&usePageNavy=false`
+            )
+                .then(async (json) => {
+                    const list = json.data;
+
+                    if (list.length == 0) {
+                        alert("조회된 결과가 없습니다.");
+                        return;
+                    }
+
+                    const excelData = list.map((data) => ({
+                        자재명: data.name?.trim() || "-",
+                        업체명: data.cmpn_name?.trim() || "-",
+                        희망가격: Common.numberWithCommas(data.price),
+                        수량: Common.numberWithCommas(data.qntty),
+                        규격: data.standard?.trim() || "-",
+                        연락처: Common.formatPhoneNumber(data.phone),
+                        설명: data.note.split("<br>").join(" ")?.trim() || "-",
+                        일시: data.created_at.substring(0, 10),
+                    }));
+
+                    const sheet = XLSX.utils.json_to_sheet(excelData);
+                    const wb = XLSX.utils.book_new();
+                    const str = "유휴자재 구매";
+                    XLSX.utils.book_append_sheet(wb, sheet, str);
+
+                    const wbout = XLSX.write(wb, {
+                        bookType: "xlsx",
+                        type: "binary",
+                    });
+                    const fileName = `${str}_${Common.getCurrentFormattedTime()}.xlsx`;
+
+                    saveAs(
+                        new Blob([s2ab(wbout)], {
+                            type: "application/octet-stream",
+                        }),
+                        fileName
+                    );
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function s2ab(s) {
+            var buf = new ArrayBuffer(s.length); //convert s to arrayBuffer
+            var view = new Uint8Array(buf); //create uint8array as viewer
+            for (var i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff; //convert to octet
+            return buf;
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>유휴자재 구매</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">유휴자재관리 > 유휴자재 구매</p>
+                    </div>
+                </div>
+                <div class="search">
+                    <img src="../img/ico_search.png" class="ico-search" />
+                    <div class="search-in">
+                        <input
+                            type="text"
+                            placeholder="검색어를 입력해주세요."
+                            class="search-input"
+                            id="search"
+                            onkeypress="enterkey()"
+                        />
+                        <p class="btn btn-search" onclick="search()">검색</p>
+                    </div>
+
+                    <div class="btn-wrap">
+                        <div
+                            class="btn btn-excel btn-excel-down"
+                            onclick="excel_download()"
+                        >
+                            <p>엑셀 다운로드</p>
+                        </div>
+                        <div class="btn btn-add" onclick="add()">
+                            <p>등록</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="contents-in">
+                    <div class="list">
+                        <table>
+                            <colgroup>
+                                <col style="width: 100px" />
+                                <col style="width: 15%" />
+                                <col style="width: 15%" />
+                                <col style="width: 15%" />
+                                <col style="width: 15%" />
+                                <col style="width: 15%" />
+                                <col style="width: 15%" />
+                                <col style="width: 150px" />
+                            </colgroup>
+
+                            <tbody>
+                                <tr class="t-header">
+                                    <th>No.</th>
+                                    <th>자재명</th>
+                                    <th>업체명</th>
+                                    <th>희망 가격</th>
+                                    <th>수량</th>
+                                    <th>규격</th>
+                                    <th>연락처</th>
+                                    <th>일시</th>
+                                </tr>
+                            </tbody>
+
+                            <tbody id="list"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="paging">
+                        <div class="paging-inner" id="pagingArea"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

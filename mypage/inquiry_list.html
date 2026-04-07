@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script src="../js/common.js"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+    </head>
+
+    <script>
+        let arr = [];
+        const currentUrl = "inquiry";
+        const currentApi = "/inquiry";
+        const page = params.get("page") || "1";
+
+        $(function () {
+            if (params.get("page") == null) {
+                location.href = `${currentUrl}_list.html?page=1`;
+            } else {
+                getList();
+            }
+        });
+
+        // 리스트
+        function getList() {
+            Common.sendAxios(`${currentApi}?page=${page}`)
+                .then(async (json) => {
+                    if (json.code != 200) return;
+
+                    const { data: list, searchVO } = json; // 구조 분해 할당 (가독성 향상)
+                    const $list = $("#list"); // jQuery 객체 캐싱
+
+                    if (!list || list.length === 0) {
+                        $list.html(
+                            "<tr><td colspan='7'>문의 내역이 없습니다.</td></tr>"
+                        );
+                        return false;
+                    }
+
+                    $list.empty();
+                    Common.renderPaging(searchVO);
+
+                    const info = JSON.parse(localStorage.getItem("info"));
+                    const current_account_id = info?.account_id;
+
+                    list.forEach((data, i) => {
+                        // 1. 기본 데이터 가공 및 null 체크
+                        const id = data.inquiry_id;
+                        const listno =
+                            searchVO.totalCnt -
+                            ((searchVO.page - 1) * searchVO.recordSize + i);
+
+                        const title = data.title?.trim() || "-";
+                        const content =
+                            data.content?.replace(/<br>/g, " ").trim() || "-";
+                        const created_at =
+                            data.created_at?.substring(0, 10) || "-";
+
+                        // 2. 상태 및 타입 텍스트 결정 (삼항 연산자 활용)
+                        const isAnswered = data.status === "ANSWERED";
+                        const status_text = isAnswered ? "완료" : "미완료";
+                        const status_class = isAnswered ? "delivery-s" : "";
+                        const inquiry_text =
+                            data.inquiry === "SALE" ? "판매" : "구매";
+
+                        // 3. 사용자 이름 스타일 결정
+                        const isMyPost = current_account_id == data.account_id;
+                        const userStyle = isMyPost
+                            ? 'style="color:#FFA01A"'
+                            : "";
+
+                        // 4. 템플릿 리터럴을 이용한 한 번의 HTML 생성 (가장 전문가스러운 방식)
+                        const trHtml = `
+                            <tr id="tr${id}" val="${id}" onclick="detail(event, ${id})">
+                                <td>${listno}</td>
+                                <td>${inquiry_text}</td>
+                                <td>${title}</td>
+                                <td>${content}</td>
+                                <td ${userStyle}>${data.user_name}</td>
+                                <td>${created_at}</td>
+                                <td class="${status_class}">${status_text}</td>
+                            </tr>
+                        `;
+
+                        $list.append(trHtml);
+                    });
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        // paging 이동
+        function pageMove(pageIndex) {
+            location.href = `${currentUrl}_list.html?page=${pageIndex}`;
+        }
+
+        // 상세
+        function detail(e, id) {
+            var targetId = $(e.target).attr("id") || "";
+
+            if (targetId.includes("row")) {
+                return;
+            }
+
+            const queryString = window.location.search;
+            location.href = `${currentUrl}_detail.html?id=${id}${queryString.replace(
+                "?",
+                "&"
+            )}`;
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents scroll-custom">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>문의내역</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 마이페이지 > 문의내역</p>
+                    </div>
+                </div>
+                <div class="contents-in contents-mypage">
+                    <div class="menu-mypage">
+                        <div class="menu-mypage-top">
+                            <img src="../img/ico_mypage.png" />
+                            <p>마이페이지</p>
+                        </div>
+                        <ul>
+                            <li>
+                                <p onclick="location.href='user_info.html'">
+                                    정보관리
+                                </p>
+                            </li>
+                            <li>
+                                <p onclick="location.href='order_list.html'">
+                                    주문정보
+                                </p>
+                            </li>
+                            <li class="on">
+                                <p onclick="location.href='inquiry_list.html'">
+                                    문의내역
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="order-wrap inquiry-wrap">
+                        <div class="mypage-in">
+                            <p class="info-top" style="margin-bottom: 0px">
+                                문의내역
+                            </p>
+                            <!-- <div class="btn-wrap">
+                                <div class="btn btn-del"><p>선택 삭제</p></div>
+                                <div class="btn btn-add"><p>등록</p></div>
+                            </div> -->
+                            <div class="list">
+                                <table>
+                                    <colgroup>
+                                        <col style="width: 100px" />
+                                        <col style="width: 100px" />
+                                        <col style="width: 35%" />
+                                        <col style="width: 45%" />
+                                        <col style="width: 20%" />
+                                        <col style="width: 150px" />
+                                        <col style="width: 150px" />
+                                    </colgroup>
+
+                                    <tbody>
+                                        <tr class="t-header">
+                                            <th>No.</th>
+                                            <th>문의 종류</th>
+                                            <th>제목</th>
+                                            <th>내용</th>
+                                            <th>문의 담당자</th>
+                                            <th>문의일자</th>
+                                            <th>답변 상태</th>
+                                        </tr>
+                                    </tbody>
+
+                                    <tbody id="list"></tbody>
+                                </table>
+                            </div>
+
+                            <div class="paging">
+                                <div class="paging-inner" id="pagingArea"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

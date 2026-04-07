@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/S 이력관리시스템</title>
+        <link rel="shortcut icon" href="../img/ico_shortIcon.png" />
+        <script
+            src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="../js/axios.min.js"></script>
+        <script type="text/javascript" src="../js/common.js?ver=1"></script>
+        <link rel="stylesheet" href="../css/common.css" />
+        <link rel="stylesheet" href="../css/style.css" />
+        <!-- 카카오맵 연동 -->
+        <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    </head>
+
+    <script>
+        const id = params.get("id");
+        const currentUrl = "prchs";
+        const currentApi = "/prch";
+
+        let pitemArr = [];
+        let pitemName = "";
+        let firstName = "";
+
+        function kakaopost() {
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    document.querySelector("#zipcode").value = data.zonecode;
+                    document.querySelector("#addr1").value = data.address + " ";
+                },
+            }).open();
+        }
+
+        $(function () {
+            getPitem();
+
+            if (id != null) {
+                getDetail();
+                $("#saveBtn").html("수정");
+            } else {
+                $(".btn-del").css("display", "none");
+                $("#pitem_pop").css("display", "none");
+                $("#saveBtn").html("등록");
+            }
+        });
+
+        // 체크박스
+        function check() {
+            $("input[name=_selected_all_]").on("change", function () {
+                $("input[name=_selected_]").prop("checked", this.checked);
+                if (this.checked) {
+                    $("tr").addClass("selected-row");
+                } else {
+                    $("tr").removeClass("selected-row");
+                }
+            });
+
+            $("input[name=_selected_]").on("change", function () {
+                $(this).closest("tr").toggleClass("selected-row", this.checked);
+
+                const allChecked =
+                    $("input[name=_selected_]").length ===
+                    $("input[name=_selected_]:checked").length;
+                $("input[name=_selected_all_]").prop("checked", allChecked);
+            });
+        }
+
+        // 선택 → 수정 → back, 선택해제
+        function uncheck() {
+            $(":checkbox:checked").prop("checked", false);
+        }
+
+        function getPitem(page = 1) {
+            Common.sendAxios(
+                `/pitem?&keyword=${decodeURI(
+                    $("#search").val()
+                )}&page=${page}&sort=${decodeURI(
+                    "a.created_at DESC"
+                )}&prch_id=${id}`
+            )
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        const list = json.data;
+                        const searchVO = json.searchVO;
+
+                        $("#list").empty();
+
+                        Common.renderPaging(searchVO);
+
+                        if (list.length == 0) {
+                            $("#list").append(
+                                $(
+                                    "<tr><td colspan='4'>검색 결과가 없습니다.</td></tr>"
+                                )
+                            );
+                            return false;
+                        }
+
+                        for (let i = 0; i < list.length; i++) {
+                            const data = list[i];
+                            const id = data.prcItm_id;
+
+                            const listno = searchVO.totalCnt - i;
+                            const name = data.name.replaceAll("<br>", "\\r\\n");
+                            const price = Common.numberWithCommas(data.price);
+
+                            let tr = $(
+                                `<tr id="tr${id}" onclick="selectPitem(${id}, '${name}')">`
+                            );
+
+                            tr.append($($(`<td>${listno}</td>`)));
+                            tr.append($(`<td>${name}</td>`));
+                            tr.append($(`<td>${price} 원</td>`));
+
+                            $("#list").append(tr);
+                        }
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function pageMove(pageIndex) {
+            getPitem(pageIndex);
+        }
+
+        function selectPitem(id, name) {
+            if (pitemArr.includes(id)) {
+                alert("이미 추가된 대표 품목입니다.");
+                return;
+            }
+
+            pitemArr.push(id);
+
+            $("#pItemList").append(`
+                <div class="info-in" data-id="${id}" data-name="${name}">
+                    <input
+                        type="radio"
+                        name="mainItem"
+                        class="main-item-radio"
+                        style="margin-right: 10px;"
+                    />
+                    <input
+                        type="text"
+                        value="${name}"
+                        style="width: 632px; margin-right: 20px; background: #E4E8EA; color: #676767;"
+                        readonly
+                    />
+                    <div class="btn" onclick="delPItem(this, ${id}, '${name}')">
+                        <p
+                            style="
+                                margin-right: 0px;
+                                background: rgb(245, 63, 63);
+                                color: white;
+                            "
+                        >
+                            삭제
+                        </p>
+                    </div>
+                </div>
+            `);
+
+            ensureFirstRadioChecked();
+
+            popup_close();
+        }
+
+        function ensureFirstRadioChecked() {
+            const $checked = $("#pItemList .main-item-radio:checked");
+
+            if ($checked.length === 0) {
+                $("#pItemList .main-item-radio")
+                    .first()
+                    .prop("checked", true)
+                    .trigger("change");
+            }
+        }
+
+        function delPItem(btn, id, name) {
+            // 배열에서도 제거
+            pitemArr = pitemArr.filter((x) => x !== id);
+
+            // 화면에서 .info-in 전체 삭제
+            $(btn).closest(".info-in").remove();
+
+            ensureFirstRadioChecked();
+        }
+
+        function getDetail() {
+            Common.sendAxios(`${currentApi}/${id}`)
+                .then(async (json) => {
+                    const data = json.data;
+
+                    const name = data.name;
+                    const owner = data.owner;
+                    const tel = data.tel;
+                    const addr1 = data.addr1;
+                    const addr2 = data.addr2;
+                    const addr3 = data.addr3;
+                    const bizno = data.bizno;
+                    const note = data.note.replaceAll("<br>", "\r\n");
+                    const mainPitem_id = data.mainPitem_id;
+
+                    $("#name").val(name);
+                    $("#owner").val(owner);
+                    $("#tel").val(tel);
+                    $("#addr1").val(addr1);
+                    $("#addr2").val(addr2);
+                    $("#zipcode").val(addr3);
+                    $("#bizno").val(bizno);
+                    $("#note").val(note);
+
+                    const searchVO = json.searchVO;
+
+                    for (let i = 0; i < searchVO.length; i++) {
+                        const isChecked =
+                            searchVO[i].prcItm_id == mainPitem_id
+                                ? "checked"
+                                : "";
+
+                        pitemArr.push(searchVO[i].prcItm_id);
+
+                        $("#pItemList").append(`
+                            <div class="info-in" data-id="${searchVO[i].prcItm_id}" data-name="${searchVO[i].name}">
+                                <input
+                                    type="radio"
+                                    name="mainItem"
+                                    class="main-item-radio"
+                                    style="margin-right: 10px;"
+                                    ${isChecked}
+                                />
+                                <input
+                                    type="text"
+                                    value="${searchVO[i].name}"
+                                    style="width: 632px; margin-right: 20px; background: #E4E8EA; color: #676767;"
+                                    readonly
+                                />
+                                <div class="btn" onclick="delPItem(this, ${searchVO[i].prcItm_id}, '${searchVO[i].name}')">
+                                    <p
+                                        style="
+                                            margin-right: 0px;
+                                            background: rgb(245, 63, 63);
+                                            color: white;
+                                        "
+                                    >
+                                        삭제
+                                    </p>
+                                </div>
+                            </div>
+                        `);
+                    }
+
+                    ensureFirstRadioChecked();
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function saveClick() {
+            const formData = new FormData();
+            const name = Common.valueCheck("#name", "매입처명");
+            const owner = $("#owner").val();
+            const tel = $("#tel").val();
+            const addr1 = $("#addr1").val();
+            const addr2 = $("#addr2").val();
+            const addr3 = $("#zipcode").val();
+            const bizno = $("#bizno").val();
+            const note = ($("#note").val() || "").replaceAll("<br>", "\r\n");
+
+            let method = "";
+
+            formData.append("name", name);
+            formData.append("owner", owner);
+            formData.append("tel", tel);
+            formData.append("addr1", addr1);
+            formData.append("addr2", addr2);
+            formData.append("addr3", addr3);
+            formData.append("bizno", bizno);
+            formData.append("note", note);
+
+            const $item = $(".main-item-radio:checked").closest(".info-in");
+
+            let id_ = $item.data("id");
+            let name_ = $item.data("name");
+
+            if (pitemArr.length > 1) {
+                name_ = name_ + " 외 " + (pitemArr.length - 1) + " 종";
+            } else if (pitemArr.length == 1) {
+                name_ = name_;
+            } else {
+                id_ = "";
+                name_ = "";
+            }
+
+            if (id != null) {
+                method = "/put";
+                formData.append("prch_id", id);
+                pitemArr.reverse();
+                formData.append("pitemArr", pitemArr);
+                formData.append("mainPitem", name_);
+                formData.append("mainPitem_id", id_);
+            }
+
+            Common.sendAxios(`${currentApi}${method}`, formData)
+                .then(async (json) => {
+                    if (json.code == 200) {
+                        alert(json.msg);
+
+                        if (id == null) {
+                            const params = new URLSearchParams(
+                                window.location.search
+                            );
+                            params.delete("id");
+
+                            const queryString = params.toString();
+                            location.href = `${currentUrl}_list.html${queryString}`;
+                        } else {
+                            const queryString = window.location.search;
+                            location.href = `${currentUrl}_detail.html${queryString}`;
+                        }
+                    } else if (json.code == 202) {
+                        alert(json.msg);
+                        $(`#${json.data}`).focus();
+                    }
+                })
+                .catch((err) => {
+                    console.error("ERROR : ", err);
+                });
+        }
+
+        function deletion() {
+            if (
+                confirm(
+                    "정말 삭제하시겠습니까?\n한번 삭제한 데이터는 복구 할 수 없습니다."
+                ) == true
+            ) {
+                const formData = new FormData();
+                formData.append("id_list", id);
+
+                Common.sendAxios(`${currentApi}/delete`, formData)
+                    .then(async (json) => {
+                        alert(json.msg);
+                        location.href = `${currentUrl}_list.html`;
+                    })
+                    .catch((err) => {
+                        console.error("ERROR : ", err);
+                    });
+            }
+        }
+
+        function backPage() {
+            const params = new URLSearchParams(window.location.search);
+            const queryString = params.toString();
+
+            if (queryString) {
+                location.href = `${currentUrl}_detail.html?${queryString}`;
+            } else {
+                location.href = `${currentUrl}_detail.html`;
+            }
+        }
+
+        // 고객정보관리 팝업 열기
+        function popup() {
+            $(".background").css({ "z-index": "1000000" });
+            $(".show-use").css({ "z-index": "100" });
+            document.querySelector(".background").className =
+                "background show-use";
+        }
+
+        // 고객정보관리 팝업 닫기
+        function popup_close() {
+            $(".background").css({ "z-index": "-1" });
+            document.querySelector(".background").className = "background";
+        }
+    </script>
+
+    <body>
+        <div class="top"></div>
+        <div class="main">
+            <div class="menu"></div>
+            <div class="contents contents-add">
+                <div class="menu-nm">
+                    <div class="menu-nm-in">
+                        <img src="../img/ico_input_line.png" />
+                        <p>매입처 관리</p>
+                    </div>
+                    <div class="menu-nm-in menu-route">
+                        <img src="../img/ico_home.png" />
+                        <p class="route">HOME > 매입처 관리 > 매입처 관리</p>
+                    </div>
+                </div>
+                <div
+                    class="contents-in scroll-custom"
+                    style="height: calc(100vh - 350px)"
+                >
+                    <div class="info-in">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            매입처
+                        </p>
+                        <input type="text" id="name" />
+                    </div>
+
+                    <div class="info-in" id="pitem_pop">
+                        <p>
+                            <span class="r-value">*&nbsp;</span>
+                            대표 품목
+                        </p>
+
+                        <button class="info-button" onclick="popup()">
+                            대표 품목 추가
+                        </button>
+                    </div>
+
+                    <div id="pItemList"></div>
+
+                    <div class="info-in">
+                        <p>대표</p>
+                        <input type="text" id="owner" />
+                    </div>
+
+                    <div class="info-in">
+                        <p>연락처</p>
+                        <input
+                            type="text"
+                            id="tel"
+                            class="number"
+                            placeholder="'-' 를 제외하고 입력해주세요."
+                            maxlength="11"
+                        />
+                    </div>
+                    <div class="info-in info-addr">
+                        <p>주소</p>
+                        <div class="addr-wrap">
+                            <div class="addr-zipcode-wrap">
+                                <input
+                                    type="text"
+                                    readonly
+                                    class="addr-zipcode"
+                                    id="zipcode"
+                                    onclick="kakaopost()"
+                                />
+                                <p onclick="kakaopost()" class="btn-addr">
+                                    우편번호 검색
+                                </p>
+                            </div>
+                            <input
+                                type="text"
+                                id="addr1"
+                                class="addr-dtl"
+                                readonly
+                            />
+                            <input
+                                type="text"
+                                id="addr2"
+                                class="addr-dtl"
+                                placeholder="상세주소를 입력해주세요."
+                            />
+                        </div>
+                    </div>
+                    <div class="info-in">
+                        <p>사업자등록번호</p>
+                        <input
+                            type="text"
+                            id="bizno"
+                            maxlength="10"
+                            class="number"
+                            placeholder="'-' 를 제외하고 입력해주세요."
+                        />
+                    </div>
+                    <div class="info-in info-in-rm">
+                        <p>비고</p>
+                        <textarea class="scroll-custom" id="note"></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-wrap" style="margin-top: 21px; right: 33px">
+                    <div class="btn btn-del" onclick="deletion()">
+                        <p>삭제</p>
+                    </div>
+                    <div class="btn btn-del" onclick="backPage()">
+                        <p>뒤로</p>
+                    </div>
+                    <div class="btn btn-add" onclick="saveClick()">
+                        <p id="saveBtn"></p>
+                    </div>
+                </div>
+
+                <!-- 매입 품목 팝업 -->
+                <div class="background">
+                    <div class="window">
+                        <div class="popup popup-list-dtl" style="width: 749px">
+                            <div class="popup-hd"><p>대표 품목 목록</p></div>
+                            <div class="popup-search">
+                                <div class="popup-search-in">
+                                    <div class="popup-search-in">
+                                        <input
+                                            type="text"
+                                            placeholder="검색어를 입력해주세요."
+                                            class="search-input"
+                                            id="search"
+                                            onkeypress="getPitem()"
+                                        />
+                                    </div>
+                                    <img
+                                        src="../img/ico_search_popup.png"
+                                        class="ico-search-popup"
+                                        onclick="getPitem()"
+                                    />
+                                </div>
+                            </div>
+                            <div class="popup-in">
+                                <div class="contents-in popup-contents-in">
+                                    <div class="list popup-list">
+                                        <table>
+                                            <colgroup>
+                                                <col style="width: 100px" />
+                                                <col style="width: 70%" />
+                                                <col style="width: 30%" />
+                                            </colgroup>
+                                            <tbody>
+                                                <tr>
+                                                    <th>NO</th>
+                                                    <th>품목명</th>
+                                                    <th>단가</th>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody id="list"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="paging">
+                                        <div
+                                            class="paging-inner"
+                                            id="pagingArea"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div class="popup-close">
+                                    <p onclick="popup_close()">닫기</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
