@@ -241,9 +241,13 @@ body {
 
 /* PC Toggle `.closed` state */
 .menu.closed {
-    width: 78px;
-    padding: 1.2rem 0.5rem;
-    opacity: 1;
+    width: 0;
+    min-width: 0;
+    padding: 0;
+    opacity: 0;
+    overflow: hidden;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 /* Hide redundant _h.png hover icons */
@@ -333,16 +337,16 @@ body {
 }
 .sub-menu-on img { filter: brightness(0) invert(1) !important; }
 
-/* 접힘 모드: 아이콘만 남기기 */
+/* 접힘 모드: 완전 숨김 */
 .menu.closed .menu-title {
     display: none;
 }
 .menu.closed .menu-in {
-    justify-content: center;
-    padding: 0.7rem 0.4rem;
+    justify-content: flex-start;
+    padding: 0;
 }
 .menu.closed .menu-in img {
-    margin-right: 0;
+    margin-right: 12px;
 }
 .menu.closed .sub-menu {
     display: none !important;
@@ -418,60 +422,64 @@ body {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    padding: 1.5rem 2rem;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.3s;
+    padding: 1.75rem 2rem;
+    box-shadow: 0 2px 8px rgba(17, 38, 60, 0.05);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .status-as:hover {
-    box-shadow: var(--shadow-md);
+    border-color: var(--input-border);
+    box-shadow: 0 6px 18px rgba(17, 38, 60, 0.08);
 }
 .as-title {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px dashed var(--border-color);
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 .as-title h1 {
-    font-size: 1.4rem;
+    font-size: 1.28rem;
     font-weight: 700;
     color: var(--text-primary);
 }
 .as-title p {
     color: var(--text-secondary);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 .as-title span {
-    font-weight: 700;
-    color: var(--brand-primary);
-    margin-left: 0.8rem;
-    background: rgba(79, 70, 229, 0.1);
-    padding: 0.3rem 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-left: 0.6rem;
+    background: var(--page-bg);
+    border: 1px solid var(--border-color);
+    padding: 0.25rem 0.65rem;
     border-radius: var(--radius-md);
 }
 .as-contents {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1.25rem;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(150px, 1fr));
+    gap: 1rem;
 }
 .as-graph-box {
-    flex: 1;
-    min-width: 150px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 1rem;
+    justify-content: center;
+    padding: 1rem 0.75rem 0.9rem;
     background: var(--page-bg);
     border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
+    border: 1px solid transparent;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.as-graph-box:hover {
+    background: var(--bg-secondary);
+    box-shadow: 0 1px 6px rgba(17, 38, 60, 0.05);
 }
 .as-graph {
-    width: 120px;
-    height: 120px;
-    margin-bottom: 1.5rem;
+    width: 116px;
+    height: 116px;
+    margin-bottom: 1rem;
 }
 .as-graph canvas {
     width: 100% !important;
@@ -479,32 +487,66 @@ body {
 }
 .as-graph-text {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.5rem;
     color: var(--text-primary);
-    font-weight: 700;
-    font-size: 1.15rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+.as-graph-text > span {
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.as-graph-text > span::before {
+    content: "";
+    width: 18px;
+    height: 18px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    flex-shrink: 0;
+}
+.as-graph-box:nth-child(1) .as-graph-text > span::before {
+    background-image: url('../img/ico_kpi_as_1.png');
+}
+.as-graph-box:nth-child(2) .as-graph-text > span::before {
+    background-image: url('../img/ico_kpi_as_2.png');
+}
+.as-graph-box:nth-child(3) .as-graph-text > span::before {
+    background-image: url('../img/ico_kpi_as_3.png');
+}
+.as-graph-box:nth-child(4) .as-graph-text > span::before {
+    background-image: url('../img/ico_kpi_as_4.png');
+}
+.as-graph-box:nth-child(5) .as-graph-text > span::before {
+    background-image: url('../img/ico_kpi_as_2.png');
 }
 .as-graph-title {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    padding: 0.4rem 0.8rem;
+    background: rgba(239, 68, 68, 0.08);
+    color: #d9363e;
+    padding: 0.28rem 0.62rem;
     border-radius: var(--radius-md);
-    font-size: 0.95rem;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    font-size: 0.82rem;
+    font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    transition: all 0.2s;
+    gap: 0.3rem;
+    line-height: 1;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 .as-graph-title:hover {
-    background: rgba(239, 68, 68, 0.15);
-    transform: translateY(-2px);
+    background: rgba(239, 68, 68, 0.13);
+    border-color: rgba(239, 68, 68, 0.32);
 }
 .as-graph-title h2 {
     margin: 0;
-    font-size: 1rem;
-    text-decoration: underline;
+    font-size: 0.92rem;
+    font-weight: 700;
 }
 
 .status-box {
@@ -856,7 +898,8 @@ body {
     }
     
     .as-contents {
-        justify-content: center;
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+        gap: 0.75rem;
     }
 
     /* 모바일 팝업 */

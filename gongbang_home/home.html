@@ -53,7 +53,6 @@
         },
         {
             canvasId: "donutChart_5",
-            icon: "/img/home_icon_5.png",
             labels: ["작업완료", "취소"],
             counts: { success: 0, cancel: 0 },
             backgroundColor: ["#4E8EED", "#DBDBDB"],
@@ -756,33 +755,6 @@
 
     <script>
         // 도넛 차트 시작
-        const centerImagePlugin = {
-            id: "centerImage",
-            afterDatasetsDraw(chart) {
-                const { ctx, chartArea } = chart;
-                const icon = chart.options.custom?.icon;
-
-                if (!icon || !icon.complete) return;
-
-                const centerX = (chartArea.left + chartArea.right) / 2;
-                const centerY = (chartArea.top + chartArea.bottom) / 2;
-
-                const width = chartArea.right - chartArea.left;
-                const size = width * 0.22; // 반응형 사이즈
-                const offsetY = width * 0.12;
-
-                ctx.save();
-                ctx.drawImage(
-                    icon,
-                    centerX - size / 2,
-                    centerY - size / 2 - offsetY,
-                    size,
-                    size,
-                );
-                ctx.restore();
-            },
-        };
-
         const centerTextPlugin = {
             id: "centerText",
             beforeDraw(chart) {
@@ -797,7 +769,6 @@
 
                 const width = chartArea.right - chartArea.left;
                 const fontSize = Math.max(14, Math.round(width * 0.15));
-                const offsetY = width * 0.14;
 
                 // 테마 텍스트 컬러 (없으면 #000)
                 let textColor = getComputedStyle(document.body).getPropertyValue('--text-primary').trim();
@@ -809,31 +780,18 @@
 
                 ctx.font = `bold ${fontSize}px Noto Sans CJK KR`;
                 ctx.fillStyle = textColor;
-                ctx.fillText(text, centerX, centerY + offsetY);
-
-                // 밑줄
-                const textWidth = ctx.measureText(text).width;
-                const underlineY = centerY + offsetY + Math.round(fontSize * 0.6);
-
-                ctx.beginPath();
-                ctx.moveTo(centerX - textWidth / 2, underlineY);
-                ctx.lineTo(centerX + textWidth / 2, underlineY);
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = textColor;
-                ctx.stroke();
+                ctx.fillText(text, centerX, centerY);
 
                 ctx.restore();
             },
         };
 
         function createDonutChart(config) {
-            const { canvasId, icon, counts, labels, backgroundColor } = config;
+            const { canvasId, counts, labels, backgroundColor } = config;
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
 
             const ctx = canvas.getContext("2d");
-            const iconImg = new Image();
-            iconImg.src = icon;
 
             let dataArr = [counts.success, counts.cancel];
             let viewBgColors = backgroundColor;
@@ -851,7 +809,6 @@
             if (existingChart) {
                 existingChart.data.datasets[0].data = dataArr;
                 existingChart.data.datasets[0].backgroundColor = viewBgColors;
-                existingChart.options.custom.icon = iconImg;
                 existingChart.update();
                 config.instance = existingChart;
             } else {
@@ -874,13 +831,9 @@
                             legend: { display: false },
                             tooltip: { enabled: false },
                         },
-                        custom: {
-                            icon: iconImg,
-                        },
                     },
-                    plugins: [centerTextPlugin, centerImagePlugin],
+                    plugins: [centerTextPlugin],
                 });
-                iconImg.onload = () => chart.update();
                 config.instance = chart;
             }
         }

@@ -1,15 +1,16 @@
 /* legacy-forms-lists.css — 목록/폼 전용 (구 style.css에서 셸 충돌 규칙 제외). modern-dashboard 이후 로드 */
+/* 단위 규칙: rem/em 변환 중단, px 기준 유지 */
 /* contents-top */
-.menu-nm { width: calc(100% - 66px); margin: 0 auto; margin-top: 22px; position: relative; display: flex; align-items: center; } 
+.menu-nm { width: calc(100% - 66px); margin: 0 auto; margin-top: 40px; position: relative; display: flex; align-items: center; } 
 .menu-nm-in { display: flex; align-items: center; } 
 .menu-nm-in img { width: 7px; height: 26px; margin-right: 14px; } 
 .menu-nm-in p { color: #3D3D3D; font-family: "Noto Sans KR"; font-size: 24px; font-style: normal; font-weight: 600; line-height: 100%; letter-spacing: -0.4px; } 
 .menu-route { position: absolute; right: 0; } 
 .menu-route img { width: 15px; height: 15px; } 
-.menu-route .route { color: #A5ADB8; font-family: "Noto Sans KR"; font-size: 15px; font-style: normal; font-weight: 600; line-height: 100%; letter-spacing: -0.3px; } 
+.menu-route .route { color: #A5ADB8; font-family: "Noto Sans KR"; font-size: 14px; font-style: normal; font-weight: 400; line-height: 100%; letter-spacing: -0.3px; } 
 
 /* search */
-.search { position: relative; width: calc(100% - 66px); height: 73px; margin: 0 auto; margin-top: 13px; background: #FFF; box-shadow: 0px 4px 18px 0px rgba(66, 76, 96, 0.10); display: flex; align-items: center; } 
+.search { position: relative; width: calc(100% - 66px); height: 73px; margin: 0 auto; margin-top: 20px; background: #FFF; box-shadow: 0 4px 18px 0 rgba(66, 76, 96, 0.10); display: flex; align-items: center; font-size: 14px;} 
 .ico-search { width: 24px; height: 24px; margin-left: 16px; margin-right: 15px; } 
 .search-select { width: 105px; height: 34px; padding-left: 10px; margin-right: 15px; color: #A5ADB8; font-family: "Noto Sans KR"; font-size: 16px; font-style: normal; font-weight: 400; line-height: 100%; border-radius: 6px; border: 1px solid var(--Color-line, #E4E8EA); } 
 .search-in { display: flex; align-items: center; } 
@@ -153,7 +154,7 @@ input[type=file]::file-selector-button:hover { background: #385885; border: 1px 
 .popup-search-in input::placeholder { color: #A5ADB8; font-family: "Noto Sans KR"; font-size: 12px; font-style: normal; font-weight: 400; line-height: 100%; } 
 .ico-search-popup { cursor: pointer; padding-right: 12px; width: 16px; height: 16px; } 
 .popup-in .popup-contents-in { overflow: hidden; width: 95%; padding-top: 0px; margin-top: 17px; height: 500px; } 
-.popup-in .popup-contents-in .list { margin-top: 0px; } 
+.popup-in .popup-contents-in .list { margin-top: 0; } 
 .popup-list { height: calc(100vh - 556px); } 
 .popup-list table tbody tr th { height: 46.5px; font-size: 13px; font-weight: 600; background: #F3F3F3; color: #696969; border-top: 1px solid #696969; border-right: 1px solid #E6E6E6; } 
 .popup-list table tbody tr td { height: 46.5px; cursor: pointer; font-size: 13px; border-right: 1px solid #E6E6E6; } 
@@ -441,3 +442,109 @@ table { table-layout:fixed; }
 .inquiry-wrap .mypage-in .inquiry-info textarea { padding-left: 10px; padding-top: 10px; border: none; resize: none; width: calc(100% - 12px); height: 120px; border-radius: 4px; border: 1px solid #D5D7D9; color: #676767; font-family: "Noto Sans KR"; font-size: 14px; font-style: normal; font-weight: 400; line-height: 1.5; } 
 
  .as-list table tbody tr .as-status, .list-sales table tbody tr .as-status { font-weight: 700; } 
+
+/* =========================================
+   Detail Common Form (Home 톤 일관화)
+   ========================================= */
+.contents-add.detail-view .menu-nm-in p { color: var(--text-primary); }
+.contents-add.detail-view .menu-route .route { color: var(--text-secondary); }
+
+.contents-add.detail-view .contents-in {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    padding: 24px 24px 16px;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.contents-add.detail-view .info-in {
+    width: 100%;
+    margin-bottom: 10px;
+    min-height: 44px;
+    height: auto !important;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e9edf3;
+}
+
+.contents-add.detail-view .info-in > p {
+    width: 140px;
+    min-height: 36px;
+    margin-right: 12px;
+    border-radius: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    justify-content: flex-start;
+    padding-left: 6px;
+}
+
+.contents-add.detail-view .info-in input,
+.contents-add.detail-view .info-in textarea,
+.contents-add.detail-view .info-in select {
+    width: calc(100% - 152px);
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    min-height: 36px;
+}
+
+.contents-add.detail-view .info-in-modify-info input,
+.contents-add.detail-view .info-in-modify-info textarea,
+.contents-add.detail-view .info-in-modify-info select {
+    background: #eef2f7;
+    border-color: #d8dee8;
+    color: #4b5563;
+}
+
+[data-theme='dark'] .contents-add.detail-view .info-in-modify-info input,
+[data-theme='dark'] .contents-add.detail-view .info-in-modify-info textarea,
+[data-theme='dark'] .contents-add.detail-view .info-in-modify-info select {
+    background: #1f2a3a;
+    border-color: #334155;
+    color: #d1d5db;
+}
+
+.contents-add.detail-view .info-addr .addr-wrap {
+    width: calc(100% - 152px);
+}
+
+.contents-add.detail-view .info-addr .addr-wrap input {
+    width: 100%;
+}
+
+.contents-add.detail-view .info-in-rm textarea {
+    min-height: 140px;
+    height: 140px;
+}
+
+.contents-add.detail-view .btn-wrap {
+    position: static;
+    width: calc(100% - 66px);
+    margin: 16px auto 0;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.contents-add.detail-view .btn-wrap .btn {
+    margin-right: 0;
+    min-width: 76px;
+    height: 36px;
+    border-radius: 8px;
+}
+
+.contents-add.detail-view .detail-sub-field {
+    width: calc(100% - 152px);
+}
+
+[data-theme='dark'] .contents-add.detail-view .info-in {
+    background: #172132;
+    border-color: #253247;
+}
