@@ -304,7 +304,7 @@ input[type="checkbox"]:checked + label::after { background-color: #378eff; conte
 /* 입력 */
 .info-in { width: 90%; margin: 0 auto; margin-bottom: 16px; height: 32px; display: flex; align-items: center; } 
 .info-in p { width: 120px; color: #000; font-family: "Noto Sans KR"; font-size: 14px; font-style: normal; font-weight: 400; line-height: 100%; } 
-.info-in input { width: 588px; height: 32px; padding-left: 10px; border-radius: 4px; border: solid 1px #D5D7D9; color: #676767; font-family: "Noto Sans KR"; font-size: 14px; font-style: normal; font-weight: 400; line-height: 100%; } 
+.info-in input:not([type="radio"]):not([type="checkbox"]) { width: 588px; height: 32px; padding-left: 10px; border-radius: 4px; border: solid 1px #D5D7D9; color: #676767; font-family: "Noto Sans KR"; font-size: 14px; font-style: normal; font-weight: 400; line-height: 100%; } 
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="date"]::-webkit-inner-spin-button { display: none; appearance: none; } 
 input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; color: rgba(0, 0, 0, 0); opacity: 1; display: block; background: url('../img/ico_calendar.png'); background-repeat: no-repeat; background-position: 50% 80%; padding-right: 32px; background-size: 20px 20px; } 
@@ -326,9 +326,62 @@ input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; color: 
 .info-in-rm textarea { height: 247px; } 
 .info-in-radio { display: flex; align-items: center; margin-right: 24px; } 
 .info-in-radio p { margin-left: 4px; width: auto; color: #000; font-family: "Noto Sans KR"; font-size: 13px; font-style: normal; font-weight: 350; line-height: 100%; } 
-.info-in input[type="radio"] { width: 20px; height: 20px; border-radius: 20px; } 
-[type="radio"] { cursor: pointer; appearance: none; width: 20px; height: 20px; border: 2px solid #DFDFDF; border-radius: 50%; background-color: #fff; } 
-[type="radio"]:checked { box-shadow: 0 0 0 1px #718096; border: 4px solid #fff; background-color: #718096; } 
+/* 라디오: 커스텀 원형. :checked는 .detail-view 규칙보다 특이도 높은 규칙으로 반드시 덮어씀 */
+input[type="radio"] {
+    cursor: pointer;
+    flex-shrink: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    background-color: #ffffff;
+    vertical-align: middle;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+input[type="radio"]:hover:not(:disabled) {
+    border-color: var(--brand-primary, #4e8eed);
+}
+input[type="radio"]:focus-visible {
+    outline: 2px solid var(--brand-primary, #4e8eed);
+    outline-offset: 2px;
+}
+input[type="radio"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+input[type="radio"]:checked {
+    border: 4px solid #ffffff;
+    background-color: var(--brand-primary, #4e8eed);
+    box-shadow: 0 0 0 1px var(--brand-primary, #4e8eed);
+}
+[data-theme='dark'] input[type="radio"] {
+    border-color: var(--input-border);
+    background-color: var(--input-bg);
+}
+[data-theme='dark'] input[type="radio"]:hover:not(:disabled) {
+    border-color: var(--brand-primary);
+}
+[data-theme='dark'] input[type="radio"]:checked {
+    border: 4px solid var(--input-bg);
+    background-color: var(--brand-primary);
+    box-shadow: 0 0 0 1px var(--brand-primary);
+}
+/* detail-view에서 텍스트 input과 동일 블록에 있을 때 체크 스타일이 지워지지 않도록 명시 */
+.contents-add.detail-view .info-in input[type="radio"]:checked {
+    border: 4px solid #ffffff;
+    background-color: var(--brand-primary, #4e8eed);
+    box-shadow: 0 0 0 1px var(--brand-primary, #4e8eed);
+}
+[data-theme='dark'] .contents-add.detail-view .info-in input[type="radio"]:checked {
+    border: 4px solid var(--input-bg);
+    background-color: var(--brand-primary);
+    box-shadow: 0 0 0 1px var(--brand-primary);
+}
 .info-file { height: 152px; margin-bottom: 16px; display: grid; } 
 .info-file-in { display: flex; align-items: center; } 
 .info-in .input-file { width: 80px; padding-left: 0px; margin-right: 16px; border: none; } 
@@ -346,11 +399,11 @@ input[type=file]::file-selector-button:hover { background: #385885; border: 1px 
 .contents-add .contents-btm { height: 380px; padding-top: 0px; margin-top: 23px; } 
 .list-btm { height: 288px; margin-top: 0px; } 
 .info-in-line-btm { width: calc(100% - 66px); margin: 0 auto; margin-top: 33px; border-bottom: none; padding-bottom: 0px; } 
-.input-file-button { display: flex; justify-content: center; align-items: center; width: 144px; height: 32px; background-color:#4E8EED; border-radius: 4px; color: #FFF; text-align: center; font-family: "Noto Sans KR"; font-size: 12px; font-style: normal; font-weight: 400; line-height: 100%; cursor: pointer; } 
+.input-file-button { display: flex; justify-content: center; align-items: center; width: 144px; height: 32px; background-color:#4E8EED; border-radius: 4px; color: #FFF; text-align: center; font-family: "Noto Sans KR", sans-serif; font-size: 12px; font-style: normal; font-weight: 400; line-height: 1.2; cursor: pointer; } 
 .input-file-button:hover { background: #385885; } 
 .info-file-custom { display: none; } 
-.btn-img-del { cursor: pointer; margin-left: 16px; display: flex; justify-content: center; align-items: center; width: 109px; height: 32px; border-radius: 4px; border: 1px solid var(--Color-line, #E4E8EA); background: #FFF; } 
-.btn-img-del p { color: #A5ADB8; text-align: center; font-family: "Noto Sans KR"; font-size: 12px; font-style: normal; font-weight: 400; line-height: 100%; } 
+.btn-img-del { cursor: pointer; margin-left: 16px; display: flex; justify-content: center; align-items: center; width: 109px; height: 32px; border-radius: 4px; border: 1px solid var(--Color-line, #E4E8EA); background: #FFF; font-family: "Noto Sans KR", sans-serif; font-size: 12px; font-weight: 400; line-height: 1.2; } 
+.btn-img-del p { margin: 0; color: #A5ADB8; text-align: center; font-family: inherit; font-size: inherit; font-style: normal; font-weight: inherit; line-height: inherit; } 
 .btn-img-del:hover { background: #385885; color: #FFF; } 
 .btn-img-del:hover p { color: #FFF; } 
 .as-input-select { width: 120px; } 
@@ -745,8 +798,8 @@ table { table-layout:fixed; }
 .inquiry-info input { width: calc(100% - 160px); padding-left: 10px; padding-right: 10px; height: 32px; font-size: 14px; border-radius: 4px; border: 1px solid #D5D7D9; } 
 .inquiry-info-txt textarea { margin-top: 10px; padding-left: 10px; padding-top: 10px; border: none; resize: none; width: calc(100% - 14px); height: 310px; border-radius: 4px; border: 1px solid #D5D7D9; color: #676767; font-family: "Noto Sans KR"; font-size: 14px; font-style: normal; font-weight: 400; line-height: 1.5; } 
 
-/* inquiry_dtl.html */
-.inquiry-info span { color: #8C8C8C; font-family: "Noto Sans KR"; font-size: 18px; font-style: normal; font-weight: 400; } 
+/* inquiry_detail: 작성일(created_at) — 제목 행과 동일 톤 */
+.inquiry-info span { color: #8C8C8C; font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-style: normal; font-weight: 400; line-height: 1.3; } 
 
 /* sales_list.html */
 .list table tbody tr .total { background: #FDFFE2; } 
@@ -772,16 +825,16 @@ table { table-layout:fixed; }
 .list table tbody tr td .total-price { font-weight: 700; } 
 
 /* idle_sale_dtl.html */
-.contents-in .info-in .info-title { display: flex; justify-content: center; align-items: center; height: 100%; background: #F6F6F6; margin-right: 10px; } 
+.contents-in .info-in .info-title { display: flex; justify-content: center; align-items: center; height: 100%; background: transparent; margin-right: 10px; } 
 .contents-in .info-in .info-title-t { height: 112px; } 
 .contents-in-dtl .info-in input { border: none; } 
 .contents-in-dtl .info-in textarea { border: none; } 
 
 /* ============== 2025-09-17 추가 ============== */
-.contents-in .info-in p { display: flex; justify-content: center; align-items: center; height: 100%; background: #F6F6F6; margin-right: 10px; } 
+.contents-in .info-in p { display: flex; justify-content: center; align-items: center; height: 100%; background: transparent; margin-right: 10px; } 
 
 /* 수정 page */
-.info-in-modify-info input { background: #E4E8EA; } 
+.info-in-modify-info input:not([type="radio"]):not([type="checkbox"]) { background: #E4E8EA; } 
 .info-in-modify-info select { background: #E4E8EA; } 
 .info-in-modify-info textarea { background: #E4E8EA; } 
 .info-in-modify-info input[type="date"]::-webkit-calendar-picker-indicator,
@@ -835,6 +888,16 @@ table { table-layout:fixed; }
     border: 1px solid #E4E8EA;
 }
 
+.contents-mypage .mypage-upload-hint {
+    margin-left: 20px;
+    color: #7c828a;
+    font-size: 14px;
+}
+
+.contents-mypage .mypage-in .list table tbody tr td.inquiry-user-self {
+    color: #FFA01A;
+}
+
  .as-list table tbody tr .as-status, .list-sales table tbody tr .as-status { font-weight: 700; } 
 
 /* =========================================
@@ -879,7 +942,7 @@ table { table-layout:fixed; }
     padding-left: 6px;
 }
 
-.contents-add.detail-view .info-in input,
+.contents-add.detail-view .info-in input:not([type="radio"]):not([type="checkbox"]),
 .contents-add.detail-view .info-in textarea,
 .contents-add.detail-view .info-in select {
     width: calc(100% - 152px);
@@ -891,7 +954,20 @@ table { table-layout:fixed; }
     padding: 0 20px;
 }
 
-.contents-add.detail-view .info-in-modify-info input,
+/* 레이아웃만 (테두리·배경은 위 input[type="radio"] / :checked 규칙에 맡김) */
+.contents-add.detail-view .info-in input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    min-height: 0;
+    min-width: 0;
+    padding: 0;
+    margin: 0 4px 0 0;
+    flex: 0 0 auto;
+    align-self: center;
+    border-radius: 50%;
+}
+
+.contents-add.detail-view .info-in-modify-info input:not([type="radio"]):not([type="checkbox"]),
 .contents-add.detail-view .info-in-modify-info textarea,
 .contents-add.detail-view .info-in-modify-info select {
     background: #eef2f7;
@@ -899,7 +975,7 @@ table { table-layout:fixed; }
     color: #4b5563;
 }
 
-[data-theme='dark'] .contents-add.detail-view .info-in-modify-info input,
+[data-theme='dark'] .contents-add.detail-view .info-in-modify-info input:not([type="radio"]):not([type="checkbox"]),
 [data-theme='dark'] .contents-add.detail-view .info-in-modify-info textarea,
 [data-theme='dark'] .contents-add.detail-view .info-in-modify-info select {
     background: #1f2a3a;
@@ -1008,7 +1084,7 @@ table { table-layout:fixed; }
 
 [data-theme='dark'] .search-select,
 [data-theme='dark'] .search-input,
-[data-theme='dark'] .info-in input,
+[data-theme='dark'] .info-in input:not([type="radio"]):not([type="checkbox"]),
 [data-theme='dark'] .info-in textarea,
 [data-theme='dark'] .input-select,
 [data-theme='dark'] .p-item-contents input,
@@ -1027,12 +1103,22 @@ table { table-layout:fixed; }
     color: var(--text-secondary);
 }
 
+/* 마이페이지 라디오 라벨(.r-txt): 다크에서 회색 박스 배경 제거 */
+[data-theme='dark'] .mypage-in .info-in p.r-txt {
+    background: transparent !important;
+}
+
 [data-theme='dark'] .btn,
 [data-theme='dark'] .btn-img-del,
 [data-theme='dark'] .btn-mypage-g {
     background: var(--bg-secondary);
     border-color: var(--border-color);
     color: var(--text-secondary);
+}
+
+[data-theme='dark'] .contents-in .info-in .btn-img-del p {
+    background: transparent !important;
+    color: inherit;
 }
 
 [data-theme='dark'] .list table tbody tr th,
@@ -1047,12 +1133,54 @@ table { table-layout:fixed; }
 [data-theme='dark'] .popup-list table tbody tr td {
     color: var(--text-primary);
     border-color: var(--border-color);
+    /* 라이트 전용 규칙의 background:#FFF 가 남지 않도록 명시 */
+    background: var(--bg-color);
+}
+
+[data-theme='dark'] .list table tbody tr {
+    border-color: var(--border-color);
+}
+
+[data-theme='dark'] .list table tbody tr:hover td,
+[data-theme='dark'] .mypage-in .list table tbody tr:hover td,
+[data-theme='dark'] .popup-list table tbody tr:hover td {
+    background: #1f2937;
 }
 
 [data-theme='dark'] .list table tbody tr:hover,
 [data-theme='dark'] .selected-row,
 [data-theme='dark'] .as-selected-row {
     background: #1f2937;
+}
+
+[data-theme='dark'] .list table tbody tr.selected-row td,
+[data-theme='dark'] .list table tbody tr.as-selected-row td,
+[data-theme='dark'] .mypage-in .list table tbody tr.selected-row td,
+[data-theme='dark'] .mypage-in .list table tbody tr.as-selected-row td {
+    background: #1f2937;
+}
+
+/* sales_list: 페이지합계·총합계(tfoot) — 라이트 전용 파랑/회색 배경 대체 */
+[data-theme='dark'] .list-sales table tfoot .total-page,
+[data-theme='dark'] .list-sales table tfoot .total-page:hover {
+    background: #1e3a5f;
+}
+
+[data-theme='dark'] .list-sales table tfoot .total-page td {
+    background: #1e3a5f;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme='dark'] .list-sales table tfoot .total-sum,
+[data-theme='dark'] .list-sales table tfoot .total-sum:hover {
+    background: #334155;
+}
+
+[data-theme='dark'] .list-sales table tfoot .total-sum td {
+    background: #334155;
+    color: var(--text-primary);
+    border-color: var(--border-color);
 }
 
 [data-theme='dark'] .popup-hd,
@@ -1065,12 +1193,42 @@ table { table-layout:fixed; }
 [data-theme='dark'] .popup-search-in,
 [data-theme='dark'] .kpi-in,
 [data-theme='dark'] .menu-mypage-top,
-[data-theme='dark'] .contents-in .info-in p,
-[data-theme='dark'] .contents-in .info-in .info-title {
+[data-theme='dark'] .contents-in .info-in p:not(.info-title) {
     background: var(--bg-secondary);
 }
 
+/* 폼 레이블(.info-title)·detail-view 직접 자식 라벨 p: 라이트와 같이 배경 없음 */
+[data-theme='dark'] .contents-in .info-in .info-title {
+    background: transparent !important;
+}
+
+[data-theme='dark'] .contents-add.detail-view .contents-in .info-in > p {
+    background: transparent !important;
+}
+
+/* buy_form type_check() 인라인 배경 제거 후 — 희망 가격 입력 다크·비활성 */
+.contents-add.detail-view #price:disabled {
+    background: #eef2f7;
+    border-color: #d8dee8;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+[data-theme='dark'] .contents-add.detail-view #price:not(:disabled) {
+    background: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] .contents-add.detail-view #price:disabled {
+    background: #1f2a3a !important;
+    border-color: #334155 !important;
+    color: var(--text-secondary) !important;
+}
+
 /* mypage: dark mode text visibility fix */
+[data-theme='dark'] .contents-mypage .mypage-in .info-in .info-value {
+    background: transparent;
+}
 [data-theme='dark'] .contents-mypage .menu-mypage ul li,
 [data-theme='dark'] .contents-mypage .menu-mypage ul li p,
 [data-theme='dark'] .contents-mypage .mypage-in .info-in .info-nm,
@@ -1087,4 +1245,100 @@ table { table-layout:fixed; }
 [data-theme='dark'] .contents-mypage .btn-mypage-b {
     background: #4E8EED;
     color: #fff;
+}
+
+/* 마이페이지: 주문 상세·문의·목록 버튼·날짜 입력·인라인 보정 (다크) */
+[data-theme='dark'] .contents-mypage .menu-mypage-top img {
+    filter: invert(0.85) brightness(1.2);
+}
+
+[data-theme='dark'] .contents-mypage .menu-mypage-top p {
+    color: #93c5fd !important;
+}
+
+[data-theme='dark'] .contents-mypage .menu-mypage ul li {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme='dark'] .contents-mypage .mypage-in .info-top {
+    color: var(--text-primary) !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+[data-theme='dark'] .contents-mypage .mypage-unregister-inner p {
+    color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr .delivery-b {
+    color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr .delivery-s {
+    color: #7dd3fc !important;
+}
+
+[data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr td .order-c {
+    border-color: var(--input-border);
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+}
+
+[data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr td .order-c:hover {
+    background: #334155;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme='dark'] .contents-mypage .order-wrap .mypage-dtl-in span {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme='dark'] .contents-mypage .order-wrap .mypage-dtl-inner .info-in .info-value,
+[data-theme='dark'] .contents-mypage .order-wrap .mypage-dtl-inner .info-in-price .info-price {
+    color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] .contents-mypage .inquiry-info .inquiry-title {
+    background: var(--bg-secondary) !important;
+}
+
+/* 제목 칸(input): 패널과 같은 톤 — 옆 회색 입력 박스 제거 */
+[data-theme='dark'] .contents-mypage .inquiry-wrap .inquiry-info input {
+    background: transparent !important;
+}
+
+[data-theme='dark'] .contents-mypage .inquiry-info {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme='dark'] .contents-mypage .inquiry-wrap .inquiry-info span {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme='dark'] .contents-mypage .inquiry-wrap .inquiry-info:has(#answer),
+[data-theme='dark'] .contents-mypage #answer_div {
+    border-top-color: var(--border-color) !important;
+}
+
+[data-theme='dark'] .contents-mypage .mypage-order-wrap .search .search-in input[type="date"] {
+    color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] .contents-mypage .mypage-upload-hint {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr td.inquiry-user-self {
+    color: #fbbf24 !important;
+}
+
+/* order_form.js type_check() 인라인 배경색 대응 */
+[data-theme='dark'] .contents-mypage #price:not(:disabled) {
+    background: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] .contents-mypage #price:disabled {
+    background: var(--bg-secondary) !important;
+    color: var(--text-secondary) !important;
 }

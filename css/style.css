@@ -461,13 +461,13 @@ table { table-layout:fixed; }
 .list table tbody tr td .total-price { font-weight: 700; } 
 
 /* idle_sale_dtl.html */
-.contents-in .info-in .info-title { display: flex; justify-content: center; align-items: center; height: 100%; background: #F6F6F6; margin-right: 10px; } 
+.contents-in .info-in .info-title { display: flex; justify-content: center; align-items: center; height: 100%; background: transparent; margin-right: 10px; } 
 .contents-in .info-in .info-title-t { height: 112px; } 
 .contents-in-dtl .info-in input { border: none; } 
 .contents-in-dtl .info-in textarea { border: none; } 
 
 /* ============== 2025-09-17 추가 ============== */
-.contents-in .info-in p { display: flex; justify-content: center; align-items: center; height: 100%; background: #F6F6F6; margin-right: 10px; } 
+.contents-in .info-in p { display: flex; justify-content: center; align-items: center; height: 100%; background: transparent; margin-right: 10px; } 
 
 /* 수정 page */
 .info-in-modify-info input { background: #E4E8EA; } 

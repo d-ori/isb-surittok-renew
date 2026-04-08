@@ -152,20 +152,36 @@
         function drawChart() {
             var data = google.visualization.arrayToDataTable(chartData);
 
+            var isDark =
+                document.documentElement.getAttribute("data-theme") === "dark";
+            var bgColor = isDark ? "#1e293b" : "#ffffff";
+            var axisColor = isDark ? "#94a3b8" : "#333333";
+            var gridColor = isDark ? "#334155" : "#e5e7eb";
+            var legendColor = isDark ? "#e2e8f0" : "#333333";
+
             var options = {
+                backgroundColor: bgColor,
                 curveType: "function",
-                legend: { position: "bottom" },
-                // Y축 설정 추가
+                legend: {
+                    position: "bottom",
+                    textStyle: { color: legendColor },
+                },
+                hAxis: {
+                    textStyle: { color: axisColor },
+                    gridlines: { color: gridColor },
+                },
                 vAxis: {
                     minValue: 0, // 최소값을 0으로 설정
                     viewWindow: {
                         min: 0, // 뷰포트 하단을 0으로 고정 (-200 방지)
                     },
+                    textStyle: { color: axisColor },
+                    gridlines: { color: gridColor },
                 },
-                // 차트 영역 여백 조정 (선택사항)
                 chartArea: {
                     width: "90%",
                     height: "70%",
+                    backgroundColor: bgColor,
                 },
             };
 
@@ -176,6 +192,7 @@
         }
 
         window.addEventListener("resize", drawChart);
+        window.addEventListener("themechange", drawChart);
 
         function getCustomList(page = 1) {
             Common.sendAxios(

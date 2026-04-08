@@ -1669,6 +1669,7 @@
                 align-items: center;
             "
         >
+            <button type="button" class="img-modal-close" aria-label="닫기">닫기</button>
             <img id="modalImg" src="" style="max-width: 90%; max-height: 90%" />
         </div>
 
@@ -1689,9 +1690,16 @@
                     });
                 });
 
-                modal.addEventListener("click", () => {
+                function closeImgModal() {
                     modal.style.display = "none";
                     modalImg.src = "";
+                }
+                modal.addEventListener("click", (e) => {
+                    if (e.target === modal) closeImgModal();
+                });
+                modal.querySelector(".img-modal-close").addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    closeImgModal();
                 });
             });
         </script>

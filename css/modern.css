@@ -72,8 +72,9 @@ body {
   overflow-x: hidden;
 }
 
-/* Base Form Inputs reset that previously relied on common.css */
-input,
+/* Base Form Inputs reset that previously relied on common.css
+   라디오/체크는 native 또는 legacy-forms-lists의 전용 스타일을 쓰므로 제외 */
+input:not([type="radio"]):not([type="checkbox"]),
 button {
   font-family: inherit;
   border: none;
@@ -253,4 +254,35 @@ button {
     right: 0.75rem;
     padding: 0.5rem 0.8rem;
   }
+}
+
+/* 이미지 확대(#imgModal): 인라인 스타일만 쓰는 페이지 공통 — 대시보드 팝업·슬라이드 메뉴보다 위 */
+#imgModal {
+  z-index: 10050;
+}
+
+#imgModal .img-modal-close {
+  /* flex 내부 absolute 이슈 방지: 전체 화면 오버레이와 동일 영역 기준 오른쪽 상단 고정 */
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  left: auto;
+  bottom: auto;
+  z-index: 10051;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #f9fafb;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  line-height: 1.2;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+#imgModal .img-modal-close:hover {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: rgba(255, 255, 255, 0.55);
 }

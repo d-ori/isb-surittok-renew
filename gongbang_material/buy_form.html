@@ -271,11 +271,11 @@
             if (type == "Y") {
                 $("#price").removeAttr("disabled");
                 $("#price").val("");
-                $("#price").css("background", "#FFF");
+                $("#price").css("background", "");
             } else {
                 $("#price").attr("disabled", "disabled");
                 $("#price").val("가격 협의");
-                $("#price").css("background", "#E4E8EA");
+                $("#price").css("background", "");
             }
         }
     </script>
@@ -352,13 +352,7 @@
                                 onclick="type_check('Y')"
                                 checked
                             />
-                            <p
-                                class="info-title"
-                                style="
-                                    background-color: #fff;
-                                    justify-content: left;
-                                "
-                            >
+                            <p class="info-title">
                                 희망 가격
                             </p>
                         </label>
@@ -371,13 +365,7 @@
                                 onclick="type_check('N')"
                                 value="N"
                             />
-                            <p
-                                class="info-title"
-                                style="
-                                    background-color: #fff;
-                                    justify-content: left;
-                                "
-                            >
+                            <p class="info-title">
                                 가격 협의
                             </p>
                         </label>
@@ -580,6 +568,7 @@
                 align-items: center;
             "
         >
+            <button type="button" class="img-modal-close" aria-label="닫기">닫기</button>
             <img id="modalImg" src="" style="max-width: 90%; max-height: 90%" />
         </div>
 
@@ -600,9 +589,16 @@
                     });
                 });
 
-                modal.addEventListener("click", () => {
+                function closeImgModal() {
                     modal.style.display = "none";
                     modalImg.src = "";
+                }
+                modal.addEventListener("click", (e) => {
+                    if (e.target === modal) closeImgModal();
+                });
+                modal.querySelector(".img-modal-close").addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    closeImgModal();
                 });
             });
         </script>
@@ -616,6 +612,8 @@
 
             .radio-label .info-title {
                 margin: 0; /* p 기본 margin 제거 */
+                justify-content: flex-start;
+                background: transparent;
             }
         </style>
     </body>

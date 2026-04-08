@@ -62,9 +62,7 @@
 
                         // 3. 사용자 이름 스타일 결정
                         const isMyPost = current_account_id == data.account_id;
-                        const userStyle = isMyPost
-                            ? 'style="color:#FFA01A"'
-                            : "";
+                        const userCellClass = isMyPost ? ' class="inquiry-user-self"' : "";
 
                         // 4. 템플릿 리터럴을 이용한 한 번의 HTML 생성 (가장 전문가스러운 방식)
                         const trHtml = `
@@ -73,7 +71,7 @@
                                 <td>${inquiry_text}</td>
                                 <td>${title}</td>
                                 <td>${content}</td>
-                                <td ${userStyle}>${data.user_name}</td>
+                                <td${userCellClass}>${data.user_name}</td>
                                 <td>${created_at}</td>
                                 <td class="${status_class}">${status_text}</td>
                             </tr>
