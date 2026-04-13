@@ -340,35 +340,33 @@
                         />
                     </div>
 
-                    <div class="info-in">
+                    <div class="info-in info-in-radio-row">
                         <p class="info-nm">거래 타입</p>
 
-                        <label class="radio-label">
-                            <input
-                                type="radio"
-                                name="type"
-                                class="input-radio"
-                                value="Y"
-                                onclick="type_check('Y')"
-                                checked
-                            />
-                            <p class="info-title">
-                                희망 가격
-                            </p>
-                        </label>
+                        <div class="radio-options-inline">
+                            <label class="radio-label">
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    class="input-radio"
+                                    value="Y"
+                                    onclick="type_check('Y')"
+                                    checked
+                                />
+                                <span class="radio-inline-text">희망 가격</span>
+                            </label>
 
-                        <label class="radio-label">
-                            <input
-                                type="radio"
-                                name="type"
-                                class="input-radio"
-                                onclick="type_check('N')"
-                                value="N"
-                            />
-                            <p class="info-title">
-                                가격 협의
-                            </p>
-                        </label>
+                            <label class="radio-label">
+                                <input
+                                    type="radio"
+                                    name="type"
+                                    class="input-radio"
+                                    onclick="type_check('N')"
+                                    value="N"
+                                />
+                                <span class="radio-inline-text">가격 협의</span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="info-in">
@@ -421,15 +419,8 @@
                                         >
                                             <p>이미지 모두 삭제</p>
                                         </div>
-                                        <div>
-                                            <span
-                                                style="
-                                                    margin-left: 20px;
-                                                    color: #7c828a;
-                                                "
-                                            >
-                                                * 이미지 최대 10장 등록
-                                            </span>
+                                        <div class="file-upload-hints">
+                                            <span class="file-upload-hint">* 이미지 최대 10장 등록</span>
                                         </div>
                                     </div>
                                     <div class="img-list scroll-custom">
@@ -602,19 +593,5 @@
                 });
             });
         </script>
-        <style>
-            .radio-label {
-                display: flex;
-                align-items: center; /* 수직 가운데 정렬 */
-                gap: 8px; /* 라디오와 텍스트 사이 간격 */
-                cursor: pointer; /* 클릭 가능 표시 */
-            }
-
-            .radio-label .info-title {
-                margin: 0; /* p 기본 margin 제거 */
-                justify-content: flex-start;
-                background: transparent;
-            }
-        </style>
     </body>
 </html>
