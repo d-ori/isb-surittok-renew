@@ -891,19 +891,91 @@
                             },
                         },
                         datalabels: {
-                            anchor: "end",
-                            align: "start",
-                            color: "#333",
+                            anchor: function (context) {
+                                const meta = context.chart.getDatasetMeta(
+                                    context.datasetIndex,
+                                );
+                                const el = meta.data[context.dataIndex];
+                                if (!el) return "center";
+                                const raw = el.height;
+                                const h =
+                                    raw != null && !isNaN(raw)
+                                        ? Math.abs(raw)
+                                        : 0;
+                                return h < 22 ? "end" : "center";
+                            },
+                            align: function (context) {
+                                const meta = context.chart.getDatasetMeta(
+                                    context.datasetIndex,
+                                );
+                                const el = meta.data[context.dataIndex];
+                                if (!el) return "center";
+                                const raw = el.height;
+                                const h =
+                                    raw != null && !isNaN(raw)
+                                        ? Math.abs(raw)
+                                        : 0;
+                                return h < 22 ? "end" : "center";
+                            },
+                            offset: function (context) {
+                                const meta = context.chart.getDatasetMeta(
+                                    context.datasetIndex,
+                                );
+                                const el = meta.data[context.dataIndex];
+                                if (!el) return 0;
+                                const raw = el.height;
+                                const h =
+                                    raw != null && !isNaN(raw)
+                                        ? Math.abs(raw)
+                                        : 0;
+                                return h < 22 ? 2 : 0;
+                            },
+                            color: function (context) {
+                                const meta = context.chart.getDatasetMeta(
+                                    context.datasetIndex,
+                                );
+                                const el = meta.data[context.dataIndex];
+                                if (!el) return "#374151";
+                                const raw = el.height;
+                                const h =
+                                    raw != null && !isNaN(raw)
+                                        ? Math.abs(raw)
+                                        : 0;
+                                if (h < 22) {
+                                    return "#374151";
+                                }
+                                return context.datasetIndex === 0
+                                    ? "#ffffff"
+                                    : "#0f172a";
+                            },
                             font: {
-                                size: 12,
+                                size: 11,
                                 weight: "bold",
                             },
                             formatter(value) {
+                                if (
+                                    value === 0 ||
+                                    value === null ||
+                                    value === undefined
+                                ) {
+                                    return "";
+                                }
                                 return value;
                             },
+                            clamp: true,
+                        },
+                    },
+                    layout: {
+                        padding: {
+                            top: 6,
                         },
                     },
                     scales: {
+                        x: {
+                            ticks: {
+                                padding: 6,
+                            },
+                        },
                         y: {
                             beginAtZero: true,
                             ticks: {

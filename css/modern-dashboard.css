@@ -122,6 +122,28 @@ body {
     border: 0;
 }
 
+/* 모바일: 상단 마이페이지·로그아웃은 사이드 메뉴로 이동 (스타일은 일반 .menu-in / .ico-menu와 동일) */
+.menu-mobile-only {
+    display: none !important;
+}
+/* 마이페이지: top.html과 동일 SVG — img 필터 대신 currentColor로 메뉴 톤에 맞춤 */
+.menu-mobile-mypage .menu-mypage-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.92);
+}
+.menu-on.menu-mobile-mypage .menu-mypage-icon {
+    color: #ffffff;
+}
+[data-theme='dark'] .menu-mobile-mypage .menu-mypage-icon {
+    color: rgba(255, 255, 255, 0.92);
+}
+[data-theme='dark'] .menu-on.menu-mobile-mypage .menu-mypage-icon {
+    color: #ffffff;
+}
+
 .top-btn {
     display: flex;
     align-items: center;
@@ -882,6 +904,16 @@ body {
 }
 
 @media (max-width: 1024px) {
+    .top-actions--header {
+        display: none !important;
+    }
+    .profile-info {
+        display: none !important;
+    }
+    .menu-mobile-only {
+        display: list-item !important;
+    }
+
     .hamburger {
         display: flex; 
     }
@@ -924,8 +956,44 @@ body {
         height: auto;
     }
     .status-month, .status-year {
-        height: 380px;
-        padding: 1.5rem;
+        min-height: 300px;
+        height: auto;
+        padding: 1rem 1.1rem;
+    }
+    .month-title,
+    .year-title {
+        flex-direction: column;
+        align-items: stretch;
+        align-content: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .month-title h1,
+    .year-title h1 {
+        font-size: 1.05rem;
+        line-height: 1.4;
+        word-break: keep-all;
+    }
+    .month-title > div {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .month-title > div select {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .year-title select {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .month-graph-box,
+    .year-graph-box {
+        min-height: 240px;
     }
     
     .as-contents {

@@ -4,17 +4,18 @@
             '<svg class="top-toolbar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
         var SUN_SVG =
             '<svg class="top-toolbar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
-        var MENU_OPEN_SVG =
-            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"></polyline></svg>';
+        /* 모바일·데스크톱 공통: 메뉴 토글은 햄버거(닫힘) / X(열림) */
+        var HAMBURGER_SVG =
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>';
         var MENU_CLOSE_SVG =
-            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 6 9 12 15 18"></polyline></svg>';
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
 
         function syncMenuToggleIcon() {
             var isDesktop = $(window).width() > 1024;
             var isMenuVisible = isDesktop
                 ? !$(".menu").hasClass("closed")
                 : $(".menu").hasClass("open");
-            $("#top-menu-toggle-icon").html(isMenuVisible ? MENU_CLOSE_SVG : MENU_OPEN_SVG);
+            $("#top-menu-toggle-icon").html(isMenuVisible ? MENU_CLOSE_SVG : HAMBURGER_SVG);
         }
 
         function syncTopThemeControls() {
@@ -117,7 +118,7 @@
             <span id="admin_name">관리자</span>님, 안녕하세요!
         </div>
 
-        <div class="top-actions">
+        <div class="top-actions top-actions--header">
             <div class="top-btn top-btn--icon" role="button" tabindex="0" data-tooltip="마이페이지" aria-label="마이페이지"
                 onclick="location.href='/mypage/user_info.html';">
                 <svg class="top-toolbar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"

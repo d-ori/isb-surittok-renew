@@ -1365,6 +1365,26 @@
         </div>
     </li> -->
 
+    <!-- 모바일: 상단 바의 마이페이지·로그아웃 (마이페이지 아이콘은 top.html과 동일 SVG) -->
+    <li class="menu-mobile-only menu-mobile-mypage">
+        <div class="menu-in" onclick="location.href='/mypage/user_info.html';">
+            <svg class="menu-mypage-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <p class="menu-title">마이페이지</p>
+        </div>
+    </li>
+    <li class="menu-mobile-only menu-mobile-logout">
+        <div class="menu-in" onclick="logout()">
+            <img src="../img/ico_logout.png" class="ico-menu" alt="" />
+            <img src="../img/ico_logout_h.png" class="ico-hover" alt="" />
+            <p class="menu-title">로그아웃</p>
+        </div>
+    </li>
+
     <li class="menu-theme-toggle" onclick="menuToggleTheme()">
         <div class="menu-in menu-theme-toggle-in">
             <span id="menu-theme-icon"></span>
