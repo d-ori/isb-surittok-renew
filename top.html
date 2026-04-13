@@ -21,14 +21,34 @@
         function syncTopThemeControls() {
             var dark =
                 document.documentElement.getAttribute("data-theme") === "dark";
-            $("#top-theme-icon").html(dark ? SUN_SVG : MOON_SVG);
+            var icon = dark ? SUN_SVG : MOON_SVG;
+            $("#top-theme-icon").html(icon);
+            $("#mobile-menu-theme-fab-icon").html(icon);
             $(".theme-btn")
                 .attr("data-tooltip", dark ? "라이트 모드" : "다크 모드")
                 .attr("aria-label", dark ? "라이트 모드" : "다크 모드");
         }
 
+        function syncMobileMenuThemeFabVisibility() {
+            var mobile = $(window).width() <= 1024;
+            var $fab = $("#mobile-menu-theme-fab");
+            if (!mobile || !$fab.length) {
+                if ($fab.length) $fab.hide();
+                return;
+            }
+            if ($(".menu").hasClass("open")) {
+                $fab.css("display", "flex");
+                if (typeof window.__syncTopThemeControls === "function") {
+                    window.__syncTopThemeControls();
+                }
+            } else {
+                $fab.hide();
+            }
+        }
+
         window.__syncTopThemeControls = syncTopThemeControls;
         window.__syncMenuToggleIcon = syncMenuToggleIcon;
+        window.__syncMobileMenuThemeFabVisibility = syncMobileMenuThemeFabVisibility;
         window.__topThemeMoonSvg = MOON_SVG;
         window.__topThemeSunSvg = SUN_SVG;
 
@@ -44,6 +64,7 @@
             syncMenuToggleIcon();
             $(window).on("resize", function () {
                 syncMenuToggleIcon();
+                syncMobileMenuThemeFabVisibility();
             });
         });
     })();
@@ -65,8 +86,20 @@
                 } else {
                     $("#menu-overlay").show();
                 }
+                if ($("#mobile-menu-theme-fab").length === 0) {
+                    $(".main").append(
+                        '<button type="button" id="mobile-menu-theme-fab" class="mobile-menu-theme-fab" aria-label="테마 전환 (라이트/다크)" onclick="topToggleTheme()"><span id="mobile-menu-theme-fab-icon" aria-hidden="true"></span></button>'
+                    );
+                }
+                if (typeof window.__syncMobileMenuThemeFabVisibility === "function") {
+                    window.__syncMobileMenuThemeFabVisibility();
+                }
+                if (typeof syncMenuThemeToggleState === "function") {
+                    syncMenuThemeToggleState();
+                }
             } else {
                 $("#menu-overlay").hide();
+                $("#mobile-menu-theme-fab").hide();
             }
         }
         if (typeof window.__syncMenuToggleIcon === "function") {
@@ -98,6 +131,9 @@
 
         if (typeof window.__syncTopThemeControls === "function") {
             window.__syncTopThemeControls();
+        }
+        if (typeof syncMenuThemeToggleState === "function") {
+            syncMenuThemeToggleState();
         }
     };
 </script>

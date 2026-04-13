@@ -212,12 +212,21 @@ body {
     box-shadow: 0 0 0 rgba(0, 0, 0, 0);
 }
 [data-theme='dark'] .top-btn.logout {
-    background: #ffffff;
-    color: #2f5fa8;
+    background: #334155;
+    color: #e2e8f0;
+    border: 1px solid rgba(148, 163, 184, 0.35);
 }
 [data-theme='dark'] .top-btn.logout .btn-text,
 [data-theme='dark'] .top-btn.logout svg {
-    color: #2f5fa8;
+    color: #e2e8f0;
+}
+[data-theme='dark'] .top-btn.logout:hover {
+    background: #1e293b;
+    color: #f8fafc;
+}
+[data-theme='dark'] .top-btn.logout:hover .btn-text,
+[data-theme='dark'] .top-btn.logout:hover svg {
+    color: #f8fafc;
 }
 
 /* 2. Main Flex Area */
@@ -235,8 +244,7 @@ body {
     height: 100%;
     background: linear-gradient(180deg, #4E8EED 0%, #3f79d1 100%);
     border-right: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     padding: 1.2rem 0.8rem;
     display: flex;
     flex-direction: column;
@@ -245,6 +253,20 @@ body {
     z-index: 900;
     border-radius: 0 20px 20px 0;
     box-shadow: 6px 0 20px rgba(22, 61, 121, 0.22);
+}
+
+/* 메뉴 항목만 스크롤 — 테마 토글(.menu-theme-dock)은 항상 패널 하단 고정 */
+.menu-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.menu-theme-dock {
+    flex-shrink: 0;
+    margin-top: 0.25rem;
 }
 
 /* PC Toggle `.closed` state */
@@ -279,8 +301,7 @@ body {
     margin-bottom: 0.2rem;
 }
 .menu-theme-toggle {
-    margin-top: auto;
-    padding-top: 0.5rem;
+    padding-top: 0.35rem;
 }
 .menu-theme-toggle .menu-theme-toggle-in {
     border: 1px solid rgba(255, 255, 255, 0.24);
@@ -877,6 +898,42 @@ body {
     border-color: var(--brand-primary);
 }
 
+/* 햄버거 메뉴 열림 시만 표시: 뷰포트 우측 하단 FAB (top.html toggleMenu 가 .main 에 삽입, .menu 의 transform 과 무관) */
+.mobile-menu-theme-fab {
+    display: none;
+    position: fixed;
+    right: max(0.75rem, env(safe-area-inset-right, 0px));
+    bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+    z-index: 1600;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    margin: 0;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--text-primary, #1e293b);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.08s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.mobile-menu-theme-fab:active {
+    transform: scale(0.96);
+}
+.mobile-menu-theme-fab .top-toolbar-icon {
+    width: 22px;
+    height: 22px;
+}
+[data-theme='dark'] .mobile-menu-theme-fab {
+    background: rgba(30, 41, 59, 0.94);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #e2e8f0;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
 
 /* =========================================
    Responsive & Mobile Overrides 
@@ -957,56 +1014,8 @@ body {
         transform: translateX(0);
     }
 
-    /* 메뉴 열림 시: 테마 토글을 패널 하단 오른쪽 원형 아이콘만 표시 */
-    .menu.open ul {
-        padding-bottom: 4rem;
-    }
-
-    .menu.open .menu-theme-toggle {
-        position: absolute;
-        bottom: max(0.65rem, env(safe-area-inset-bottom, 0px));
-        right: max(0.45rem, env(safe-area-inset-right, 0px));
-        left: auto;
-        margin-top: 0;
-        margin-bottom: 0;
-        padding-top: 0;
-        width: auto;
-        z-index: 2;
-    }
-
-    .menu.open .menu-theme-toggle .menu-theme-toggle-in {
-        width: 46px;
-        height: 46px;
-        min-width: 46px;
-        padding: 0;
-        margin: 0;
-        border-radius: 999px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        background: rgba(255, 255, 255, 0.22);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-    }
-
-    .menu.open .menu-theme-toggle .menu-theme-toggle-in:hover {
-        background: rgba(255, 255, 255, 0.32);
-    }
-
-    .menu.open .menu-theme-toggle #menu-theme-icon {
-        margin-right: 0;
-        width: 22px;
-        height: 22px;
-    }
-
-    .menu.open .menu-theme-toggle .top-toolbar-icon {
-        width: 22px;
-        height: 22px;
-    }
-
-    .menu.open .menu-theme-toggle .menu-title,
-    .menu.open .menu-theme-toggle #menu-theme-text {
+    /* 모바일: 사이드 내부 테마 버튼 대신 화면 우측 하단 FAB(top.html에서 .main에 삽입) */
+    .menu-theme-dock {
         display: none !important;
     }
 

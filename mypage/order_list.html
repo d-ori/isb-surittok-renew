@@ -183,7 +183,7 @@
                         <p class="route">HOME > 마이페이지 > 주문정보</p>
                     </div>
                 </div>
-                <div class="contents-in contents-mypage">
+                <div class="contents-in contents-mypage order-list-mypage">
                     <div class="menu-mypage">
                         <div class="menu-mypage-top">
                             <img src="../img/ico_mypage.png" />
@@ -212,67 +212,65 @@
                         </ul>
                     </div>
 
-                    <div class="mypage-order-wrap">
-                        <div class="search">
-                            <img src="../img/ico_search.png" class="ico-search" alt="" />
-                            <div class="search-in">
-                                <p class="p-search-title">일시</p>
-                                <input
-                                    type="date"
-                                    class="search-input"
-                                    id="startDate"
-                                />
-                                <p class="p-search-title">~</p>
-                                <input
-                                    type="date"
-                                    class="search-input"
-                                    id="endDate"
-                                />
-                                <p class="btn btn-search" onclick="search()">
-                                    검색
-                                </p>
-                            </div>
+                    <div class="search">
+                        <img src="../img/ico_search.png" class="ico-search" alt="" />
+                        <div class="search-in">
+                            <p class="p-search-title">일시</p>
+                            <input
+                                type="date"
+                                class="search-input"
+                                id="startDate"
+                            />
+                            <p class="p-search-title">~</p>
+                            <input
+                                type="date"
+                                class="search-input"
+                                id="endDate"
+                            />
+                            <p class="btn btn-search" onclick="search()">
+                                검색
+                            </p>
+                        </div>
 
-                            <div class="btn-wrap">
-                                <div
-                                    class="btn btn-add"
-                                    onclick="location.href = 'order_form.html'"
-                                >
-                                    <p>등록</p>
-                                </div>
+                        <div class="btn-wrap">
+                            <div
+                                class="btn btn-add"
+                                onclick="location.href = 'order_form.html'"
+                            >
+                                <p>등록</p>
                             </div>
                         </div>
-                        <div class="contents-in">
-                            <div class="list">
-                                <table>
-                                    <colgroup>
-                                        <col style="width: 200px" />
-                                        <col style="width: 35%" />
-                                        <col style="width: 45%" />
-                                        <col style="width: 20%" />
-                                        <col style="width: 150px" />
-                                    </colgroup>
+                    </div>
+                    <div class="contents-in">
+                        <div class="list">
+                            <table>
+                                <colgroup>
+                                    <col style="width: 200px" />
+                                    <col style="width: 35%" />
+                                    <col style="width: 45%" />
+                                    <col style="width: 20%" />
+                                    <col style="width: 150px" />
+                                </colgroup>
 
-                                    <tbody>
-                                        <tr class="t-header">
-                                            <th>일시</th>
-                                            <th>자재명</th>
-                                            <th>금액</th>
-                                            <th>수량</th>
-                                            <th>처리상태</th>
-                                        </tr>
-                                    </tbody>
+                                <tbody>
+                                    <tr class="t-header">
+                                        <th>일시</th>
+                                        <th>자재명</th>
+                                        <th>금액</th>
+                                        <th>수량</th>
+                                        <th>처리상태</th>
+                                    </tr>
+                                </tbody>
 
-                                    <tbody id="list"></tbody>
-                                </table>
-                            </div>
+                                <tbody id="list"></tbody>
+                            </table>
+                        </div>
 
-                            <div class="paging">
-                                <div
-                                    class="paging-inner"
-                                    id="pagingArea"
-                                ></div>
-                            </div>
+                        <div class="paging">
+                            <div
+                                class="paging-inner"
+                                id="pagingArea"
+                            ></div>
                         </div>
                     </div>
                 </div>

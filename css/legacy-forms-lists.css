@@ -90,6 +90,10 @@
 .menu-route .route {  color: #385885; font-family: "Noto Sans KR"; font-size: 12px; font-weight: 500; line-height: 100%; letter-spacing: -0.3px; } 
 
 /* search */
+.theme-toggle-btn {
+    display: none !important;
+}
+
 .search {
     position: relative;
     width: calc(100% - 66px);
@@ -763,7 +767,7 @@ ul.image-preview,
     }
 
     /* 마이페이지 주문 목록: .search가 .contents-in 안에 중첩 — 절대배치 .btn-wrap 이 표·날짜와 겹침 방지 */
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .btn-wrap {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .btn-wrap {
         position: static !important;
         right: auto !important;
         top: auto !important;
@@ -781,11 +785,11 @@ ul.image-preview,
         box-sizing: border-box;
     }
 
-    [data-theme='dark'] #viewport .contents-in.contents-mypage .mypage-order-wrap .search .btn-wrap {
+    [data-theme='dark'] #viewport .contents-in.contents-mypage.order-list-mypage > .search .btn-wrap {
         border-top-color: var(--border-color);
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search {
         flex-wrap: wrap;
         align-items: stretch;
     }
@@ -820,13 +824,13 @@ ul.image-preview,
      * 마이페이지 주문 목록: 위 공통 규칙(#viewport .contents .search .search-in { flex-wrap:nowrap })
      * 이 날짜·검색 버튼을 한 줄로 밀어 화면 밖으로 내보냄 → 마이페이지만 줄바꿈·폭 제한
      */
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search {
         min-width: 0;
         max-width: 100%;
         box-sizing: border-box;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .search-in {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .search-in {
         flex-wrap: wrap !important;
         flex: 1 1 100% !important;
         width: 100% !important;
@@ -835,7 +839,7 @@ ul.image-preview,
         box-sizing: border-box;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .search-in input[type="date"] {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .search-in input[type="date"] {
         flex: 1 1 100% !important;
         width: 100% !important;
         max-width: 100% !important;
@@ -843,7 +847,7 @@ ul.image-preview,
         box-sizing: border-box !important;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .search-in .btn-search {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .search-in .btn-search {
         flex: 0 0 auto !important;
         width: 100% !important;
         max-width: 100% !important;
@@ -855,7 +859,9 @@ ul.image-preview,
 /* 모바일: 리스트 페이지 공통 (prchs_list 등 — 검색·제목·본문 폭 정렬) */
 @media (max-width: 768px) {
     /* 본문 영역은 좌우 여백 유지 (modern-dashboard 1rem 세로와 맞춤) */
-    #viewport .main > .contents:has(> .search) {
+    /* prchs_list: .contents 직계 .search | order_list: .contents-mypage.order-list-mypage 안 .search */
+    #viewport .main > .contents:has(> .search),
+    #viewport .main > .contents:has(.order-list-mypage .search) {
         padding: 1rem 12px;
     }
 
@@ -1263,17 +1269,36 @@ ul.image-preview,
 .mypage-unregister-inner img { width: 74px; margin-bottom: 30px; } 
 .mypage-unregister-inner p { margin-bottom: 120px; color: #3D3D3D; font-family: "Noto Sans KR"; font-size: 30px; font-style: normal; font-weight: 700; line-height: 100%; } 
 
-/* order_list.html — prchs_list 와 동일: .search 안에 ico + .search-in(일시·기간·검색) + .btn-wrap(등록) → .contents-in */
-.contents-in.contents-mypage .mypage-order-wrap {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 0;
-    min-width: 0;
-    background: none;
-    box-shadow: none;
+/* order_list.html — prchs_list 과 동일: .menu-mypage 다음 .search 와 .contents-in 이 형제. 데스크톱은 우측 열 2행 그리드 */
+@media (min-width: 1025px) {
+    #viewport .contents-in.contents-mypage.order-list-mypage {
+        display: grid !important;
+        grid-template-columns: 240px minmax(0, 1fr);
+        grid-template-rows: auto 1fr;
+        gap: 16px;
+        align-items: start;
+    }
+    #viewport .contents-in.contents-mypage.order-list-mypage > .menu-mypage {
+        grid-column: 1;
+        grid-row: 1 / -1;
+    }
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search {
+        grid-column: 2;
+        grid-row: 1;
+        width: 100% !important;
+        max-width: 100%;
+        margin: 0 !important;
+        box-sizing: border-box;
+    }
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+        margin-top: 0;
+    }
 }
-/* prchs_list 와 같이 목록 카드만 .contents-in (중첩: 바깥은 .contents-in.contents-mypage) */
-#viewport .contents-in.contents-mypage .mypage-order-wrap > .contents-in {
+/* prchs_list 의 .contents-in 카드에 대응하는 주문 목록 표 영역 */
+#viewport .contents-in.contents-mypage.order-list-mypage > .contents-in {
     width: 100% !important;
     max-width: 100%;
     margin: 13px 0 0 0;
@@ -1285,15 +1310,35 @@ ul.image-preview,
     box-shadow: 0 4px 18px 0 rgba(66, 76, 96, 0.10);
     box-sizing: border-box;
 }
-.mypage-order-wrap .search { margin-top: 0px; width: 100%; border-radius: 10px; border: 1px solid #E4E8EA; box-shadow: 0 4px 18px 0 rgba(66, 76, 96, 0.10); }
-.mypage-order-wrap .search .search-in input[type="date"] { width: 237px; color: var(--input-line, #D5D7D9); font-family: "Noto Sans KR"; font-size: 14px; font-style: normal; font-weight: 400; line-height: 100%; }
+/* 레거시 .btn-wrap 절대배치가 표와 겹침 — 주문 목록 검색만 항상 문서 흐름 */
+#viewport .contents-in.contents-mypage.order-list-mypage > .search .btn-wrap {
+    position: static;
+    right: auto;
+    top: auto;
+    left: auto;
+}
+.contents-in.contents-mypage.order-list-mypage > .search {
+    margin-top: 0;
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid #E4E8EA;
+    box-shadow: 0 4px 18px 0 rgba(66, 76, 96, 0.10);
+}
+.contents-in.contents-mypage.order-list-mypage > .search .search-in input[type="date"] {
+    width: 237px;
+    color: var(--input-line, #D5D7D9);
+    font-family: "Noto Sans KR";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 100%;
+}
 .order-wrap { height: calc(100% - 93px); border-radius: 10px; border: 1px solid #E4E8EA; background: #FFF; box-shadow: 0 4px 18px 0 rgba(66, 76, 96, 0.10); }
 .order-wrap .mypage-in { margin-top: 20px; padding-top: 50px; }
 .mypage-in .list { height: calc(100vh - 515px); margin-top: 0px; }
-.mypage-order-wrap .contents-in .list { height: calc(100vh - 515px); margin-top: 0px; }
+.contents-in.contents-mypage.order-list-mypage > .contents-in .list { height: calc(100vh - 515px); margin-top: 0px; }
 /* .mypage-in .list table tbody tr { cursor: auto; } */
-.mypage-order-wrap .mypage-in .list table tbody tr th,
-.mypage-order-wrap .contents-in .list table tbody tr th,
+.contents-in.contents-mypage.order-list-mypage > .contents-in .list table tbody tr th,
 .inquiry-wrap .mypage-in .list table tbody tr th {
     height: 46px;
     border: 1px solid #E4E8EA;
@@ -1305,8 +1350,7 @@ ul.image-preview,
     font-weight: 500;
     line-height: 100%;
 }
-.mypage-order-wrap .mypage-in .list table tbody tr td,
-.mypage-order-wrap .contents-in .list table tbody tr td,
+.contents-in.contents-mypage.order-list-mypage > .contents-in .list table tbody tr td,
 .inquiry-wrap .mypage-in .list table tbody tr td {
     height: 44px;
     color: #000;
@@ -1318,15 +1362,15 @@ ul.image-preview,
     line-height: 1.5;
 }
 .mypage-in .list table tbody tr .delivery-s,
-.mypage-order-wrap .contents-in .list table tbody tr .delivery-s { color: var(--Color-Primary, #41B6E6); font-weight: 500; }
+.contents-in.contents-mypage.order-list-mypage > .contents-in .list table tbody tr .delivery-s { color: var(--Color-Primary, #41B6E6); font-weight: 500; }
 .mypage-in .list table tbody tr .delivery-b,
-.mypage-order-wrap .contents-in .list table tbody tr .delivery-b { color: #000; font-weight: 500; }
+.contents-in.contents-mypage.order-list-mypage > .contents-in .list table tbody tr .delivery-b { color: #000; font-weight: 500; }
 .mypage-in .list table tbody tr td .order-c { cursor: pointer; display: flex; justify-content: center; align-items: center; width: 100px; height: 26px; margin: 0 auto; margin-top: 6px; border-radius: 4px; border: 1px solid #D5D7D9; color: #8C8C8C; font-family: "Noto Sans KR"; font-size: 16px; font-style: normal; font-weight: 500; line-height: 100%; } 
 .mypage-in .list table tbody tr td .order-c:hover { background-color: #D5D7D9; color: #000; } 
 .mypage-in .paging { height: 50px; }
 .mypage-in .paging .paging-inner { height: 50px;}
-.mypage-order-wrap .contents-in .paging { height: 50px; }
-.mypage-order-wrap .contents-in .paging .paging-inner { height: 50px; }
+.contents-in.contents-mypage.order-list-mypage > .contents-in .paging { height: 50px; }
+.contents-in.contents-mypage.order-list-mypage > .contents-in .paging .paging-inner { height: 50px; }
 
 /* order_dtl.html */
 .order-wrap .mypage-dtl-in { position: relative; margin-top: 0px; } 
@@ -1432,14 +1476,14 @@ ul.image-preview,
     font-size: 24px !important;
     border-bottom: 2px solid #D5DCE0;
 }
-.mypage-order-wrap .p-search-title {
+.contents-in.contents-mypage.order-list-mypage > .search .p-search-title {
     margin-left: 0;
     margin-right: 0;
     color: #3D3D3D;
     font-size: 14px;
     font-weight: 500;
 }
-.mypage-order-wrap .search input.search-input {
+.contents-in.contents-mypage.order-list-mypage > .search input.search-input {
     font-size: 14px;
     color: #3D3D3D;
     border: 1px solid #E4E8EA;
@@ -1473,6 +1517,13 @@ ul.image-preview,
         height: auto;
         min-height: 0;
         max-height: none;
+    }
+
+    /* order_list: 데스크톱 grid 해제 → prchs_list 와 같이 세로 스택(.menu-mypage → .search → .contents-in) */
+    #viewport .contents-in.contents-mypage.order-list-mypage {
+        display: flex !important;
+        flex-direction: column;
+        align-items: stretch;
     }
 
     #viewport .contents-in.contents-mypage .menu-mypage {
@@ -1547,7 +1598,6 @@ ul.image-preview,
     }
 
     #viewport .contents-in.contents-mypage .mypage-wrap,
-    #viewport .contents-in.contents-mypage .mypage-order-wrap,
     #viewport .contents-in.contents-mypage .inquiry-wrap {
         width: 100% !important;
         max-width: 100%;
@@ -1568,7 +1618,7 @@ ul.image-preview,
         max-height: none;
     }
 
-    .contents-mypage .mypage-order-wrap .contents-in .list {
+    .contents-mypage.order-list-mypage > .contents-in .list {
         height: auto !important;
         min-height: 0;
         max-height: none;
@@ -1583,7 +1633,7 @@ ul.image-preview,
         min-height: 0;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap > .contents-in {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in {
         height: auto !important;
     }
 
@@ -1637,86 +1687,109 @@ ul.image-preview,
 }
 
 @media (max-width: 768px) {
-    /* 주문 목록: 검색 영역 세로 배치 — 날짜·검색·등록이 표 헤더와 겹치지 않도록 */
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-        min-height: 0;
-    }
-
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .ico-search {
-        align-self: flex-start;
-    }
-
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .search-in {
-        flex: 1 1 auto;
-        flex-wrap: wrap;
-        width: 100%;
-        min-width: 0;
-    }
-
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .search-in input[type="date"] {
+    /*
+     * 주문 목록(order_list): prchs_list 와 동일하게 .search → .contents-in 순 문서 흐름, 절대배치 .btn-wrap 무효
+     */
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        align-content: flex-start !important;
+        flex-wrap: nowrap !important;
         width: 100% !important;
-        max-width: 100%;
-        min-width: 0;
-        box-sizing: border-box;
+        max-width: 100% !important;
+        min-height: 0 !important;
+        height: auto !important;
+        margin: 0 0 12px 0 !important;
+        padding: 12px !important;
+        gap: 10px !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .search-in .p-search-title {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        width: 100%;
-        text-align: center;
-        flex: 1 1 100%;
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .ico-search {
+        display: none !important;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .search-in .btn-search {
-        width: 100%;
-        margin-left: 0 !important;
-        box-sizing: border-box;
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .search-in {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        flex-wrap: nowrap !important;
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        gap: 8px !important;
+        box-sizing: border-box !important;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .btn-wrap {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .search-in > .p-search-title:first-of-type {
+        width: auto !important;
+        flex: 0 0 auto !important;
+        margin: 0 !important;
+        text-align: left !important;
+        align-self: flex-start !important;
+    }
+
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .search-in > .p-search-title:not(:first-of-type) {
+        width: auto !important;
+        flex: 0 0 auto !important;
+        margin: 0 !important;
+        text-align: center !important;
+        align-self: center !important;
+        font-size: 12px !important;
+    }
+
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .search-in input[type="date"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        flex: 0 0 auto !important;
+        box-sizing: border-box !important;
+    }
+
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .search-in .btn-search {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        flex: 0 0 auto !important;
+        box-sizing: border-box !important;
+        justify-content: center !important;
+    }
+
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .btn-wrap {
         position: static !important;
         right: auto !important;
         top: auto !important;
-        width: 100%;
-        justify-content: flex-end;
-    }
-
-    /*
-     * 주문 목록 가로 넘침 대응
-     * 주의: 부모에 overflow-x:hidden 만 주면 overflow-y가 auto로 바뀌는 규칙 때문에
-     * flex 자식(.mypage-order-wrap) 높이가 무너져 화면이 비는 경우가 있음 → 부모에는 overflow 금지.
-     */
-    #viewport .contents-in.contents-mypage .mypage-order-wrap {
-        max-width: 100%;
-        box-sizing: border-box;
-    }
-
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search {
+        left: auto !important;
+        display: flex !important;
         width: 100% !important;
-        max-width: 100%;
-        box-sizing: border-box;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 10px 0 0 0 !important;
+        border-top: 1px solid #E4E8EA;
+        justify-content: flex-end !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        box-sizing: border-box !important;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .search-in {
-        max-width: 100%;
-        box-sizing: border-box;
+    [data-theme='dark'] #viewport .contents-in.contents-mypage.order-list-mypage > .search .btn-wrap {
+        border-top-color: var(--border-color);
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .search-in input[type="date"] {
-        min-width: 0 !important;
-    }
-
-    #viewport .contents-in.contents-mypage .mypage-order-wrap > .contents-in {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in {
         max-width: 100%;
         box-sizing: border-box;
+        margin-top: 0 !important;
+        position: relative;
+        z-index: 0;
     }
 
     /* 표: 목록 박스(.list)만 가로 스크롤 — 열 최소 폭 */
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .contents-in .list {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in .list {
         padding-left: 8px;
         padding-right: 8px;
         overflow-x: auto;
@@ -1726,14 +1799,14 @@ ul.image-preview,
         box-sizing: border-box;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .contents-in .list table {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in .list table {
         min-width: 640px;
         width: 100%;
         table-layout: auto;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .contents-in .list table tbody tr th,
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .contents-in .list table tbody tr td {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in .list table tbody tr th,
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in .list table tbody tr td {
         white-space: nowrap;
     }
 
@@ -1764,15 +1837,37 @@ ul.image-preview,
         font-size: 11px;
     }
 
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search,
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search p,
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search input[type="date"],
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .search .btn p,
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .contents-in .list table tbody tr th,
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .contents-in .list table tbody tr td,
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .contents-in .list table tbody tr td p,
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .paging,
-    #viewport .contents-in.contents-mypage .mypage-order-wrap .paging p {
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search,
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search p,
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search input[type="date"],
+    #viewport .contents-in.contents-mypage.order-list-mypage > .search .btn p,
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in .list table tbody tr th,
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in .list table tbody tr td,
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in .list table tbody tr td p,
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in .paging,
+    #viewport .contents-in.contents-mypage.order-list-mypage > .contents-in .paging p {
+        font-size: 11px !important;
+    }
+
+    /* user_info.html: 모바일 본문·타이틀·마이페이지 박스 11px */
+    body.page-user-info #viewport .contents .menu-nm > .menu-nm-in:not(.menu-route) p {
+        font-size: 11px !important;
+    }
+
+    body.page-user-info #viewport .contents-in.contents-mypage .menu-mypage-top p {
+        font-size: 11px !important;
+    }
+
+    body.page-user-info .contents-mypage .mypage-in .info-in .info-nm,
+    body.page-user-info .contents-mypage .mypage-in .info-in .info-value {
+        font-size: 11px !important;
+    }
+
+    body.page-user-info .contents-mypage .mypage-in .info-in p {
+        font-size: 11px !important;
+    }
+
+    body.page-user-info .contents-mypage .mypage-wrap .btn-mypage-b {
         font-size: 11px !important;
     }
 }
@@ -2539,6 +2634,22 @@ ul.image-preview,
     color: var(--text-secondary);
 }
 
+/* gongbang_kpi 검색영역: 다크모드 텍스트 가시성 보정 */
+[data-theme='dark'] #viewport .contents.kpi-page .search,
+[data-theme='dark'] #viewport .contents.kpi-page .search .p-search-title,
+[data-theme='dark'] #viewport .contents.kpi-page .search p,
+[data-theme='dark'] #viewport .contents.kpi-page .search label,
+[data-theme='dark'] #viewport .contents.kpi-page .search span {
+    color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] #viewport .contents.kpi-page .search .search-in select.search-input,
+[data-theme='dark'] #viewport .contents.kpi-page .search .search-in input.search-input {
+    background: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+}
+
 /* 마이페이지 라디오 라벨(.r-txt): 다크에서 회색 박스 배경 제거 */
 [data-theme='dark'] .mypage-in .info-in p.r-txt {
     background: transparent !important;
@@ -2550,6 +2661,63 @@ ul.image-preview,
     background: var(--bg-secondary);
     border-color: var(--border-color);
     color: var(--text-secondary);
+}
+
+/* 다크모드: 엑셀 버튼은 배경 유지, 아이콘만 선명하게 */
+[data-theme='dark'] .btn.btn-excel,
+[data-theme='dark'] .btn.btn-excel-down {
+    position: relative;
+    background-image: none;
+}
+
+[data-theme='dark'] .btn.btn-excel::before,
+[data-theme='dark'] .btn.btn-excel-down::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    display: block;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 14px 14px;
+    filter: brightness(0) invert(1) contrast(1.1);
+    opacity: 0.95;
+}
+
+[data-theme='dark'] .btn.btn-excel::before {
+    background-image: url('../img/ico_excel.png');
+}
+
+[data-theme='dark'] .btn.btn-excel-down::before {
+    background-image: url('../img/ico_excel_down.png');
+}
+
+/* 다크모드: 커스텀 체크박스 배경 톤 다운 */
+[data-theme='dark'] input[type="checkbox"] + label {
+    background-color: #334155;
+    border: 1px solid #475569;
+}
+
+[data-theme='dark'] input[type="checkbox"] + label::after {
+    color: #cbd5e1;
+}
+
+[data-theme='dark'] input[type="checkbox"]:checked + label::after {
+    background-color: #4E8EED;
+    color: #ffffff;
+}
+
+/* 다크모드: 파일 업로드 버튼 밝기 완화 */
+[data-theme='dark'] .input-file-button {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+[data-theme='dark'] .input-file-button:hover {
+    background-color: #1d4ed8;
 }
 
 [data-theme='dark'] .contents-in .info-in .btn-img-del p {
@@ -2670,7 +2838,7 @@ ul.image-preview,
 [data-theme='dark'] .contents-mypage .mypage-in .info-in .info-nm,
 [data-theme='dark'] .contents-mypage .mypage-in .info-in .info-value,
 [data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr td,
-[data-theme='dark'] .contents-mypage .mypage-order-wrap .contents-in .list table tbody tr td,
+[data-theme='dark'] .contents-mypage.order-list-mypage > .contents-in .list table tbody tr td,
 [data-theme='dark'] .contents-mypage .inquiry-info .inquiry-title,
 [data-theme='dark'] .contents-mypage .p-search-title {
     color: var(--text-primary) !important;
@@ -2707,24 +2875,24 @@ ul.image-preview,
 }
 
 [data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr .delivery-b,
-[data-theme='dark'] .contents-mypage .mypage-order-wrap .contents-in .list table tbody tr .delivery-b {
+[data-theme='dark'] .contents-mypage.order-list-mypage > .contents-in .list table tbody tr .delivery-b {
     color: var(--text-primary) !important;
 }
 
 [data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr .delivery-s,
-[data-theme='dark'] .contents-mypage .mypage-order-wrap .contents-in .list table tbody tr .delivery-s {
+[data-theme='dark'] .contents-mypage.order-list-mypage > .contents-in .list table tbody tr .delivery-s {
     color: #7dd3fc !important;
 }
 
 [data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr td .order-c,
-[data-theme='dark'] .contents-mypage .mypage-order-wrap .contents-in .list table tbody tr td .order-c {
+[data-theme='dark'] .contents-mypage.order-list-mypage > .contents-in .list table tbody tr td .order-c {
     border-color: var(--input-border);
     color: var(--text-secondary);
     background: var(--bg-secondary);
 }
 
 [data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr td .order-c:hover,
-[data-theme='dark'] .contents-mypage .mypage-order-wrap .contents-in .list table tbody tr td .order-c:hover {
+[data-theme='dark'] .contents-mypage.order-list-mypage > .contents-in .list table tbody tr td .order-c:hover {
     background: #334155;
     color: var(--text-primary);
     border-color: var(--border-color);
@@ -2761,13 +2929,24 @@ ul.image-preview,
     border-top-color: var(--border-color) !important;
 }
 
-[data-theme='dark'] .contents-mypage .mypage-order-wrap .search .search-in input[type="date"] {
+[data-theme='dark'] .contents-mypage.order-list-mypage > .search .search-in input[type="date"] {
     color: var(--text-primary) !important;
 }
 
 [data-theme='dark'] .contents-mypage .mypage-upload-hint,
 [data-theme='dark'] .contents-mypage .info-file-inner .file-upload-hint {
     color: var(--text-secondary) !important;
+}
+
+/* 다크모드: mypage/order_list.html 리스트 카드 배경 */
+[data-theme='dark'] .contents-in.contents-mypage.order-list-mypage > .contents-in {
+    background: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 4px 18px 0 rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='dark'] .contents-in.contents-mypage.order-list-mypage > .contents-in .list {
+    background: transparent;
 }
 
 [data-theme='dark'] .contents-mypage .mypage-in .list table tbody tr td.inquiry-user-self {

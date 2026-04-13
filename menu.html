@@ -714,6 +714,7 @@
     });
 </script>
 
+<div class="menu-scroll">
 <ul>
     <!-- HOME -->
     <li class="menu-home">
@@ -1379,12 +1380,16 @@
             <p class="menu-title">로그아웃</p>
         </div>
     </li>
+</ul>
+</div>
 
-    <li class="menu-theme-toggle" onclick="menuToggleTheme()" role="button" tabindex="0"
+<!-- 스크롤 영역 밖: 데스크톱 패널 하단 고정 / 모바일은 top.html에서 뷰포트 우측 하단 FAB 사용 -->
+<div class="menu-theme-dock">
+    <div class="menu-theme-toggle" onclick="menuToggleTheme()" role="button" tabindex="0"
         aria-label="테마 전환 (라이트/다크)">
         <div class="menu-in menu-theme-toggle-in">
             <span id="menu-theme-icon" aria-hidden="true"></span>
             <p class="menu-title" id="menu-theme-text">다크 모드</p>
         </div>
-    </li>
-</ul>
+    </div>
+</div>
