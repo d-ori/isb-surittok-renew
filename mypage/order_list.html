@@ -172,7 +172,7 @@
             <div class="top"></div>
             <div class="main">
                 <div class="menu scroll-custom"></div>
-            <div class="contents scroll-custom">
+            <div class="contents">
                 <div class="menu-nm">
                     <div class="menu-nm-in">
                         <img src="../img/ico_input_line.png" />
@@ -212,10 +212,11 @@
                         </ul>
                     </div>
 
-                    <div class="mypage-wrap mypage-order-wrap">
+                    <div class="mypage-order-wrap">
                         <div class="search">
-                            <p class="p-search-title">일시</p>
+                            <img src="../img/ico_search.png" class="ico-search" alt="" />
                             <div class="search-in">
+                                <p class="p-search-title">일시</p>
                                 <input
                                     type="date"
                                     class="search-input"
@@ -241,38 +242,36 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="order-wrap">
-                            <div class="mypage-in">
-                                <div class="list">
-                                    <table>
-                                        <colgroup>
-                                            <col style="width: 200px" />
-                                            <col style="width: 35%" />
-                                            <col style="width: 45%" />
-                                            <col style="width: 20%" />
-                                            <col style="width: 150px" />
-                                        </colgroup>
+                        <div class="contents-in">
+                            <div class="list">
+                                <table>
+                                    <colgroup>
+                                        <col style="width: 200px" />
+                                        <col style="width: 35%" />
+                                        <col style="width: 45%" />
+                                        <col style="width: 20%" />
+                                        <col style="width: 150px" />
+                                    </colgroup>
 
-                                        <tbody>
-                                            <tr class="t-header">
-                                                <th>일시</th>
-                                                <th>자재명</th>
-                                                <th>금액</th>
-                                                <th>수량</th>
-                                                <th>처리상태</th>
-                                            </tr>
-                                        </tbody>
+                                    <tbody>
+                                        <tr class="t-header">
+                                            <th>일시</th>
+                                            <th>자재명</th>
+                                            <th>금액</th>
+                                            <th>수량</th>
+                                            <th>처리상태</th>
+                                        </tr>
+                                    </tbody>
 
-                                        <tbody id="list"></tbody>
-                                    </table>
-                                </div>
+                                    <tbody id="list"></tbody>
+                                </table>
+                            </div>
 
-                                <div class="paging">
-                                    <div
-                                        class="paging-inner"
-                                        id="pagingArea"
-                                    ></div>
-                                </div>
+                            <div class="paging">
+                                <div
+                                    class="paging-inner"
+                                    id="pagingArea"
+                                ></div>
                             </div>
                         </div>
                     </div>
