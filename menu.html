@@ -1365,15 +1365,10 @@
         </div>
     </li> -->
 
-    <!-- 모바일: 상단 바의 마이페이지·로그아웃 (마이페이지 아이콘은 top.html과 동일 SVG) -->
+    <!-- 모바일: 상단 바의 마이페이지·로그아웃 (다른 메뉴와 동일 ico-menu PNG) -->
     <li class="menu-mobile-only menu-mobile-mypage">
         <div class="menu-in" onclick="location.href='/mypage/user_info.html';">
-            <svg class="menu-mypage-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
-                aria-hidden="true">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-            </svg>
+            <img src="../img/ico_mypage.png" class="ico-menu" alt="" />
             <p class="menu-title">마이페이지</p>
         </div>
     </li>
@@ -1385,9 +1380,10 @@
         </div>
     </li>
 
-    <li class="menu-theme-toggle" onclick="menuToggleTheme()">
+    <li class="menu-theme-toggle" onclick="menuToggleTheme()" role="button" tabindex="0"
+        aria-label="테마 전환 (라이트/다크)">
         <div class="menu-in menu-theme-toggle-in">
-            <span id="menu-theme-icon"></span>
+            <span id="menu-theme-icon" aria-hidden="true"></span>
             <p class="menu-title" id="menu-theme-text">다크 모드</p>
         </div>
     </li>
